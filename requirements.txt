@@ -1,0 +1,8 @@
+# (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ ~~~~~~ #
+# python==3.11       #
+# pipenv==2022.12.19 #
+# ~~~~~~~~~~~~~~~~~~ #
+Flask==2.2.2
+pyngrok==5.2
+SQLAlchemy==1.4
+pyTelegramBotAPI==4.8
