@@ -1,3 +1,3 @@
 # LuckyBot
 
-![picture](design.png =560x "project design")
+[<img src='design.png' width='760'/>](design.png)
