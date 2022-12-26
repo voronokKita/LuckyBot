@@ -1,5 +1,4 @@
 """ python -m unittest tests.test_base """
-
 import sys
 import pathlib
 import unittest
@@ -7,9 +6,9 @@ import unittest
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 
 
-class ProjectBase(unittest.TestCase):
+class TestProjectBase(unittest.TestCase):
     ''' Main files and structure. '''
-    def test_base(self):
+    def testit(self):
         package_dir = BASE_DIR / 'lucky_bot'
         files = [
             BASE_DIR / '.gitignore',
