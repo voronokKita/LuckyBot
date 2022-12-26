@@ -8,7 +8,7 @@ BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 
 class TestProjectBase(unittest.TestCase):
     ''' Base files, structure and syntax. '''
-    def testit(self):
+    def test_project_base(self):
         package_dir = BASE_DIR / 'lucky_bot'
         files = [
             BASE_DIR / '.gitignore',

@@ -6,30 +6,31 @@ import unittest
 from lucky_bot.helpers.signals import ALL_THREADS_ARE_GO, EXIT_SIGNAL, ALL_DONE_SIGNAL
 
 
-class TestMain(unittest.TestCase):
-    def testit(self):
-        import main
+class MainTestException(Exception):
+    ...
 
-        m = threading.Thread(target=main.main, name='main integrity thread')
-        m.start()
+
+class TestMain(unittest.TestCase):
+    def setUp(self):
+        import main
+        self.main_thread = threading.Thread(target=main.main, name='main integrity thread')
+
+    def tearDown(self):
+        if not EXIT_SIGNAL:
+            EXIT_SIGNAL.set()
+        self.main_thread.join(10)
+
+    def test_main(self):
+        self.main_thread.start()
 
         if ALL_THREADS_ARE_GO.wait(5):
             EXIT_SIGNAL.set()
         else:
-            self._stop_the_thread(m)
-            raise Exception('The time to start the threads has passed.')
+            raise MainTestException('The time to start the threads has passed.')
 
-        if ALL_DONE_SIGNAL.wait(5):
-            sleep(0.1)
-            pass
+        if ALL_DONE_SIGNAL.wait(10):
+            sleep(0.01)
+            self.main_thread.join(10)
+            self.assertFalse(self.main_thread.is_alive())
         else:
-            self._stop_the_thread(m)
-            raise Exception('The time to finish the work has passed.')
-
-        self._stop_the_thread(m)
-
-    @staticmethod
-    def _stop_the_thread(thread):
-        if not EXIT_SIGNAL:
-            EXIT_SIGNAL.set()
-        thread.join(10)
+            raise MainTestException('The time to finish the work has passed.')

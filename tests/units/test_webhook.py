@@ -21,12 +21,12 @@ class TestWebhook(unittest.TestCase):
             EXIT_SIGNAL.set()
             self.webhook.join(3)
 
-    def test_threading(self):
+    def test_webhook_threading(self):
         self.webhook.start()
 
         if WEBHOOK_IS_RUNNING.wait(10):
             EXIT_SIGNAL.set()
-            sleep(0.1)
+            sleep(0.01)
             self.webhook.stop()
             self.assertFalse(self.webhook.is_alive())
 
@@ -34,7 +34,7 @@ class TestWebhook(unittest.TestCase):
             raise WebhookTestException('The time to start the webhook has passed.')
 
     @patch('lucky_bot.webhook.WebhookThread._test_exception')
-    def test_threading_exception(self, mock_exception):
+    def test_webhook_threading_exception(self, mock_exception):
         mock_exception.side_effect = TestException('boom')
         self.webhook.start()
 
