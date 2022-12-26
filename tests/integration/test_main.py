@@ -20,7 +20,7 @@ class TestMain(unittest.TestCase):
             EXIT_SIGNAL.set()
         self.main_thread.join(10)
 
-    def test_main(self):
+    def test_main_integrity(self):
         self.main_thread.start()
 
         if ALL_THREADS_ARE_GO.wait(5):

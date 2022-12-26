@@ -21,22 +21,18 @@ from tests.integration import test_main
 
 loader = unittest.TestLoader()
 
-print('Project base:')
-unittest.TextTestRunner(verbosity=2).run(
-    loader.loadTestsFromModule(test_base)
-)
-
-print('\nUnits:')
-test_units = [test_webhook, test_input_controller, test_updater, test_sender]
+modules_to_test = [
+    test_base,
+    test_sender,
+    test_updater,
+    test_input_controller,
+    test_webhook,
+    test_main,
+]
 suite_list = []
-for module in test_units:
+for module in modules_to_test:
     suite = loader.loadTestsFromModule(module)
     suite_list.append(suite)
+big_suite_of_tests = unittest.TestSuite(suite_list)
 
-big_suite_of_units = unittest.TestSuite(suite_list)
-unittest.TextTestRunner(verbosity=2).run(big_suite_of_units)
-
-print('\nModules integration:')
-unittest.TextTestRunner(verbosity=2).run(
-    loader.loadTestsFromModule(test_main)
-)
+unittest.TextTestRunner(verbosity=2).run(big_suite_of_tests)

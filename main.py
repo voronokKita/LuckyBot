@@ -1,44 +1,39 @@
 import sys
 from time import sleep
 
+from lucky_bot.helpers.constants import MainError
 from lucky_bot.helpers.signals import (
     WEBHOOK_IS_RUNNING, INPUT_CONTROLLER_IS_RUNNING, UPDATER_IS_RUNNING,
     SENDER_IS_RUNNING, ALL_THREADS_ARE_GO, EXIT_SIGNAL, ALL_DONE_SIGNAL,
 )
-
-from lucky_bot.webhook import WebhookThread
-from lucky_bot.input_controller import InputControllerThread
-from lucky_bot.updater import UpdaterThread
 from lucky_bot.sender import SenderThread
-
-
-THREADS = {}
+from lucky_bot.updater import UpdaterThread
+from lucky_bot.input_controller import InputControllerThread
+from lucky_bot.webhook import WebhookThread
 
 
 def main():
-    # run all the threads;
-    webhook = WebhookThread()
-    input_controller = InputControllerThread()
-    updater = UpdaterThread()
+    # instantiate threads;
     sender = SenderThread()
+    updater = UpdaterThread()
+    input_controller = InputControllerThread()
+    webhook = WebhookThread()
 
-    webhook.start()
-    input_controller.start()
-    updater.start()
-    sender.start()
+    threads = {
+        sender: SENDER_IS_RUNNING,
+        updater: UPDATER_IS_RUNNING,
+        input_controller: INPUT_CONTROLLER_IS_RUNNING,
+        webhook: WEBHOOK_IS_RUNNING,
+    }
 
-    for thread in THREADS:
-        thread()
-        # TODO WEBHOOK_IS_RUNNING
-        # TODO INPUT_CONTROLLER_IS_RUNNING
-        # TODO UPDATER_IS_RUNNING
-        # TODO SENDER_IS_RUNNING
-        if THREADS[thread].wait(2):
-            pass
+    # run all the threads;
+    active_threads = []
+    for thread in threads:
+        thread.start()
+        if threads[thread].wait(2):
+            active_threads.append(thread)
         else:
-            EXIT_SIGNAL.set()
-            sleep(0.1)
-            raise Exception('Threads running has failed.')
+            thread_loading_timeout(thread, active_threads)
 
     ALL_THREADS_ARE_GO.set()
 
@@ -47,14 +42,33 @@ def main():
         pass
 
     # finish the work;
-    webhook.stop()
-    input_controller.stop()
-    updater.stop()
-    sender.stop()
-    sleep(0.1)
+    exception_in_threads = stop_the_threads(active_threads)
 
     ALL_DONE_SIGNAL.set()
+    if exception_in_threads:
+        raise exception_in_threads
     sys.exit(0)
+
+
+def stop_the_threads(threads):
+    last_exception = None
+    for thread in threads:
+        try:
+            thread.stop()
+        except Exception as e:
+            last_exception = e
+    return last_exception
+
+
+def thread_loading_timeout(thread, active_threads):
+    EXIT_SIGNAL.set()
+    sleep(0.1)
+    msg = f'Threads running has failed: {thread} timeout.'
+    exception_in_threads = stop_the_threads(active_threads)
+    if exception_in_threads:
+        raise exception_in_threads from MainError(msg)
+    else:
+        raise MainError(msg)
 
 
 if __name__ == '__main__':

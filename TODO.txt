@@ -1,1 +1,4 @@
-- Run the threads in order: sender, updater, input controller and webhook in the last.
+- Test thread timeout in the main.
+- Test thread exception in the main.
+
+DONE - Run the threads in order: sender, updater, input controller and webhook in the last.

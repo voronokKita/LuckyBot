@@ -31,7 +31,7 @@ class TestUpdater(unittest.TestCase):
             self.assertFalse(self.updater.is_alive())
 
         else:
-            raise UpdaterTestException('The time to start the webhook has passed.')
+            raise UpdaterTestException('The time to start the updater has passed.')
 
     @patch('lucky_bot.updater.UpdaterThread._test_exception')
     def test_updater_threading_exception(self, mock_exception):
@@ -42,4 +42,4 @@ class TestUpdater(unittest.TestCase):
             self.assertRaises(TestException, self.updater.stop)
             self.assertFalse(self.updater.is_alive())
         else:
-            raise UpdaterTestException('The time to start the webhook has passed.')
+            raise UpdaterTestException('The time to start the updater has passed.')

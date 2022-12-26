@@ -31,7 +31,7 @@ class TestSender(unittest.TestCase):
             self.assertFalse(self.sender.is_alive())
 
         else:
-            raise SenderTestException('The time to start the webhook has passed.')
+            raise SenderTestException('The time to start the sender has passed.')
 
     @patch('lucky_bot.sender.SenderThread._test_exception')
     def test_sender_threading_exception(self, mock_exception):
@@ -42,5 +42,5 @@ class TestSender(unittest.TestCase):
             self.assertRaises(TestException, self.sender.stop)
             self.assertFalse(self.sender.is_alive())
         else:
-            raise SenderTestException('The time to start the webhook has passed.')
+            raise SenderTestException('The time to start the sender has passed.')
 

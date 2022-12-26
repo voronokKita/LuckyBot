@@ -31,7 +31,7 @@ class TestInputController(unittest.TestCase):
             self.assertFalse(self.input_controller.is_alive())
 
         else:
-            raise InputControllerTestException('The time to start the webhook has passed.')
+            raise InputControllerTestException('The time to start the input controller has passed.')
 
     @patch('lucky_bot.input_controller.InputControllerThread._test_exception')
     def test_input_controller_threading_exception(self, mock_exception):
@@ -42,4 +42,4 @@ class TestInputController(unittest.TestCase):
             self.assertRaises(TestException, self.input_controller.stop)
             self.assertFalse(self.input_controller.is_alive())
         else:
-            raise InputControllerTestException('The time to start the webhook has passed.')
+            raise InputControllerTestException('The time to start the input controller has passed.')
