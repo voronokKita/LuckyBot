@@ -1,0 +1,1 @@
+- Run the threads in order: sender, updater, input controller and webhook in the last.
