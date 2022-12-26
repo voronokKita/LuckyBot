@@ -9,12 +9,10 @@ from lucky_bot.helpers.signals import (
 from lucky_bot.webhook import WebhookThread
 from lucky_bot.input_controller import InputControllerThread
 from lucky_bot.updater import UpdaterThread
-from lucky_bot.sender import sender_thread
+from lucky_bot.sender import SenderThread
 
 
-THREADS = {
-    sender_thread: SENDER_IS_RUNNING
-}
+THREADS = {}
 
 
 def main():
@@ -22,16 +20,19 @@ def main():
     webhook = WebhookThread()
     input_controller = InputControllerThread()
     updater = UpdaterThread()
+    sender = SenderThread()
 
     webhook.start()
     input_controller.start()
     updater.start()
+    sender.start()
 
     for thread in THREADS:
         thread()
         # TODO WEBHOOK_IS_RUNNING
         # TODO INPUT_CONTROLLER_IS_RUNNING
         # TODO UPDATER_IS_RUNNING
+        # TODO SENDER_IS_RUNNING
         if THREADS[thread].wait(2):
             pass
         else:
@@ -49,6 +50,7 @@ def main():
     webhook.stop()
     input_controller.stop()
     updater.stop()
+    sender.stop()
     sleep(0.1)
 
     ALL_DONE_SIGNAL.set()

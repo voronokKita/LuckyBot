@@ -14,6 +14,7 @@ sys.path.append(str(BASE_DIR))
 from tests import test_base
 from tests.units import (
     test_webhook, test_input_controller, test_updater,
+    test_sender,
 )
 from tests.integration import test_main
 
@@ -26,7 +27,7 @@ unittest.TextTestRunner(verbosity=2).run(
 )
 
 print('\nUnits:')
-test_units = [test_webhook, test_input_controller, test_updater]
+test_units = [test_webhook, test_input_controller, test_updater, test_sender]
 suite_list = []
 for module in test_units:
     suite = loader.loadTestsFromModule(module)
