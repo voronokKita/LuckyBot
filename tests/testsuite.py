@@ -2,7 +2,7 @@
 import sys
 
 if __name__ != '__main__':
-    print('run testsuite.py as main.')
+    print('Run testsuite.py as main.')
     sys.exit(1)
 
 import pathlib

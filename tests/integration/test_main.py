@@ -33,14 +33,3 @@ class TestMain(unittest.TestCase):
         if not EXIT_SIGNAL:
             EXIT_SIGNAL.set()
         thread.join(10)
-
-
-if __name__ == '__main__':
-    import sys
-    import pathlib
-
-    base_dir = pathlib.Path(__file__).resolve().parent.parent.parent
-    if str(base_dir) not in sys.path:
-        sys.path.append(str(base_dir))
-
-    unittest.main()

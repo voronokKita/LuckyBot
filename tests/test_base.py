@@ -51,9 +51,3 @@ class TestProjectBase(unittest.TestCase):
         from lucky_bot import sender
 
         import main
-
-
-if __name__ == '__main__':
-    if str(BASE_DIR) not in sys.path:
-        sys.path.append(str(BASE_DIR))
-    unittest.main()
