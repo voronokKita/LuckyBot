@@ -6,10 +6,10 @@ from lucky_bot.helpers.signals import (
     SENDER_IS_RUNNING, ALL_THREADS_ARE_GO, EXIT_SIGNAL, ALL_DONE_SIGNAL,
 )
 
-from lucky_bot.receiver.webhook import webhook_thread
-from lucky_bot.receiver.input_controller import input_controller_thread
-from lucky_bot.updater.updater import updater_thread
-from lucky_bot.sender.sender import sender_thread
+from lucky_bot.webhook import webhook_thread
+from lucky_bot.input_controller import input_controller_thread
+from lucky_bot.updater import updater_thread
+from lucky_bot.sender import sender_thread
 
 
 THREADS = {

@@ -7,7 +7,7 @@ BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 
 
 class TestProjectBase(unittest.TestCase):
-    ''' Main files and structure. '''
+    ''' Base files, structure and syntax. '''
     def testit(self):
         package_dir = BASE_DIR / 'lucky_bot'
         files = [
@@ -17,33 +17,40 @@ class TestProjectBase(unittest.TestCase):
             BASE_DIR / 'README.md',
             BASE_DIR / 'design.png',
 
-            package_dir / 'receiver' / 'webhook.py',
-            package_dir / 'receiver' / 'input_message_queue.sqlite3',
-            package_dir / 'receiver' / 'input_controller.py',
+            BASE_DIR / 'data' / 'data.sqlite3',
+            BASE_DIR / 'data' / 'input_message_queue.sqlite3',
+            BASE_DIR / 'data' / 'output_message_queue.sqlite3',
 
-            package_dir / 'parser' / 'parser.py',
-            package_dir / 'controller' / 'telegram_controller.py',
-            package_dir / 'updater' / 'updater.py',
+            package_dir / 'helpers' / 'signals.py',
+            package_dir / 'helpers' / 'constants.py',
 
-            package_dir / 'sender' / 'sender.py',
-            package_dir / 'sender' / 'output_message_queue.sqlite3',
+            package_dir / 'webhook.py',
+            package_dir / 'input_controller.py',
+            package_dir / 'parser.py',
+            package_dir / 'telegram_controller.py',
+            package_dir / 'updater.py',
+            package_dir / 'sender.py',
         ]
         for f in files:
             self.assertTrue(f.exists(), msg=f)
 
+        self.assertIn('3.11', sys.version)
         import flask
         import pyngrok
         import sqlalchemy
-        self.assertIn('3.11', sys.version)
+
+        from lucky_bot.helpers import signals
+        from lucky_bot.helpers import constants
+
+        from lucky_bot import webhook
+        from lucky_bot import input_controller
+        from lucky_bot import parser
+        from lucky_bot import models
+        from lucky_bot import telegram_controller
+        from lucky_bot import updater
+        from lucky_bot import sender
 
         import main
-        from lucky_bot.receiver import webhook
-        from lucky_bot.receiver import input_controller
-        from lucky_bot.parser import parser
-        from lucky_bot.data import models
-        from lucky_bot.controller import telegram_controller
-        from lucky_bot.updater import updater
-        from lucky_bot.sender import sender
 
 
 if __name__ == '__main__':
