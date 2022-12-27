@@ -3,10 +3,12 @@ import unittest
 from unittest.mock import patch
 from time import sleep
 
+from lucky_bot.webhook import WebhookThread
 from lucky_bot.helpers.constants import TestException
 from lucky_bot.helpers.signals import WEBHOOK_IS_RUNNING, EXIT_SIGNAL
-from lucky_bot.webhook import WebhookThread
 
+
+SIGNALS = [EXIT_SIGNAL, WEBHOOK_IS_RUNNING]
 
 class WebhookTestException(Exception):
     ...
@@ -20,6 +22,11 @@ class TestWebhook(unittest.TestCase):
         if self.webhook.is_alive():
             EXIT_SIGNAL.set()
             self.webhook.join(3)
+        self._clear_signals()
+
+    @staticmethod
+    def _clear_signals():
+        [signal.clear() for signal in SIGNALS if signal.is_set()]
 
     def test_webhook_threading(self):
         self.webhook.start()

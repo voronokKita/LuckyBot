@@ -16,8 +16,7 @@ class UpdaterThread(threading.Thread):
         try:
             # TODO
 
-            UPDATER_IS_RUNNING.set()
-
+            self._set_the_signal()
             self._test_exception()
 
             if EXIT_SIGNAL.wait():
@@ -25,6 +24,7 @@ class UpdaterThread(threading.Thread):
 
         except Exception as e:
             self.exception = e
+            EXIT_SIGNAL.set()
 
     def stop(self):
         threading.Thread.join(self, 1)
@@ -34,3 +34,8 @@ class UpdaterThread(threading.Thread):
     @staticmethod
     def _test_exception():
         pass
+
+    @staticmethod
+    def _set_the_signal():
+        ''' Signal is wrapped for testing purposes. '''
+        UPDATER_IS_RUNNING.set()

@@ -25,6 +25,7 @@ class InputControllerThread(threading.Thread):
 
         except Exception as e:
             self.exception = e
+            EXIT_SIGNAL.set()
 
     def stop(self):
         threading.Thread.join(self, 1)

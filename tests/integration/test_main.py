@@ -22,6 +22,9 @@ class MainTestException(Exception):
 
 
 class TestMain(unittest.TestCase):
+    ''' Only the errors in the updater thread is tested
+        as the second in the order of loading. '''
+
     def setUp(self):
         from main import MainAsThread
         self.main_thread = MainAsThread()

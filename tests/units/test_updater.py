@@ -3,10 +3,12 @@ import unittest
 from unittest.mock import patch
 from time import sleep
 
+from lucky_bot.updater import UpdaterThread
 from lucky_bot.helpers.constants import TestException
 from lucky_bot.helpers.signals import UPDATER_IS_RUNNING, EXIT_SIGNAL
-from lucky_bot.updater import UpdaterThread
 
+
+SIGNALS = [EXIT_SIGNAL, UPDATER_IS_RUNNING]
 
 class UpdaterTestException(Exception):
     ...
@@ -20,6 +22,11 @@ class TestUpdater(unittest.TestCase):
         if self.updater.is_alive():
             EXIT_SIGNAL.set()
             self.updater.join(3)
+        self._clear_signals()
+
+    @staticmethod
+    def _clear_signals():
+        [signal.clear() for signal in SIGNALS if signal.is_set()]
 
     def test_updater_threading(self):
         self.updater.start()

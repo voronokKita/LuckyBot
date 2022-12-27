@@ -1,4 +1,5 @@
-- Test thread timeout in the main.
-- Test thread exception in the main.
+- Adjust the waiting time in main's tests.
 
 DONE - Run the threads in order: sender, updater, input controller and webhook in the last.
+DONE - Test thread timeout in the main.
+DONE - Test thread exception in the main.

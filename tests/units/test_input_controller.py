@@ -3,10 +3,12 @@ import unittest
 from unittest.mock import patch
 from time import sleep
 
+from lucky_bot.input_controller import InputControllerThread
 from lucky_bot.helpers.constants import TestException
 from lucky_bot.helpers.signals import INPUT_CONTROLLER_IS_RUNNING, EXIT_SIGNAL
-from lucky_bot.input_controller import InputControllerThread
 
+
+SIGNALS = [EXIT_SIGNAL, INPUT_CONTROLLER_IS_RUNNING]
 
 class InputControllerTestException(Exception):
     ...
@@ -20,6 +22,11 @@ class TestInputController(unittest.TestCase):
         if self.input_controller.is_alive():
             EXIT_SIGNAL.set()
             self.input_controller.join(3)
+        self._clear_signals()
+
+    @staticmethod
+    def _clear_signals():
+        [signal.clear() for signal in SIGNALS if signal.is_set()]
 
     def test_input_controller_threading(self):
         self.input_controller.start()

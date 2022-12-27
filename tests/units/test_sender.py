@@ -3,10 +3,12 @@ import unittest
 from unittest.mock import patch
 from time import sleep
 
+from lucky_bot.sender import SenderThread
 from lucky_bot.helpers.constants import TestException
 from lucky_bot.helpers.signals import SENDER_IS_RUNNING, EXIT_SIGNAL
-from lucky_bot.sender import SenderThread
 
+
+SIGNALS = [EXIT_SIGNAL, SENDER_IS_RUNNING]
 
 class SenderTestException(Exception):
     ...
@@ -20,6 +22,11 @@ class TestSender(unittest.TestCase):
         if self.sender.is_alive():
             EXIT_SIGNAL.set()
             self.sender.join(3)
+        self._clear_signals()
+
+    @staticmethod
+    def _clear_signals():
+        [signal.clear() for signal in SIGNALS if signal.is_set()]
 
     def test_sender_threading(self):
         self.sender.start()
