@@ -30,6 +30,8 @@ class MainAsThread(threading.Thread):
             self.exception = e
 
     def stop(self):
+        if not EXIT_SIGNAL.is_set():
+            EXIT_SIGNAL.set()
         threading.Thread.join(self, 1)
         if self.exception:
             raise self.exception
