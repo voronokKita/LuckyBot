@@ -21,14 +21,14 @@ from tests.integration import test_main
 
 loader = unittest.TestLoader()
 
-modules_to_test = [
+modules_to_test = {
     test_base,
     test_sender,
     test_updater,
     test_input_controller,
     test_webhook,
     test_main,
-]
+}
 suite_list = []
 for module in modules_to_test:
     suite = loader.loadTestsFromModule(module)

@@ -1,11 +1,11 @@
 import sys
 import threading
-from time import sleep
 
-from lucky_bot.helpers.constants import MainError
+from lucky_bot.helpers.constants import MainError, TREAD_RUNNING_TIMEOUT
 from lucky_bot.helpers.signals import (
-    WEBHOOK_IS_RUNNING, INPUT_CONTROLLER_IS_RUNNING, UPDATER_IS_RUNNING,
-    SENDER_IS_RUNNING, ALL_THREADS_ARE_GO, EXIT_SIGNAL, ALL_DONE_SIGNAL,
+    WEBHOOK_IS_RUNNING, INPUT_CONTROLLER_IS_RUNNING,
+    UPDATER_IS_RUNNING, SENDER_IS_RUNNING,
+    ALL_THREADS_ARE_GO, ALL_DONE_SIGNAL, EXIT_SIGNAL,
 )
 from lucky_bot.sender import SenderThread
 from lucky_bot.updater import UpdaterThread
@@ -18,7 +18,7 @@ class MainAsThread(threading.Thread):
     exception = None
 
     def __str__(self):
-        return 'main thread'
+        return 'main thread (well, not exactly)'
 
     def __int__(self):
         threading.Thread.__init__(self)
@@ -29,10 +29,10 @@ class MainAsThread(threading.Thread):
         except Exception as e:
             self.exception = e
 
-    def stop(self):
+    def merge(self):
         if not EXIT_SIGNAL.is_set():
             EXIT_SIGNAL.set()
-        threading.Thread.join(self, 1)
+        threading.Thread.join(self, 5)
         if self.exception:
             raise self.exception
 
@@ -44,26 +44,28 @@ def main():
     input_controller = InputControllerThread()
     webhook = WebhookThread()
 
-    threads = {
-        sender: SENDER_IS_RUNNING,
-        updater: UPDATER_IS_RUNNING,
-        input_controller: INPUT_CONTROLLER_IS_RUNNING,
-        webhook: WEBHOOK_IS_RUNNING,
-    }
+    threads = [
+        {'thread': sender, 'running': SENDER_IS_RUNNING},
+        {'thread': updater, 'running': UPDATER_IS_RUNNING},
+        {'thread': input_controller, 'running': INPUT_CONTROLLER_IS_RUNNING},
+        {'thread': webhook, 'running': WEBHOOK_IS_RUNNING},
+    ]
 
     # run all the threads;
     active_threads = []
-    for thread in threads:
-        thread.start()
-        active_threads.append(thread)
-        if threads[thread].wait(2):
-            pass
+    for unit in threads:
+        unit['thread'].start()
+        active_threads.append(unit)
+        if unit['running'].wait(TREAD_RUNNING_TIMEOUT):
+            if EXIT_SIGNAL.is_set():
+                thread_loading_error(active_threads)
         else:
-            thread_loading_timeout(thread, active_threads)
+            thread_loading_timeout(unit['thread'], active_threads)
 
+    del threads
     ALL_THREADS_ARE_GO.set()
 
-    # wait for the exit signal;
+    # just sleep and wait for the exit signal;
     if EXIT_SIGNAL.wait():
         pass
 
@@ -73,8 +75,12 @@ def main():
 
 def thread_loading_timeout(thread, active_threads):
     EXIT_SIGNAL.set()
-    sleep(0.1)
-    msg = f'Threads running has failed: {thread} timeout.'
+    msg = f'Failed to start the threads: {thread} timeout.'
+    finish_the_work(active_threads, MainError(msg))
+
+
+def thread_loading_error(active_threads):
+    msg = 'Failed to start the threads: exception occurred.'
     finish_the_work(active_threads, MainError(msg))
 
 
@@ -93,10 +99,12 @@ def finish_the_work(active_threads, main_error=None):
 
 
 def stop_active_threads(threads):
+    if not EXIT_SIGNAL.is_set():
+        EXIT_SIGNAL.set()
     last_exception = None
-    for thread in threads:
+    for unit in threads:
         try:
-            thread.stop()
+            unit['thread'].merge()
         except Exception as e:
             last_exception = e
     return last_exception

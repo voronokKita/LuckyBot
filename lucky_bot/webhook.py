@@ -1,37 +1,16 @@
-import threading
+from lucky_bot.helpers.signals import WEBHOOK_IS_RUNNING, WEBHOOK_IS_STOPPED, EXIT_SIGNAL
+from lucky_bot.helpers.misc import ThreadTemplate
 
-from lucky_bot.helpers.signals import WEBHOOK_IS_RUNNING, EXIT_SIGNAL
 
-
-class WebhookThread(threading.Thread):
-    exception = None
+class WebhookThread(ThreadTemplate):
+    is_running_signal = WEBHOOK_IS_RUNNING
+    is_stopped_signal = WEBHOOK_IS_STOPPED
 
     def __str__(self):
         return 'webhook thread'
 
-    def __int__(self):
-        threading.Thread.__init__(self)
-
-    def run(self):
-        try:
-            # TODO
-
-            WEBHOOK_IS_RUNNING.set()
-
-            self._test_exception()
-
-            if EXIT_SIGNAL.wait():
-                pass
-
-        except Exception as e:
-            self.exception = e
-            EXIT_SIGNAL.set()
-
-    def stop(self):
-        threading.Thread.join(self, 1)
-        if self.exception:
-            raise self.exception
-
-    @staticmethod
-    def _test_exception():
-        pass
+    def body(self):
+        self._set_the_signal()
+        self._test_exception()
+        if EXIT_SIGNAL.wait():
+            pass

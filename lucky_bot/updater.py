@@ -1,41 +1,16 @@
-import threading
+from lucky_bot.helpers.signals import UPDATER_IS_RUNNING, UPDATER_IS_STOPPED, EXIT_SIGNAL
+from lucky_bot.helpers.misc import ThreadTemplate
 
-from lucky_bot.helpers.signals import UPDATER_IS_RUNNING, EXIT_SIGNAL
 
-
-class UpdaterThread(threading.Thread):
-    exception = None
+class UpdaterThread(ThreadTemplate):
+    is_running_signal = UPDATER_IS_RUNNING
+    is_stopped_signal = UPDATER_IS_STOPPED
 
     def __str__(self):
         return 'updater thread'
 
-    def __int__(self):
-        threading.Thread.__init__(self)
-
-    def run(self):
-        try:
-            # TODO
-
-            self._set_the_signal()
-            self._test_exception()
-
-            if EXIT_SIGNAL.wait():
-                pass
-
-        except Exception as e:
-            self.exception = e
-            EXIT_SIGNAL.set()
-
-    def stop(self):
-        threading.Thread.join(self, 1)
-        if self.exception:
-            raise self.exception
-
-    @staticmethod
-    def _test_exception():
-        pass
-
-    @staticmethod
-    def _set_the_signal():
-        ''' Signal is wrapped for testing purposes. '''
-        UPDATER_IS_RUNNING.set()
+    def body(self):
+        self._set_the_signal()
+        self._test_exception()
+        if EXIT_SIGNAL.wait():
+            pass
