@@ -32,3 +32,9 @@ ALL_THREADS_ARE_GO: SignalThreadsAreStarted = Event()
 EXIT_SIGNAL: SignalExit = Event()
 
 ALL_DONE_SIGNAL: SignalAllDone = Event()
+
+
+def exit_signal(signal_=None, frame=None):
+    ''' SIGINT and SIGTSTP. '''
+    print()
+    EXIT_SIGNAL.set()

@@ -34,7 +34,7 @@ def get_config():
         'version': 1,
         'disable_existing_loggers': False,
         'formatters': {
-            'console_debug': {'format': '[DEBUG] {message} [/DEBUG]', 'style': '{'},
+            # 'console_debug': {'format': '[DEBUG] {message} [/DEBUG]', 'style': '{'},
             'event_to_file': {'format': '-- {asctime} {levelname} {message}', 'style': '{'},
             'exception_to_file': {
                 'format': '\n[{levelname}] {asctime}\n'
@@ -43,16 +43,16 @@ def get_config():
             },
         },
         'handlers': {
-            'console': {
-                'level': 'INFO',
-                'class': 'logging.StreamHandler',
-                'stream': 'ext://sys.stdout',  # default is stderr
-            },
+            # 'console': {
+            #     'level': 'INFO',
+            #     'class': 'logging.StreamHandler',
+            #     'stream': 'ext://sys.stdout',  # default is stderr
+            # },
             'console_debug': {
                 'level': 'DEBUG',
-                'formatter': 'console_debug',
+                # 'formatter': 'console_debug',
                 'class': 'logging.StreamHandler',
-                'stream': 'ext://sys.stdout',  # default is stderr
+                'stream': 'ext://sys.stdout',
             },
             'event': {
                 'level': 'INFO',
@@ -68,12 +68,24 @@ def get_config():
                 'formatter': 'exception_to_file',
                 'filters': [DetailedExceptionFilter()],
             },
+            'werkzeug_console': {
+                'level': 'INFO',
+                'class': 'logging.StreamHandler',
+                'stream': 'ext://sys.stdout',
+                'filters': [WerkzeugFilter()],
+            },
             'werkzeug_exception': {
                 'level': 'ERROR',
                 'class': 'logging.FileHandler',
                 'filename': LOG_WERKZEUG_FILE,
                 'formatter': 'exception_to_file',
                 'filters': [WerkzeugFilter()],
+            },
+            'telebot_console': {
+                'level': 'INFO',
+                'class': 'logging.StreamHandler',
+                'stream': 'ext://sys.stdout',
+                'filters': [TeleBotFilter()],
             },
             'telebot_exception': {
                 'level': 'ERROR',
@@ -85,11 +97,11 @@ def get_config():
         },
         'loggers': {
             'werkzeug': {
-                'handlers': ['werkzeug_exception'],
+                'handlers': ['werkzeug_console', 'werkzeug_exception'],
                 'level': 'INFO',
             },
             'TeleBot': {
-                'handlers': ['telebot_exception'],
+                'handlers': ['telebot_console', 'telebot_exception'],
                 'level': 'INFO',
             },
             'debug': {
@@ -101,8 +113,8 @@ def get_config():
                 'level': 'INFO',
             },
             '': {
-                'handlers': ['console', 'detailed_exception'],
-                'level': 'INFO',
+                'handlers': ['detailed_exception'],
+                'level': 'ERROR',
             },
         }
     }
@@ -113,25 +125,13 @@ def dummy_logger():
     logging_config = {
         'version': 1,
         'disable_existing_loggers': True,
-        'formatters': {
-            'console_debug': {'format': '[DEBUG] {message} [/DEBUG]', 'style': '{'},
-        },
         'handlers': {
             'nullifier': {'level': 'CRITICAL', 'class': 'logging.NullHandler'},
-            'console_debug': {
-                'level': 'DEBUG',
-                'formatter': 'console_debug',
-                'class': 'logging.StreamHandler',
-                'stream': 'ext://sys.stdout',
-            },
         },
         'loggers': {
             'werkzeug': {'handlers': ['nullifier'], 'level': 'CRITICAL'},
             'TeleBot': {'handlers': ['nullifier'], 'level': 'CRITICAL'},
-            'debug': {
-                'handlers': ['console_debug'],
-                'level': 'DEBUG',
-            },
+            'debug': {'handlers': ['nullifier'], 'level': 'CRITICAL'},
             'event': {'handlers': ['nullifier'], 'level': 'CRITICAL'},
             '': {'handlers': ['nullifier'], 'level': 'CRITICAL'},
         }
@@ -146,7 +146,10 @@ else:
 
 logging.config.dictConfig(config)
 
-dbg = logging.getLogger('debug')
+debugger = logging.getLogger('debug')
 event = logging.getLogger('event')
 werkzeug_logger = logging.getLogger('werkzeug')
 telebot_logger = logging.getLogger('TeleBot')
+
+def console(msg=str):
+    debugger.debug(msg)

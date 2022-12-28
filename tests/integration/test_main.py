@@ -9,7 +9,7 @@ from lucky_bot.helpers.signals import (
     WEBHOOK_IS_STOPPED, INPUT_CONTROLLER_IS_STOPPED,
     UPDATER_IS_STOPPED, SENDER_IS_STOPPED,
 )
-from lucky_bot.helpers.constants import MainError, TestException, ThreadException
+from lucky_bot.helpers.constants import MainException, TestException, ThreadException
 from main import MainAsThread
 
 
@@ -66,7 +66,7 @@ class TestMain(unittest.TestCase):
         else:
             raise TestException('Timeout: exit signal not called.')
 
-        self.assertRaises(MainError, self.main_thread.merge)
+        self.assertRaises(MainException, self.main_thread.merge)
         self.assertTrue(ALL_DONE_SIGNAL.is_set())
         self.assertFalse(self.main_thread.is_alive())
 

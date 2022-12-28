@@ -1,6 +1,10 @@
 from lucky_bot.helpers.signals import UPDATER_IS_RUNNING, UPDATER_IS_STOPPED, EXIT_SIGNAL
 from lucky_bot.helpers.misc import ThreadTemplate
 
+import logging
+from logs.config import console, event
+logger = logging.getLogger(__name__)
+
 
 class UpdaterThread(ThreadTemplate):
     is_running_signal = UPDATER_IS_RUNNING

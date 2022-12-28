@@ -20,7 +20,7 @@ TREAD_RUNNING_TIMEOUT = 10
 class TestException(Exception):
     ''' For testing purposes. '''
 
-class MainError(Exception):
+class MainException(Exception):
     ''' For a main.py '''
 
 class ThreadException(Exception):

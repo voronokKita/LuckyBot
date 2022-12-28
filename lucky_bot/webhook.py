@@ -1,6 +1,10 @@
 from lucky_bot.helpers.signals import WEBHOOK_IS_RUNNING, WEBHOOK_IS_STOPPED, EXIT_SIGNAL
 from lucky_bot.helpers.misc import ThreadTemplate
 
+import logging
+from logs.config import console, event
+logger = logging.getLogger(__name__)
+
 
 class WebhookThread(ThreadTemplate):
     is_running_signal = WEBHOOK_IS_RUNNING
