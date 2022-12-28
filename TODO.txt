@@ -1,3 +1,4 @@
+- KeyboardInterrupt.
 - Adjust the waiting time in main's tests.
 
 DONE - Run the threads in order: sender, updater, input controller and webhook in the last.

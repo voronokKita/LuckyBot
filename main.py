@@ -1,5 +1,7 @@
-import sys
 import threading
+import logging
+
+from logs.config import dbg, event
 
 from lucky_bot.helpers.constants import MainError, TREAD_RUNNING_TIMEOUT
 from lucky_bot.helpers.signals import (
@@ -11,6 +13,8 @@ from lucky_bot.sender import SenderThread
 from lucky_bot.updater import UpdaterThread
 from lucky_bot.input_controller import InputControllerThread
 from lucky_bot.webhook import WebhookThread
+
+logger = logging.getLogger(__name__)
 
 
 class MainAsThread(threading.Thread):
@@ -94,8 +98,6 @@ def finish_the_work(active_threads, main_error=None):
         raise main_error
     elif exception_in_threads:
         raise exception_in_threads
-    else:
-        sys.exit(0)
 
 
 def stop_active_threads(threads):
