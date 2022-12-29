@@ -141,7 +141,7 @@ if __name__ == '__main__':
     signal.signal(signal.SIGTSTP, exit_signal)
 
     # t = WebhookThread()
-    # t.body()
+    # t._set_webhook()
     # exit()
 
     main()

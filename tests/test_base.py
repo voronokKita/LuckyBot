@@ -17,6 +17,7 @@ class TestProjectBase(unittest.TestCase):
             BASE_DIR / 'README.md',
             BASE_DIR / 'design.png',
             BASE_DIR / 'resources' / '.api',
+            BASE_DIR / 'resources' / '.webhook_secret_token',
 
             BASE_DIR / 'data' / 'data.sqlite3',
             BASE_DIR / 'data' / 'input_message_queue.sqlite3',

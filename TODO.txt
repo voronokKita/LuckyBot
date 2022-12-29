@@ -1,6 +1,8 @@
-- KeyboardInterrupt.
-- Adjust the waiting time in main's tests.
+- Webhook: change abstract telebot to the bot.
+- allowed_updates parameter in telebot webhoog.
 
 DONE - Run the threads in order: sender, updater, input controller and webhook in the last.
 DONE - Test thread timeout in the main.
 DONE - Test thread exception in the main.
+DONE - Adjust the waiting time in main's tests.
+DONE - KeyboardInterrupt.

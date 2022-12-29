@@ -3,6 +3,7 @@ import unittest
 from lucky_bot.helpers.signals import EXIT_SIGNAL
 from lucky_bot.helpers.constants import TestException, ThreadException
 
+
 class ThreadTestTemplate(unittest.TestCase):
     thread_class = None
     is_running_signal = None
@@ -26,15 +27,13 @@ class ThreadTestTemplate(unittest.TestCase):
     def normal_case(self):
         self.thread_obj.start()
 
-        if self.is_running_signal.wait(10):
-            pass
-        else:
+        if not self.is_running_signal.wait(10):
+            self.thread_obj.merge()
             raise TestException(f'The time to start the {self.thread_obj} has passed.')
 
         EXIT_SIGNAL.set()
-        if self.is_stopped_signal.wait(10):
-            pass
-        else:
+        if not self.is_stopped_signal.wait(10):
+            self.thread_obj.merge()
             raise TestException(f'The time to stop the {self.thread_obj} has passed.')
 
         self.thread_obj.merge()
@@ -44,14 +43,12 @@ class ThreadTestTemplate(unittest.TestCase):
         test_exception.side_effect = TestException('boom')
         self.thread_obj.start()
 
-        if self.is_running_signal.wait(10):
-            pass
-        else:
+        if not self.is_running_signal.wait(10):
+            self.thread_obj.merge()
             raise TestException(f'The time to start the {self.thread_obj} has passed.')
 
-        if self.is_stopped_signal.wait(10):
-            pass
-        else:
+        if not self.is_stopped_signal.wait(10):
+            self.thread_obj.merge()
             raise TestException(f'The time to stop the {self.thread_obj} has passed.')
 
         self.assertTrue(EXIT_SIGNAL.is_set())

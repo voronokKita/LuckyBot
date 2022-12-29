@@ -12,9 +12,10 @@ from lucky_bot.helpers.signals import (
 from lucky_bot.helpers.constants import MainException, TestException, ThreadException
 from main import MainAsThread
 
-from tests.units.test_webhook import mock_ngrok
+from tests.units.test_webhook import mock_ngrok, mock_telebot
 
 
+@patch('lucky_bot.webhook.TeleBot', new_callable=mock_telebot)
 @patch('lucky_bot.webhook.ngrok', new_callable=mock_ngrok)
 class TestMain(unittest.TestCase):
     ''' Only the errors in the updater thread is tested
@@ -64,9 +65,7 @@ class TestMain(unittest.TestCase):
     @patch('lucky_bot.helpers.misc.ThreadTemplate._set_the_signal')
     def test_main_threads_timeout(self, mock_signal, *args):
         self.main_thread.start()
-        if EXIT_SIGNAL.wait(5):
-            pass
-        else:
+        if not EXIT_SIGNAL.wait(5):
             raise TestException('Timeout: exit signal not called.')
 
         self.assertRaises(MainException, self.main_thread.merge)
@@ -78,9 +77,7 @@ class TestMain(unittest.TestCase):
     def test_main_threads_error_before_signal(self, test_exception, *args):
         test_exception.side_effect = TestException('boom')
         self.main_thread.start()
-        if EXIT_SIGNAL.wait(5):
-            pass
-        else:
+        if not EXIT_SIGNAL.wait(5):
             raise TestException('Timeout: exit signal not called.')
 
         test_exception.assert_called_once()
@@ -93,9 +90,7 @@ class TestMain(unittest.TestCase):
     def test_main_threads_error_after_signal(self, test_exception, *args):
         test_exception.side_effect = TestException('boom')
         self.main_thread.start()
-        if EXIT_SIGNAL.wait(5):
-            pass
-        else:
+        if not EXIT_SIGNAL.wait(5):
             raise TestException('Timeout: exit signal not called.')
 
         test_exception.assert_called_once()

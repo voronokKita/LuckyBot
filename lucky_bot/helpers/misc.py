@@ -40,7 +40,6 @@ class ThreadTemplate(threading.Thread):
         elif self.is_alive():
             raise ThreadException(f'Stop timeout: {self}.')
 
-
     @staticmethod
     def _test_exception():
         pass

@@ -1,12 +1,12 @@
-import re
 import os
+import re
 import sys
 import pathlib
 
 
 PROJECT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
 
-if [t for t in sys.argv if 'test' in t]:
+if [arg for arg in sys.argv if 'test' in arg]:
     TESTING = True
 else:
     TESTING = False
@@ -19,15 +19,16 @@ ADDRESS = '0.0.0.0'
 WEBHOOK_ENDPOINT = '/webhook'
 WEBHOOK_WAS_SET = re.compile('was set|already set')
 
-if REPLIT:
-    API = os.environ['API']
-else:
+if not REPLIT:
     API = PROJECT_DIR / 'resources' / '.api'
-    if API.exists():
-        with open(API) as f:
-            API = f.read().strip()
-    else:
-        API = input('Enter the telegram API key: ').strip()
+    with open(API) as f:
+        API = f.read().strip()
+else:
+    API = os.environ['API']
+
+WEBHOOK_SECRET = PROJECT_DIR / 'resources' / '.webhook_secret_token'
+with open(WEBHOOK_SECRET) as f:
+    WEBHOOK_SECRET = f.read().strip()
 
 # Logs
 LOG_EVENTS_FILE = PROJECT_DIR / 'logs' / 'events.log'
@@ -47,3 +48,6 @@ class MainException(Exception):
 
 class ThreadException(Exception):
     ''' For the threads, except main. '''
+
+class WebhookException(ThreadException):
+    ''' Something wrong in the webhook thread. '''

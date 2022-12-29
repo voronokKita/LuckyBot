@@ -6,6 +6,7 @@
 diagram.json
 resources/
 .api
+.webhook_secret_token
 
 ### Flask ###
 instance/*
