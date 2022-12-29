@@ -4,6 +4,8 @@
 ### OS ###
 .directory
 diagram.json
+resources/
+.api
 
 ### Flask ###
 instance/*

@@ -151,5 +151,7 @@ event = logging.getLogger('event')
 werkzeug_logger = logging.getLogger('werkzeug')
 telebot_logger = logging.getLogger('TeleBot')
 
-def console(msg=str):
+def console(msg):
+    if not isinstance(msg, str):
+        msg = str(msg)
     debugger.debug(msg)

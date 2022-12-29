@@ -75,6 +75,7 @@ def main():
     del threads
     ALL_THREADS_ARE_GO.set()
     console('all work has started (´｡• ω •｡`)')
+    event.info('normal start')
 
     # just sleep and wait for the exit signal;
     if EXIT_SIGNAL.wait():
@@ -138,4 +139,9 @@ def stop_active_threads(threads):
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, exit_signal)
     signal.signal(signal.SIGTSTP, exit_signal)
+
+    # t = WebhookThread()
+    # t.body()
+    # exit()
+
     main()

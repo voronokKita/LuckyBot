@@ -16,6 +16,7 @@ class TestProjectBase(unittest.TestCase):
             BASE_DIR / 'Pipfile',
             BASE_DIR / 'README.md',
             BASE_DIR / 'design.png',
+            BASE_DIR / 'resources' / '.api',
 
             BASE_DIR / 'data' / 'data.sqlite3',
             BASE_DIR / 'data' / 'input_message_queue.sqlite3',
@@ -41,6 +42,7 @@ class TestProjectBase(unittest.TestCase):
 
         from lucky_bot.helpers import signals
         from lucky_bot.helpers import constants
+        from lucky_bot.helpers import misc
 
         from lucky_bot import webhook
         from lucky_bot import input_controller
