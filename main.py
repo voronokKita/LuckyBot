@@ -45,7 +45,7 @@ class MainAsThread(threading.Thread):
 
 def main():
     console('I woke up (*・ω・)ﾉ')
-    event.info('>>> START >>>')
+    event.info('[>>> START >>>')
 
     # instantiate threads;
     sender = SenderThread()
@@ -108,7 +108,7 @@ def finish_the_work(active_threads, main_exec=None):
     exception_in_threads = stop_active_threads(active_threads)
     ALL_DONE_SIGNAL.set()
     console('go to sleep (´-ω-｀)…zZZ')
-    event.info('xxx STOP xxx')
+    event.info('xxx STOP xxx]')
 
     if main_exec and exception_in_threads:
         raise exception_in_threads from main_exec

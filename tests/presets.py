@@ -8,7 +8,7 @@ class ThreadTestTemplate(unittest.TestCase):
     thread_class = None
     is_running_signal = None
     is_stopped_signal = None
-    used_signals = []
+    signals = []
 
     def setUp(self):
         self.thread_obj = self.thread_class()
@@ -22,6 +22,8 @@ class ThreadTestTemplate(unittest.TestCase):
     @classmethod
     def _clear_signals(cls):
         signals = [EXIT_SIGNAL, cls.is_running_signal, cls.is_stopped_signal]
+        if cls.signals:
+            signals += cls.signals
         [signal.clear() for signal in signals if signal.is_set()]
 
     def normal_case(self):

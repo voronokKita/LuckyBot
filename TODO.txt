@@ -1,3 +1,4 @@
+- Test exception in Flask server.
 - Test Flask server.
 - Webhoom messages db & model.
 - Webhook: change abstract telebot to the bot.

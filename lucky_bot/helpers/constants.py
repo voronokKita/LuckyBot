@@ -54,3 +54,6 @@ class ThreadException(Exception):
 
 class WebhookException(ThreadException):
     ''' Something wrong in the webhook thread. '''
+
+class FlaskException(ThreadException):
+    ''' Something wrong in the flask app. '''
