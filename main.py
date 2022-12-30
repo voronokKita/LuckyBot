@@ -139,9 +139,4 @@ def stop_active_threads(threads):
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, exit_signal)
     signal.signal(signal.SIGTSTP, exit_signal)
-
-    # t = WebhookThread()
-    # t._set_webhook()
-    # exit()
-
     main()

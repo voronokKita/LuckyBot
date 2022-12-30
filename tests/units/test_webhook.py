@@ -2,11 +2,12 @@
 from unittest.mock import patch, Mock
 
 from lucky_bot.webhook import WebhookThread
-from lucky_bot.helpers.signals import WEBHOOK_IS_RUNNING, WEBHOOK_IS_STOPPED
+from lucky_bot.helpers.signals import WEBHOOK_IS_RUNNING, WEBHOOK_IS_STOPPED, EXIT_SIGNAL
 from lucky_bot.helpers.constants import (
     TestException, ThreadException, REPLIT, PORT,
     API, WEBHOOK_SECRET, WEBHOOK_ENDPOINT,
 )
+from lucky_bot.flask_config import FLASK_APP
 
 from tests.presets import ThreadTestTemplate
 
@@ -27,18 +28,30 @@ def mock_telebot():
     return TeleBot
 
 
+def mock_serving():
+    def start_server(self=None):
+        EXIT_SIGNAL.wait()
+    return start_server
+
+
+@patch('lucky_bot.webhook.WebhookThread._start_server', new_callable=mock_serving)
 @patch('lucky_bot.webhook.TeleBot', new_callable=mock_telebot)
 @patch('lucky_bot.webhook.ngrok', new_callable=mock_ngrok)
-class TestWebhookBase(ThreadTestTemplate):
+class TestWebhook(ThreadTestTemplate):
     thread_class = WebhookThread
     is_running_signal = WEBHOOK_IS_RUNNING
     is_stopped_signal = WEBHOOK_IS_STOPPED
+
+    def tearDown(self):
+        if self.thread_obj.server:
+            self.thread_obj.server.socket.close()
+        super().tearDown()
 
     def test_webhook_normal_start(self, *args):
         super().normal_case()
 
     @patch('lucky_bot.helpers.misc.ThreadTemplate._test_exception')
-    def test_webhook_exception_case(self, test_exception, *args):
+    def test_webhook_normal_exception(self, test_exception, *args):
         super().exception_case(test_exception)
 
     def test_webhook_tunnel(self, ngrok, *args):
@@ -52,7 +65,7 @@ class TestWebhookBase(ThreadTestTemplate):
         ngrok.disconnect.assert_called_once_with('http://example.com')
         ngrok.kill.assert_called_once()
 
-    def test_setting_webhook(self, foo, TeleBot):
+    def test_setting_webhook(self, foo, TeleBot, *args):
         self.thread_obj.webhook_url = 'http://example.com/hook'
         self.thread_obj._set_webhook()
         self.thread_obj._remove_webhook()
@@ -68,7 +81,7 @@ class TestWebhookBase(ThreadTestTemplate):
             secret_token=WEBHOOK_SECRET,
         )
 
-    def test_setting_tunnel_and_webhook_exception(self, ngrok, TeleBot):
+    def test_tunnel_and_setting_webhook_exception(self, ngrok, TeleBot, *args):
         self.assertFalse(REPLIT)
         TeleBot().set_webhook.return_value = False
 
@@ -86,3 +99,123 @@ class TestWebhookBase(ThreadTestTemplate):
         self.assertEqual(instance.remove_webhook.call_count, 1)
         ngrok.disconnect.assert_called_once()
         ngrok.kill.assert_called_once()
+
+    def test_that_server_created(self, *args):
+        self.assertIsNotNone(FLASK_APP)
+        self.thread_obj._make_server()
+        from werkzeug.serving import BaseWSGIServer
+        self.assertIsInstance(self.thread_obj.server, BaseWSGIServer)
+
+    @patch('lucky_bot.webhook.WebhookThread._close_tunnel')
+    @patch('lucky_bot.webhook.WebhookThread._remove_webhook')
+    @patch('lucky_bot.webhook.WebhookThread._make_tunnel')
+    def test_webhook_exception_before_tunnel(self, make_tunnel, remove_webhook, close_tunnel, *args):
+        make_tunnel.side_effect = TestException('boom')
+
+        self.thread_obj.start()
+        if not WEBHOOK_IS_STOPPED.wait(10):
+            self.thread_obj.merge()
+            raise TestException(f'The time to raise exception in the webhook has passed.')
+
+        self.assertRaises(ThreadException, self.thread_obj.merge)
+        self.assertIsNone(self.thread_obj.tunnel)
+        self.assertFalse(self.thread_obj.webhook)
+        self.assertIsNone(self.thread_obj.server)
+        self.assertFalse(self.thread_obj.serving)
+        remove_webhook.assert_not_called()
+        close_tunnel.assert_not_called()
+
+    @patch('lucky_bot.webhook.WebhookThread._close_tunnel')
+    @patch('lucky_bot.webhook.WebhookThread._remove_webhook')
+    @patch('lucky_bot.webhook.WebhookThread._set_webhook')
+    def test_webhook_exception_after_tunnel(self, set_webhook, remove_webhook, close_tunnel, *args):
+        set_webhook.side_effect = TestException('boom')
+
+        self.thread_obj.start()
+        if not WEBHOOK_IS_STOPPED.wait(10):
+            self.thread_obj.merge()
+            raise TestException(f'The time to raise exception in the webhook has passed.')
+
+        self.assertRaises(ThreadException, self.thread_obj.merge)
+        self.assertIsNotNone(self.thread_obj.tunnel)
+        self.assertFalse(self.thread_obj.webhook)
+        self.assertIsNone(self.thread_obj.server)
+        self.assertFalse(self.thread_obj.serving)
+        remove_webhook.assert_not_called()
+        close_tunnel.assert_called_once()
+
+    @patch('lucky_bot.webhook.WebhookThread._close_tunnel')
+    @patch('lucky_bot.webhook.WebhookThread._remove_webhook')
+    @patch('lucky_bot.webhook.WebhookThread._make_server')
+    def test_webhook_exception_after_webhook_setup(self, make_server, remove_webhook, close_tunnel, *args):
+        make_server.side_effect = TestException('boom')
+
+        self.thread_obj.start()
+        if not WEBHOOK_IS_STOPPED.wait(10):
+            self.thread_obj.merge()
+            raise TestException(f'The time to raise exception in the webhook has passed.')
+
+        self.assertRaises(ThreadException, self.thread_obj.merge)
+        self.assertIsNotNone(self.thread_obj.tunnel)
+        self.assertTrue(self.thread_obj.webhook)
+        self.assertIsNone(self.thread_obj.server)
+        self.assertFalse(self.thread_obj.serving)
+        self.assertEqual(remove_webhook.call_count, 2)
+        close_tunnel.assert_called_once()
+
+    @patch('lucky_bot.webhook.WebhookThread._close_tunnel')
+    @patch('lucky_bot.webhook.WebhookThread._remove_webhook')
+    @patch('lucky_bot.helpers.misc.ThreadTemplate._test_exception')
+    def test_webhook_exception_after_making_server(self, test_exception, remove_webhook, close_tunnel, *args):
+        test_exception.side_effect = TestException('boom')
+
+        self.thread_obj.start()
+        if not WEBHOOK_IS_STOPPED.wait(10):
+            self.thread_obj.merge()
+            raise TestException(f'The time to raise exception in the webhook has passed.')
+
+        self.assertRaises(ThreadException, self.thread_obj.merge)
+        self.assertIsNotNone(self.thread_obj.tunnel)
+        self.assertTrue(self.thread_obj.webhook)
+        self.assertIsNotNone(self.thread_obj.server)
+        self.assertFalse(self.thread_obj.serving)
+        self.assertEqual(remove_webhook.call_count, 2)
+        close_tunnel.assert_called_once()
+
+    @patch('lucky_bot.webhook.WebhookThread._close_tunnel')
+    @patch('lucky_bot.webhook.WebhookThread._remove_webhook')
+    @patch('lucky_bot.webhook.WebhookThread._test_exception_after_serving')
+    def test_webhook_exception_after_server_start(self, test_exception, remove_webhook, close_tunnel, *args):
+        test_exception.side_effect = TestException('boom')
+
+        self.thread_obj.start()
+        if not WEBHOOK_IS_STOPPED.wait(10):
+            self.thread_obj.merge()
+            raise TestException(f'The time to raise exception in the webhook has passed.')
+
+        self.assertRaises(ThreadException, self.thread_obj.merge)
+        self.assertIsNotNone(self.thread_obj.tunnel)
+        self.assertTrue(self.thread_obj.webhook)
+        self.assertIsNotNone(self.thread_obj.server)
+        self.assertEqual(remove_webhook.call_count, 2)
+        close_tunnel.assert_called_once()
+
+        self.assertFalse(self.thread_obj.serving)
+
+    @patch('lucky_bot.webhook.WebhookThread._close_tunnel')
+    @patch('lucky_bot.webhook.WebhookThread._remove_webhook')
+    def test_complete_webhook_start_and_merge(self, remove_webhook, close_tunnel, *args):
+        self.thread_obj.start()
+        EXIT_SIGNAL.set()
+        if not WEBHOOK_IS_STOPPED.wait(10):
+            self.thread_obj.merge()
+            raise TestException(f'The time to stop the webhook has passed.')
+
+        self.thread_obj.merge()
+        self.assertIsNotNone(self.thread_obj.tunnel)
+        self.assertTrue(self.thread_obj.webhook)
+        self.assertIsNotNone(self.thread_obj.server)
+        self.assertFalse(self.thread_obj.serving)
+        self.assertEqual(remove_webhook.call_count, 2)
+        close_tunnel.assert_called_once()
+        self.assertIn('closed', str(self.thread_obj.server.socket))

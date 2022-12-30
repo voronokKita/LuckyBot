@@ -40,7 +40,8 @@ class WebhookThread(ThreadTemplate):
             self._test_exception()
 
             self.serving = True
-            self.server.serve_forever()
+            self._test_exception_after_serving()
+            self._start_server()
 
         except Exception as exc:
             raise WebhookException(exc)
@@ -77,6 +78,10 @@ class WebhookThread(ThreadTemplate):
             app=FLASK_APP,
         )
 
+    def _start_server(self):
+        ''' Wrapped for testing. '''
+        self.server.serve_forever(poll_interval=2)
+
     def _close_connections(self):
         if self.webhook:
             self._remove_webhook()
@@ -86,6 +91,8 @@ class WebhookThread(ThreadTemplate):
     def _shutdown(self):
         if self.serving:
             self.server.shutdown()
+        elif self.server:
+            self.server.socket.close()
 
     @staticmethod
     def _remove_webhook():
@@ -98,3 +105,7 @@ class WebhookThread(ThreadTemplate):
         except (PyngrokNgrokURLError, Exception):
             pass
         ngrok.kill()
+
+    @staticmethod
+    def _test_exception_after_serving():
+        pass

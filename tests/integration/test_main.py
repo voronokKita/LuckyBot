@@ -12,9 +12,10 @@ from lucky_bot.helpers.signals import (
 from lucky_bot.helpers.constants import MainException, TestException, ThreadException
 from main import MainAsThread
 
-from tests.units.test_webhook import mock_ngrok, mock_telebot
+from tests.units.test_webhook import mock_ngrok, mock_telebot, mock_serving
 
 
+@patch('lucky_bot.webhook.WebhookThread._start_server', new_callable=mock_serving)
 @patch('lucky_bot.webhook.TeleBot', new_callable=mock_telebot)
 @patch('lucky_bot.webhook.ngrok', new_callable=mock_ngrok)
 class TestMain(unittest.TestCase):
