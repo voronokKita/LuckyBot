@@ -46,6 +46,9 @@ class TestException(Exception):
 class MainException(Exception):
     ''' For a main.py '''
 
+class WebhookWrongRequest(Exception):
+    ''' Wrong request format. '''
+
 class ThreadException(Exception):
     ''' For the threads, except main. '''
 

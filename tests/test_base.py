@@ -27,6 +27,7 @@ class TestProjectBase(unittest.TestCase):
             package_dir / 'helpers' / 'constants.py',
 
             package_dir / 'webhook.py',
+            package_dir / 'flask_config.py',
             package_dir / 'input_controller.py',
             package_dir / 'parser.py',
             package_dir / 'telegram_controller.py',
@@ -46,11 +47,11 @@ class TestProjectBase(unittest.TestCase):
         from lucky_bot.helpers import misc
 
         from lucky_bot import webhook
+        from lucky_bot import flask_config
         from lucky_bot import input_controller
         from lucky_bot import parser
         from lucky_bot import models
         from lucky_bot import telegram_controller
         from lucky_bot import updater
         from lucky_bot import sender
-
         import main

@@ -16,22 +16,29 @@ class SignalExit(Event):
 class SignalAllDone(Event):
     ''' main.py signaling just before the exit. '''
 
+class SignalTgMessage(Event):
+    ''' A new telegram message in the receiver queue. '''
 
-SENDER_IS_RUNNING: SignalThreadStarted = Event()
-UPDATER_IS_RUNNING: SignalThreadStarted = Event()
-INPUT_CONTROLLER_IS_RUNNING: SignalThreadStarted = Event()
-WEBHOOK_IS_RUNNING: SignalThreadStarted = Event()
 
-SENDER_IS_STOPPED: SignalThreadStopped = Event()
-UPDATER_IS_STOPPED: SignalThreadStopped = Event()
-INPUT_CONTROLLER_IS_STOPPED: SignalThreadStopped = Event()
-WEBHOOK_IS_STOPPED: SignalThreadStopped = Event()
+# Threading signals
+SENDER_IS_RUNNING = SignalThreadStarted()
+UPDATER_IS_RUNNING = SignalThreadStarted()
+INPUT_CONTROLLER_IS_RUNNING = SignalThreadStarted()
+WEBHOOK_IS_RUNNING = SignalThreadStarted()
 
-ALL_THREADS_ARE_GO: SignalThreadsAreStarted = Event()
+SENDER_IS_STOPPED = SignalThreadStopped()
+UPDATER_IS_STOPPED = SignalThreadStopped()
+INPUT_CONTROLLER_IS_STOPPED = SignalThreadStopped()
+WEBHOOK_IS_STOPPED = SignalThreadStopped()
 
-EXIT_SIGNAL: SignalExit = Event()
+ALL_THREADS_ARE_GO = SignalThreadsAreStarted()
 
-ALL_DONE_SIGNAL: SignalAllDone = Event()
+EXIT_SIGNAL = SignalExit()
+
+ALL_DONE_SIGNAL = SignalAllDone()
+
+# Other
+NEW_TELEGRAM_MESSAGE = SignalTgMessage()
 
 
 def exit_signal(signal_=None, frame=None):
