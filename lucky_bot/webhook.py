@@ -1,9 +1,10 @@
 from telebot import TeleBot
 from pyngrok import ngrok
+from pyngrok.ngrok import NgrokTunnel
 from pyngrok.exception import PyngrokNgrokURLError
-from werkzeug.serving import make_server
+from werkzeug.serving import make_server, BaseWSGIServer
 
-from lucky_bot.helpers.signals import WEBHOOK_IS_RUNNING, WEBHOOK_IS_STOPPED, EXIT_SIGNAL
+from lucky_bot.helpers.signals import WEBHOOK_IS_RUNNING, WEBHOOK_IS_STOPPED
 from lucky_bot.helpers.misc import ThreadTemplate
 from lucky_bot.helpers.constants import (
     REPLIT, REPLIT_URL, WEBHOOK_ENDPOINT,
@@ -20,10 +21,11 @@ class WebhookThread(ThreadTemplate):
     is_running_signal = WEBHOOK_IS_RUNNING
     is_stopped_signal = WEBHOOK_IS_STOPPED
 
-    tunnel = None
-    webhook_url = None
-    webhook = False
-    server = None
+    tunnel: NgrokTunnel = None
+    webhook_url: str = None
+    webhook: bool = False
+    server: BaseWSGIServer = None
+    serving: bool = False
 
     def __str__(self):
         return 'webhook thread'
@@ -32,16 +34,23 @@ class WebhookThread(ThreadTemplate):
         try:
             self._make_tunnel()
             self._set_webhook()
+            self._make_server()
 
             self._set_the_signal()
             self._test_exception()
 
+            self.serving = True
             self.server.serve_forever()
 
         except Exception as exc:
             raise WebhookException(exc)
         finally:
+            self.serving = False
             self._close_connections()
+
+    def merge(self):
+        self._shutdown()
+        super().merge()
 
     def _make_tunnel(self):
         if REPLIT:
@@ -53,7 +62,6 @@ class WebhookThread(ThreadTemplate):
 
     def _set_webhook(self):
         self._remove_webhook()
-
         self.webhook = TeleBot(API, threaded=False).set_webhook(
             url=self.webhook_url,
             max_connections=10,
@@ -70,15 +78,14 @@ class WebhookThread(ThreadTemplate):
         )
 
     def _close_connections(self):
-        if self.server:  # TODO
-            self.shutdown()
         if self.webhook:
             self._remove_webhook()
         if self.tunnel:
             self._close_tunnel()
 
-    def shutdown(self):
-        self.server.shutdown()
+    def _shutdown(self):
+        if self.serving:
+            self.server.shutdown()
 
     @staticmethod
     def _remove_webhook():
@@ -91,4 +98,3 @@ class WebhookThread(ThreadTemplate):
         except (PyngrokNgrokURLError, Exception):
             pass
         ngrok.kill()
-
