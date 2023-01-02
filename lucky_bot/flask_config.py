@@ -30,7 +30,7 @@ FLASK_APP.config.update(
 )
 
 
-def get_message_data():
+def get_message_data() -> str:
     h1 = request.headers.get('content-type')
     h2 = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
     if not h1 == 'application/json' and h2 == WEBHOOK_SECRET:
@@ -44,7 +44,7 @@ def get_message_data():
         return data
 
 
-def save_message_to_db(data):
+def save_message_to_queue(data):
     try:
         pass
         test_flag()
@@ -72,7 +72,8 @@ def inbox():
         raise FlaskException(exc)
 
     else:
-        save_message_to_db(data)
+        save_message_to_queue(data)
+        # if not NEW_TELEGRAM_MESSAGE.is_set():
         NEW_TELEGRAM_MESSAGE.set()
         return '', 200
 

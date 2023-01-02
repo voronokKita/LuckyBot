@@ -23,6 +23,10 @@ class TestProjectBase(unittest.TestCase):
             BASE_DIR / 'data' / 'input_message_queue.sqlite3',
             BASE_DIR / 'data' / 'output_message_queue.sqlite3',
 
+            package_dir / 'models' / 'database.py',
+            package_dir / 'models' / 'input_mq.py',
+            package_dir / 'models' / 'output_mq.py',
+
             package_dir / 'helpers' / 'signals.py',
             package_dir / 'helpers' / 'constants.py',
 
@@ -45,6 +49,10 @@ class TestProjectBase(unittest.TestCase):
         from lucky_bot.helpers import signals
         from lucky_bot.helpers import constants
         from lucky_bot.helpers import misc
+
+        from lucky_bot.models import database
+        from lucky_bot.models import input_mq
+        from lucky_bot.models import output_mq
 
         from lucky_bot import webhook
         from lucky_bot import flask_config
