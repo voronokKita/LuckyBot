@@ -19,10 +19,6 @@ class TestProjectBase(unittest.TestCase):
             BASE_DIR / 'resources' / '.api',
             BASE_DIR / 'resources' / '.webhook_secret_token',
 
-            BASE_DIR / 'data' / 'data.sqlite3',
-            BASE_DIR / 'data' / 'input_message_queue.sqlite3',
-            BASE_DIR / 'data' / 'output_message_queue.sqlite3',
-
             package_dir / 'models' / 'database.py',
             package_dir / 'models' / 'input_mq.py',
             package_dir / 'models' / 'output_mq.py',

@@ -7,6 +7,10 @@ diagram.json
 resources/
 .api
 .webhook_secret_token
+data/
+data.sqlite3
+input_message_queue.sqlite3
+output_message_queue.sqlite3
 
 ### Flask ###
 instance/*
