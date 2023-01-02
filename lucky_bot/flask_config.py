@@ -1,3 +1,4 @@
+import json
 import secrets
 from random import randint
 
@@ -7,6 +8,7 @@ from flask import Flask, request
 
 from lucky_bot.helpers.constants import WEBHOOK_ENDPOINT, WEBHOOK_SECRET, WebhookWrongRequest, FlaskException
 from lucky_bot.helpers.signals import NEW_TELEGRAM_MESSAGE, EXIT_SIGNAL
+from lucky_bot.models.input_mq import InputQueue
 
 import logging
 from logs.config import console, event
@@ -46,10 +48,13 @@ def get_message_data() -> str:
 
 def save_message_to_queue(data):
     try:
-        pass
         test_flag()
         test_exception()
-        # TODO save to db
+
+        d = json.loads(data)
+        date = d['message']['date']
+        # InputQueue.add_message(data, date)
+
     except Exception as exc:
         logger.exception('error saving message to db')
         EXIT_SIGNAL.set()
