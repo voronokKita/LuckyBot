@@ -59,3 +59,14 @@ class TestProjectBase(unittest.TestCase):
         from lucky_bot import updater
         from lucky_bot import sender
         import main
+
+        # Important things to be mocked
+        from lucky_bot.webhook import ngrok
+        from lucky_bot.webhook import TeleBot
+        from lucky_bot.webhook import WebhookThread
+        self.assertTrue(hasattr(WebhookThread, '_make_tunnel'))
+        self.assertTrue(hasattr(WebhookThread, '_set_webhook'))
+        self.assertTrue(hasattr(WebhookThread, '_make_server'))
+        self.assertTrue(hasattr(WebhookThread, '_start_server'))
+        self.assertTrue(hasattr(WebhookThread, '_remove_webhook'))
+        self.assertTrue(hasattr(WebhookThread, '_close_tunnel'))

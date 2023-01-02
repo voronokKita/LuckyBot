@@ -22,7 +22,6 @@ from tests.integration import test_main
 loader = unittest.TestLoader()
 
 modules_to_test = {
-    test_base,
     test_sender,
     test_updater,
     test_input_controller,
@@ -35,4 +34,7 @@ for module in modules_to_test:
     suite_list.append(suite)
 big_suite_of_tests = unittest.TestSuite(suite_list)
 
+unittest.TextTestRunner(verbosity=2).run(
+    loader.loadTestsFromModule(test_base)
+)
 unittest.TextTestRunner(verbosity=2).run(big_suite_of_tests)
