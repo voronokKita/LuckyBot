@@ -60,7 +60,7 @@ class TestProjectBase(unittest.TestCase):
         from lucky_bot import sender
         import main
 
-        # Important things to be mocked
+        #! Important things to be mocked
         from lucky_bot.webhook import ngrok
         from lucky_bot.webhook import TeleBot
         from lucky_bot.webhook import WebhookThread
@@ -70,3 +70,4 @@ class TestProjectBase(unittest.TestCase):
         self.assertTrue(hasattr(WebhookThread, '_start_server'))
         self.assertTrue(hasattr(WebhookThread, '_remove_webhook'))
         self.assertTrue(hasattr(WebhookThread, '_close_tunnel'))
+        from lucky_bot.flask_config import InputQueue

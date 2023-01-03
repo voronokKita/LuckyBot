@@ -5,14 +5,23 @@ import pathlib
 
 
 PROJECT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
-DB_URI = PROJECT_DIR / 'data' / 'data.sqlite3'
-INPUT_MQ = PROJECT_DIR / 'data' / 'input_message_queue.sqlite3'
-OUTPUT_MQ = PROJECT_DIR / 'data' / 'output_message_queue.sqlite3'
 
 if [arg for arg in sys.argv if 'test' in arg]:
     TESTING = True
 else:
     TESTING = False
+
+if TESTING:
+    # NOTE: :memory: db is not working,
+    # because a werkzeug server - make_server(), - is running in another process,
+    # i.e. in another memory area.
+    DB_FILE = PROJECT_DIR / 'tests' / 'fixtures' / 'test_data.sqlite3'
+    INPUT_MQ_FILE = PROJECT_DIR / 'tests' / 'fixtures' / 'test_imq.sqlite3'
+    OUTPUT_MQ_FILE = PROJECT_DIR / 'tests' / 'fixtures' / 'test_omq.sqlite3'
+else:
+    DB_FILE = PROJECT_DIR / 'data' / 'data.sqlite3'
+    INPUT_MQ_FILE = PROJECT_DIR / 'data' / 'input_message_queue.sqlite3'
+    OUTPUT_MQ_FILE = PROJECT_DIR / 'data' / 'output_message_queue.sqlite3'
 
 # Web settings
 REPLIT = False

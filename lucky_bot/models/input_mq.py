@@ -1,22 +1,19 @@
-from sqlalchemy import (
-    create_engine,
-    Column, Integer, Text,
-)
+from sqlalchemy import create_engine, Column, Integer, Text
 from sqlalchemy.orm import declarative_base, sessionmaker, Query
 
-from lucky_bot.helpers.constants import INPUT_MQ
+from lucky_bot.helpers.constants import TESTING, INPUT_MQ_FILE
 
 import logging
-from logs.config import console, event
 logger = logging.getLogger(__name__)
 
-input_messages_engine = create_engine(f'sqlite:///{INPUT_MQ}', future=True)
-INPUT_SESSION = sessionmaker(bind=input_messages_engine)
+IMQ_ENGINE = create_engine(f'sqlite:///{INPUT_MQ_FILE}', future=True)
 
-InputBase = declarative_base()
+IMQ_SESSION = sessionmaker(bind=IMQ_ENGINE)
+
+IMQBase = declarative_base()
 
 
-class TGMessage(InputBase):
+class TGMessage(IMQBase):
     __tablename__ = 'messages_from_telegram'
 
     id = Column(Integer, primary_key=True)
@@ -29,23 +26,35 @@ class TGMessage(InputBase):
 
 class InputQueue:
     @staticmethod
+    def set_up():
+        if not INPUT_MQ_FILE.exists():
+            IMQBase.metadata.create_all(IMQ_ENGINE)
+
+    @staticmethod
+    def tear_down():
+        if TESTING and INPUT_MQ_FILE.exists():
+            INPUT_MQ_FILE.unlink()
+        else:
+            IMQBase.metadata.drop_all(IMQ_ENGINE)
+
+    @staticmethod
     def add_message(data, date):
         msg_obj = TGMessage(data=data, time=date)
-        with INPUT_SESSION.begin() as session:
+        with IMQ_SESSION.begin() as session:
             session.add(msg_obj)
 
     @staticmethod
     def get_first_message() -> Query | None:
         ''' FIFO '''
-        with INPUT_SESSION() as session:
-            msg_obj = session.query(TGMessage).order_by('time').first()
+        with IMQ_SESSION() as session:
+            msg_obj = session.query(TGMessage).order_by(TGMessage.time).first()
             return msg_obj
 
     @staticmethod
     def delete_message(msg_obj):
-        with INPUT_SESSION.begin() as session:
+        with IMQ_SESSION.begin() as session:
             session.delete(msg_obj)
 
 
-if not INPUT_MQ.exists():
-    InputBase.metadata.create_all(input_messages_engine)
+# if TESTING or not INPUT_MQ_FILE.exists():
+#     InputQueue.set_up()

@@ -16,10 +16,16 @@ from tests.units import (
     test_webhook, test_input_controller, test_updater,
     test_sender,
 )
-from tests.integration import test_main
+from tests.integration import test_main, test_webhook_int
 
 
 loader = unittest.TestLoader()
+
+result = unittest.TextTestRunner(verbosity=2).run(
+    loader.loadTestsFromModule(test_base)
+)
+if result.wasSuccessful() is False:
+    sys.exit(1)
 
 modules_to_test = {
     test_sender,
@@ -27,6 +33,7 @@ modules_to_test = {
     test_input_controller,
     test_webhook,
     test_main,
+    test_webhook_int,
 }
 suite_list = []
 for module in modules_to_test:
@@ -34,7 +41,4 @@ for module in modules_to_test:
     suite_list.append(suite)
 big_suite_of_tests = unittest.TestSuite(suite_list)
 
-unittest.TextTestRunner(verbosity=2).run(
-    loader.loadTestsFromModule(test_base)
-)
 unittest.TextTestRunner(verbosity=2).run(big_suite_of_tests)

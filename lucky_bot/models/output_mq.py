@@ -4,13 +4,13 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-from lucky_bot.helpers.constants import OUTPUT_MQ
+from lucky_bot.helpers.constants import OUTPUT_MQ_FILE
 
 import logging
 from logs.config import console, event
 logger = logging.getLogger(__name__)
 
-output_messages_engine = create_engine(f'sqlite:///{OUTPUT_MQ}', future=True)
+output_messages_engine = create_engine(f'sqlite:///{OUTPUT_MQ_FILE}', future=True)
 output_session = sessionmaker(bind=output_messages_engine)
 
 OutputBase = declarative_base()

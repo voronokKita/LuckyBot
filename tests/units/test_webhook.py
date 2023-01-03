@@ -3,20 +3,24 @@ import unittest
 from unittest.mock import patch, Mock
 
 from lucky_bot.webhook import WebhookThread
-from lucky_bot.helpers.signals import WEBHOOK_IS_RUNNING, WEBHOOK_IS_STOPPED, EXIT_SIGNAL, NEW_TELEGRAM_MESSAGE
+from lucky_bot.helpers.signals import (
+    WEBHOOK_IS_RUNNING, WEBHOOK_IS_STOPPED,
+    EXIT_SIGNAL, NEW_TELEGRAM_MESSAGE,
+)
 from lucky_bot.helpers.constants import (
     TestException, ThreadException, FlaskException,
     REPLIT, PORT, API, WEBHOOK_SECRET,
     WEBHOOK_ENDPOINT, PROJECT_DIR,
 )
 from lucky_bot.flask_config import FLASK_APP
+from lucky_bot.models.input_mq import InputQueue
 
 from tests.presets import ThreadTestTemplate
 
 
 def mock_ngrok():
     tunnel = Mock()
-    tunnel.public_url = 'http://example.com'
+    tunnel.public_url = 'http://0.0.0.0'
     ngrok = Mock()
     ngrok.connect.return_value = tunnel
     return ngrok
@@ -64,12 +68,12 @@ class TestWebhook(ThreadTestTemplate):
         self.thread_obj._close_tunnel()
 
         ngrok.connect.assert_called_once_with(PORT, proto='http', bind_tls=True)
-        self.assertEqual(self.thread_obj.webhook_url, 'http://example.com' + WEBHOOK_ENDPOINT)
-        ngrok.disconnect.assert_called_once_with('http://example.com')
+        self.assertEqual(self.thread_obj.webhook_url, 'http://0.0.0.0' + WEBHOOK_ENDPOINT)
+        ngrok.disconnect.assert_called_once_with('http://0.0.0.0')
         ngrok.kill.assert_called_once()
 
     def test_setting_webhook(self, foo, TeleBot, *args):
-        self.thread_obj.webhook_url = 'http://example.com/hook'
+        self.thread_obj.webhook_url = 'http://0.0.0.0/webhook'
         self.thread_obj._set_webhook()
         self.thread_obj._remove_webhook()
 
@@ -224,7 +228,14 @@ class TestWebhook(ThreadTestTemplate):
         self.assertIn('closed', str(self.thread_obj.server.socket))
 
 
+@patch('lucky_bot.flask_config.InputQueue')
 class TestFlaskApp(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        fixture = PROJECT_DIR / 'tests' / 'fixtures' / 'telegram_request.json'
+        with open(fixture) as f:
+            cls.telegram_request = f.read().strip()
+
     def setUp(self):
         FLASK_APP.config['ENV'] = 'development'
         FLASK_APP.config['TESTING'] = True
@@ -232,48 +243,73 @@ class TestFlaskApp(unittest.TestCase):
         self.client = FLASK_APP.test_client()
 
     def tearDown(self):
+        signals = [EXIT_SIGNAL, NEW_TELEGRAM_MESSAGE]
+        [signal.clear() for signal in signals if signal.is_set()]
         FLASK_APP.config['ENV'] = 'production'
         FLASK_APP.config['TESTING'] = False
         FLASK_APP.config['DEBUG'] = False
-        signals = [EXIT_SIGNAL, NEW_TELEGRAM_MESSAGE]
-        [signal.clear() for signal in signals if signal.is_set()]
 
-    def test_flask_app(self):
+    def test_flask_app(self, *args):
         response = self.client.get('/ping')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.text, 'pong')
 
-    def test_flask_app_wrong_request(self):
+    def test_flask_app_wrong_request(self, *args):
         response = self.client.post(WEBHOOK_ENDPOINT, data=r'junk')
         self.assertEqual(response.status_code, 400)
 
-    def test_flask_app_normal_request(self):
-        fixture = PROJECT_DIR / 'tests' / 'fixtures' / 'telegram_request.json'
-        with open(fixture) as f:
-            telegram_request = f.read().strip()
-
+    def test_flask_app_normal_request(self, *args):
         response = self.client.post(
             WEBHOOK_ENDPOINT,
             headers={'Content-Type': 'application/json',
                      'X-Telegram-Bot-Api-Secret-Token': WEBHOOK_SECRET},
-            data=telegram_request.encode(),
+            data=self.telegram_request.encode(),
         )
         self.assertEqual(response.status_code, 200)
 
     @patch('lucky_bot.flask_config.test_exception')
     @patch('lucky_bot.flask_config.test_flag')
-    def test_flask_app_exception_case(self, test_flag, test_exception):
-        fixture = PROJECT_DIR / 'tests' / 'fixtures' / 'telegram_request.json'
-        with open(fixture) as f:
-            telegram_request = f.read().strip()
+    def test_flask_app_exception_case(self, test_flag, test_exception, *args):
         test_exception.side_effect = TestException('boom')
-
         with self.assertRaises(FlaskException):
             response = self.client.post(
                 WEBHOOK_ENDPOINT,
                 headers={'Content-Type': 'application/json',
                          'X-Telegram-Bot-Api-Secret-Token': WEBHOOK_SECRET},
-                data=telegram_request.encode(),
+                data=self.telegram_request.encode(),
             )
         test_flag.assert_called_once()
         self.assertTrue(EXIT_SIGNAL.is_set())
+
+
+class TestReceiverMessageQueue(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        fixture = PROJECT_DIR / 'tests' / 'fixtures' / 'telegram_request.json'
+        with open(fixture) as f:
+            cls.telegram_request = f.read().strip()
+
+    def setUp(self):
+        InputQueue.set_up()
+        self.client = FLASK_APP.test_client()
+
+    def tearDown(self):
+        InputQueue.tear_down()
+        signals = [EXIT_SIGNAL, NEW_TELEGRAM_MESSAGE]
+        [signal.clear() for signal in signals if signal.is_set()]
+
+    def test_input_queue_works(self):
+        response = self.client.post(
+            WEBHOOK_ENDPOINT,
+            headers={'Content-Type': 'application/json',
+                     'X-Telegram-Bot-Api-Secret-Token': WEBHOOK_SECRET},
+            data=self.telegram_request.encode(),
+        )
+        self.assertEqual(response.status_code, 200)
+
+        msg_obj = InputQueue.get_first_message()
+        self.assertIsNotNone(msg_obj)
+
+        InputQueue.delete_message(msg_obj)
+        result = InputQueue.get_first_message()
+        self.assertIsNone(result)

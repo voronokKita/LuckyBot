@@ -4,13 +4,13 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-from lucky_bot.helpers.constants import DB_URI
+from lucky_bot.helpers.constants import DB_FILE
 
 import logging
 from logs.config import console, event
 logger = logging.getLogger(__name__)
 
-db_engine = create_engine(f'sqlite:///{DB_URI}', future=True)
+db_engine = create_engine(f'sqlite:///{DB_FILE}', future=True)
 main_db_session = sessionmaker(bind=db_engine)
 
 MainBase = declarative_base()

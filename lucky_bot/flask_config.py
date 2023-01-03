@@ -6,7 +6,10 @@ import telebot
 import flask
 from flask import Flask, request
 
-from lucky_bot.helpers.constants import WEBHOOK_ENDPOINT, WEBHOOK_SECRET, WebhookWrongRequest, FlaskException
+from lucky_bot.helpers.constants import (
+    WEBHOOK_ENDPOINT, WEBHOOK_SECRET,
+    WebhookWrongRequest, FlaskException
+)
 from lucky_bot.helpers.signals import NEW_TELEGRAM_MESSAGE, EXIT_SIGNAL
 from lucky_bot.models.input_mq import InputQueue
 
@@ -53,10 +56,11 @@ def save_message_to_queue(data):
 
         d = json.loads(data)
         date = d['message']['date']
-        # InputQueue.add_message(data, date)
+        InputQueue.add_message(data, date)
 
     except Exception as exc:
         logger.exception('error saving message to db')
+        event.error('error saving message to db')
         EXIT_SIGNAL.set()
         raise FlaskException(exc)
 
@@ -73,6 +77,7 @@ def inbox():
         flask.abort(400)
     except Exception as exc:
         logger.exception('error parsing request')
+        event.error('error saving message to db')
         EXIT_SIGNAL.set()
         raise FlaskException(exc)
 
@@ -80,6 +85,7 @@ def inbox():
         save_message_to_queue(data)
         # if not NEW_TELEGRAM_MESSAGE.is_set():
         NEW_TELEGRAM_MESSAGE.set()
+        console('new tg message')
         return '', 200
 
 

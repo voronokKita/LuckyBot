@@ -13,7 +13,7 @@ from lucky_bot.helpers.constants import (
 from lucky_bot.flask_config import FLASK_APP
 
 import logging
-from logs.config import console, event
+from logs.config import console
 logger = logging.getLogger(__name__)
 
 
