@@ -27,14 +27,11 @@ class TGMessage(IMQBase):
 class InputQueue:
     @staticmethod
     def set_up():
-        if not INPUT_MQ_FILE.exists():
-            IMQBase.metadata.create_all(IMQ_ENGINE)
+        IMQBase.metadata.create_all(IMQ_ENGINE)
 
     @staticmethod
     def tear_down():
         if TESTING and INPUT_MQ_FILE.exists():
-            INPUT_MQ_FILE.unlink()
-        else:
             IMQBase.metadata.drop_all(IMQ_ENGINE)
 
     @staticmethod

@@ -1,6 +1,4 @@
 - Test logs.
-- Delete old logs.
-- Do no delete test db file.
 - Webhook: change abstract telebot to the bot.
 - allowed_updates parameter in telebot webhook.
 
@@ -12,3 +10,5 @@ DONE - KeyboardInterrupt.
 DONE - Test Flask server.
 DONE - Test exception in Flask server.
 DONE - Webhook messages db & model.
+DONE - Delete old logs.
+DONE - Do no delete the test db file, drop a table instead.
