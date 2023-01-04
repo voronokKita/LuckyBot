@@ -1,6 +1,6 @@
 - Test logs.
 - Webhook: change abstract telebot to the bot.
-- allowed_updates parameter in telebot webhook.
+
 
 DONE - Run the threads in order: sender, updater, input controller and webhook in the last.
 DONE - Test thread timeout in the main.
@@ -11,4 +11,5 @@ DONE - Test Flask server.
 DONE - Test exception in Flask server.
 DONE - Webhook messages db & model.
 DONE - Delete old logs.
-DONE - Do no delete the test db file, drop a table instead.
+DONE - Do not delete the test db file, drop a table instead.
+PASS - allowed_updates parameter in telebot webhook.
