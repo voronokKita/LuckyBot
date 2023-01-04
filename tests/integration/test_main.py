@@ -15,6 +15,7 @@ from main import MainAsThread
 from tests.units.test_receiver import mock_ngrok, mock_telebot, mock_serving
 
 
+@patch('lucky_bot.sender.SenderThread._process_all_messages')
 @patch('lucky_bot.webhook.WebhookThread._remove_webhook')
 @patch('lucky_bot.webhook.WebhookThread._start_server', new_callable=mock_serving)
 @patch('lucky_bot.webhook.TeleBot', new_callable=mock_telebot)

@@ -19,6 +19,9 @@ class SignalAllDone(Event):
 class SignalTgMessage(Event):
     ''' A new telegram message in the receiver queue. '''
 
+class SignalMessageToSend(Event):
+    ''' A new message to telegram in the sender queue. '''
+
 
 # Threading signals
 SENDER_IS_RUNNING = SignalThreadStarted()
@@ -37,6 +40,7 @@ EXIT_SIGNAL = SignalExit()
 
 # Other
 NEW_TELEGRAM_MESSAGE = SignalTgMessage()
+NEW_MESSAGE_TO_SEND = SignalMessageToSend()
 
 
 def exit_signal(signal_=None, frame=None):

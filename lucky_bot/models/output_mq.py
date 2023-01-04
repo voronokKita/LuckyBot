@@ -17,9 +17,10 @@ class OutgoingMessage(OMQBase):
     __tablename__ = 'messages_to_telegram'
 
     id = Column(Integer, primary_key=True)
+    destination = Column('address', Integer, nullable=False)
     text = Column('message_text', Text, nullable=False)
-    stream = Column('message_file', BLOB, nullable=True)
-    time = Column('message_date', Integer, nullable=False)
+    stream = Column('file', BLOB, nullable=True)
+    time = Column('date', Integer, nullable=False)
 
     def __str__(self):
         return f'<outgoing message id-{self.id!r}>'
@@ -36,8 +37,8 @@ class OutputQueue:
             OMQBase.metadata.drop_all(OMQ_ENGINE)
 
     @staticmethod
-    def add_message(message, date, file=None):
-        msg_obj = OutgoingMessage(text=message, time=date)
+    def add_message(uid, message, date, file=None):
+        msg_obj = OutgoingMessage(destination=uid, text=message, time=date)
         with OMQ_SESSION.begin() as session:
             session.add(msg_obj)
 

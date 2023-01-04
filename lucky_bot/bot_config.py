@@ -8,3 +8,8 @@ logger = logging.getLogger(__name__)
 
 
 BOT = telebot.TeleBot(API, threaded=False)
+
+
+def send_message(uid:int, text:str, file=None) -> bool:
+    BOT.send_message(uid, text)
+    return True

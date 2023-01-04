@@ -1,6 +1,6 @@
 import unittest
 
-from lucky_bot.helpers.signals import EXIT_SIGNAL
+from lucky_bot.helpers.signals import EXIT_SIGNAL, NEW_MESSAGE_TO_SEND
 from lucky_bot.helpers.constants import TestException, ThreadException
 
 
@@ -21,7 +21,8 @@ class ThreadTestTemplate(unittest.TestCase):
 
     @classmethod
     def _clear_signals(cls):
-        signals = [EXIT_SIGNAL, cls.is_running_signal, cls.is_stopped_signal]
+        signals = [EXIT_SIGNAL, NEW_MESSAGE_TO_SEND,
+                   cls.is_running_signal, cls.is_stopped_signal]
         if cls.signals:
             signals += cls.signals
         [signal.clear() for signal in signals if signal.is_set()]
@@ -34,6 +35,8 @@ class ThreadTestTemplate(unittest.TestCase):
             raise TestException(f'The time to start the {self.thread_obj} has passed.')
 
         EXIT_SIGNAL.set()
+        if str(self.thread_obj) == 'sender thread':
+            NEW_MESSAGE_TO_SEND.set()
         if not self.is_stopped_signal.wait(10):
             self.thread_obj.merge()
             raise TestException(f'The time to stop the {self.thread_obj} has passed.')
