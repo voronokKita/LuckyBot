@@ -56,5 +56,5 @@ class InputQueue:
             session.delete(msg_obj)
 
 
-# if TESTING or not INPUT_MQ_FILE.exists():
-#     InputQueue.set_up()
+if not TESTING and not INPUT_MQ_FILE.exists():
+    InputQueue.set_up()

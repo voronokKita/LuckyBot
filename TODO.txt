@@ -1,6 +1,4 @@
-- Test exception in Flask server.
-- Test Flask server.
-- Webhoom messages db & model.
+- Do no delete test db file.
 - Webhook: change abstract telebot to the bot.
 - allowed_updates parameter in telebot webhook.
 
@@ -9,3 +7,6 @@ DONE - Test thread timeout in the main.
 DONE - Test thread exception in the main.
 DONE - Adjust the waiting time in main's tests.
 DONE - KeyboardInterrupt.
+DONE - Test Flask server.
+DONE - Test exception in Flask server.
+DONE - Webhook messages db & model.

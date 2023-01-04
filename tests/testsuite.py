@@ -13,10 +13,10 @@ sys.path.append(str(BASE_DIR))
 
 from tests import test_base
 from tests.units import (
-    test_webhook, test_input_controller, test_updater,
+    test_receiver, test_controller, test_updater,
     test_sender,
 )
-from tests.integration import test_main, test_webhook_int
+from tests.integration import test_main, test_receiver_int
 
 
 loader = unittest.TestLoader()
@@ -30,10 +30,10 @@ if result.wasSuccessful() is False:
 modules_to_test = {
     test_sender,
     test_updater,
-    test_input_controller,
-    test_webhook,
+    test_controller,
+    test_receiver,
+    test_receiver_int,
     test_main,
-    test_webhook_int,
 }
 suite_list = []
 for module in modules_to_test:

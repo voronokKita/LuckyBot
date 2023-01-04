@@ -16,7 +16,7 @@ class TestProjectBase(unittest.TestCase):
             BASE_DIR / 'Pipfile',
             BASE_DIR / 'README.md',
             BASE_DIR / 'design.png',
-            BASE_DIR / 'resources' / '.api',
+            BASE_DIR / 'resources' / '.tgapi',
             BASE_DIR / 'resources' / '.webhook_secret_token',
 
             package_dir / 'models' / 'database.py',
@@ -25,12 +25,14 @@ class TestProjectBase(unittest.TestCase):
 
             package_dir / 'helpers' / 'signals.py',
             package_dir / 'helpers' / 'constants.py',
+            package_dir / 'helpers' / 'misc.py',
 
             package_dir / 'webhook.py',
             package_dir / 'flask_config.py',
-            package_dir / 'input_controller.py',
+            package_dir / 'bot_config.py',
+            package_dir / 'controller.py',
             package_dir / 'parser.py',
-            package_dir / 'telegram_controller.py',
+            package_dir / 'responder.py',
             package_dir / 'updater.py',
             package_dir / 'sender.py',
         ]
@@ -52,10 +54,10 @@ class TestProjectBase(unittest.TestCase):
 
         from lucky_bot import webhook
         from lucky_bot import flask_config
-        from lucky_bot import input_controller
+        from lucky_bot import bot_config
+        from lucky_bot import controller
         from lucky_bot import parser
-        from lucky_bot import models
-        from lucky_bot import telegram_controller
+        from lucky_bot import responder
         from lucky_bot import updater
         from lucky_bot import sender
         import main

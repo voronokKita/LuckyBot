@@ -10,17 +10,19 @@ import logging
 from logs.config import console, event
 logger = logging.getLogger(__name__)
 
-output_messages_engine = create_engine(f'sqlite:///{OUTPUT_MQ_FILE}', future=True)
-output_session = sessionmaker(bind=output_messages_engine)
+OMQ_ENGINE = create_engine(f'sqlite:///{OUTPUT_MQ_FILE}', future=True)
 
-OutputBase = declarative_base()
+OMQ_SESSION = sessionmaker(bind=OMQ_ENGINE)
+
+OMQBase = declarative_base()
 
 
-class OutputMessage(OutputBase):
-    __tablename__ = 'output_messages'
+class OutputMessage(OMQBase):
+    __tablename__ = 'messages_to_telegram'
 
     id = Column(Integer, primary_key=True)
     data = Column(Text, nullable=False)
+    time = Column('message_date', Integer, nullable=False)
 
     def __str__(self):
         return f'<outgoing message id-{self.id!r}>'

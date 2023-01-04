@@ -17,12 +17,12 @@ from lucky_bot.helpers.constants import (
 from lucky_bot.flask_config import FLASK_APP
 from lucky_bot.models.input_mq import InputQueue
 
-from tests.units.test_webhook import mock_ngrok, mock_telebot
+from tests.units.test_receiver import mock_ngrok, mock_telebot
 
 
 @patch('lucky_bot.webhook.TeleBot', new_callable=mock_telebot)
 @patch('lucky_bot.webhook.ngrok', new_callable=mock_ngrok)
-class TestWebhookServing(unittest.TestCase):
+class TestReceiverServing(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         os.environ['no_proxy'] = '0.0.0.0,127.0.0.1,localhost,example.com'
@@ -56,7 +56,7 @@ class TestWebhookServing(unittest.TestCase):
         [signal.clear() for signal in signals if signal.is_set()]
 
     @patch('lucky_bot.webhook.WebhookThread._remove_webhook')
-    def test_webhook_thread_server_sql_integration(self, remove_webhook, ngrok, TeleBot):
+    def test_receiver_integration(self, remove_webhook, ngrok, TeleBot):
         self.thread_obj.start()
 
         # assert normal start
@@ -109,3 +109,4 @@ class TestWebhookServing(unittest.TestCase):
         ngrok.kill.assert_called_once()
 
         self.thread_obj.merge()
+        self.assertFalse(self.thread_obj.is_alive())

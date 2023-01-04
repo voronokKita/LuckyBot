@@ -1,4 +1,4 @@
-from lucky_bot.helpers.signals import INPUT_CONTROLLER_IS_RUNNING, INPUT_CONTROLLER_IS_STOPPED, EXIT_SIGNAL
+from lucky_bot.helpers.signals import CONTROLLER_IS_RUNNING, CONTROLLER_IS_STOPPED, EXIT_SIGNAL
 from lucky_bot.helpers.misc import ThreadTemplate
 
 import logging
@@ -6,12 +6,12 @@ from logs.config import console, event
 logger = logging.getLogger(__name__)
 
 
-class InputControllerThread(ThreadTemplate):
-    is_running_signal = INPUT_CONTROLLER_IS_RUNNING
-    is_stopped_signal = INPUT_CONTROLLER_IS_STOPPED
+class ControllerThread(ThreadTemplate):
+    is_running_signal = CONTROLLER_IS_RUNNING
+    is_stopped_signal = CONTROLLER_IS_STOPPED
 
     def __str__(self):
-        return 'input controller thread'
+        return 'controller thread'
 
     def body(self):
         self._set_the_signal()

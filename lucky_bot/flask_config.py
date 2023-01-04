@@ -30,8 +30,6 @@ FLASK_APP.config.update(
     SECRET_KEY=secrets.token_urlsafe(randint(40, 60)),
     LOGGER_NAME=__name__,
     MAX_CONTENT_LENGTH=10*1024*1024,
-    # TRAP_HTTP_EXCEPTIONS=True,
-    # TRAP_BAD_REQUEST_ERRORS=True,
 )
 
 
@@ -71,13 +69,13 @@ def inbox():
         data = get_message_data()
 
     except WebhookWrongRequest:
-        msg = f'wrong webhook request: {request.get_data().decode("utf-8")}'
+        msg = 'wrong webhook request: %s' % request.get_data().decode('utf-8')
         console(msg)
         event.warning(msg)
         flask.abort(400)
     except Exception as exc:
         logger.exception('error parsing request')
-        event.error('error saving message to db')
+        event.error('error parsing request')
         EXIT_SIGNAL.set()
         raise FlaskException(exc)
 

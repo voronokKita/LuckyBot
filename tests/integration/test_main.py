@@ -4,15 +4,15 @@ from unittest.mock import patch
 
 from lucky_bot.helpers.signals import (
     ALL_THREADS_ARE_GO, ALL_DONE_SIGNAL, EXIT_SIGNAL,
-    WEBHOOK_IS_RUNNING, INPUT_CONTROLLER_IS_RUNNING,
+    WEBHOOK_IS_RUNNING, CONTROLLER_IS_RUNNING,
     UPDATER_IS_RUNNING, SENDER_IS_RUNNING,
-    WEBHOOK_IS_STOPPED, INPUT_CONTROLLER_IS_STOPPED,
+    WEBHOOK_IS_STOPPED, CONTROLLER_IS_STOPPED,
     UPDATER_IS_STOPPED, SENDER_IS_STOPPED,
 )
 from lucky_bot.helpers.constants import MainException, TestException, ThreadException
 from main import MainAsThread
 
-from tests.units.test_webhook import mock_ngrok, mock_telebot, mock_serving
+from tests.units.test_receiver import mock_ngrok, mock_telebot, mock_serving
 
 
 @patch('lucky_bot.webhook.WebhookThread._remove_webhook')
@@ -20,13 +20,11 @@ from tests.units.test_webhook import mock_ngrok, mock_telebot, mock_serving
 @patch('lucky_bot.webhook.TeleBot', new_callable=mock_telebot)
 @patch('lucky_bot.webhook.ngrok', new_callable=mock_ngrok)
 class TestMain(unittest.TestCase):
-    ''' Only the errors in the updater thread is tested
-        as the second in the order of loading. '''
     signals = [
         ALL_THREADS_ARE_GO, ALL_DONE_SIGNAL, EXIT_SIGNAL,
-        WEBHOOK_IS_RUNNING, INPUT_CONTROLLER_IS_RUNNING,
+        WEBHOOK_IS_RUNNING, CONTROLLER_IS_RUNNING,
         UPDATER_IS_RUNNING, SENDER_IS_RUNNING,
-        WEBHOOK_IS_STOPPED, INPUT_CONTROLLER_IS_STOPPED,
+        WEBHOOK_IS_STOPPED, CONTROLLER_IS_STOPPED,
         UPDATER_IS_STOPPED, SENDER_IS_STOPPED,
     ]
 
@@ -35,7 +33,7 @@ class TestMain(unittest.TestCase):
 
     def tearDown(self):
         if self.main_thread.is_alive():
-            self.main_thread.join()
+            self.main_thread.merge()
         self._clear_signals()
 
     @classmethod
@@ -48,7 +46,7 @@ class TestMain(unittest.TestCase):
         signals = [
             {'name': 'sender', 'signal': SENDER_IS_RUNNING},
             {'name': 'updater', 'signal': UPDATER_IS_RUNNING},
-            {'name': 'input controller', 'signal': INPUT_CONTROLLER_IS_RUNNING},
+            {'name': 'input controller', 'signal': CONTROLLER_IS_RUNNING},
             {'name': 'webhook', 'signal': WEBHOOK_IS_RUNNING},
             {'name': 'all threads are go', 'signal': ALL_THREADS_ARE_GO},
             {'name': 'finish the work', 'signal': ALL_DONE_SIGNAL},

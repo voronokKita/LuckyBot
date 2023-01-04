@@ -1,17 +1,17 @@
 import sys
-import threading
 import signal
+import threading
 
 from lucky_bot.helpers.constants import MainException, TREAD_RUNNING_TIMEOUT
 from lucky_bot.helpers.signals import (
-    WEBHOOK_IS_RUNNING, INPUT_CONTROLLER_IS_RUNNING,
+    WEBHOOK_IS_RUNNING, CONTROLLER_IS_RUNNING,
     UPDATER_IS_RUNNING, SENDER_IS_RUNNING,
     ALL_THREADS_ARE_GO, ALL_DONE_SIGNAL, EXIT_SIGNAL,
     exit_signal,
 )
 from lucky_bot.sender import SenderThread
 from lucky_bot.updater import UpdaterThread
-from lucky_bot.input_controller import InputControllerThread
+from lucky_bot.controller import ControllerThread
 from lucky_bot.webhook import WebhookThread
 
 import logging
@@ -50,13 +50,13 @@ def main():
     # instantiate threads;
     sender = SenderThread()
     updater = UpdaterThread()
-    input_controller = InputControllerThread()
+    controller = ControllerThread()
     webhook = WebhookThread()
 
     threads = [
         {'thread': sender, 'running': SENDER_IS_RUNNING},
         {'thread': updater, 'running': UPDATER_IS_RUNNING},
-        {'thread': input_controller, 'running': INPUT_CONTROLLER_IS_RUNNING},
+        {'thread': controller, 'running': CONTROLLER_IS_RUNNING},
         {'thread': webhook, 'running': WEBHOOK_IS_RUNNING},
     ]
 

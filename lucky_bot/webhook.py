@@ -1,14 +1,14 @@
-from telebot import TeleBot
 from pyngrok import ngrok
 from pyngrok.ngrok import NgrokTunnel
 from pyngrok.exception import PyngrokNgrokURLError
+from telebot import TeleBot
 from werkzeug.serving import make_server, BaseWSGIServer
 
-from lucky_bot.helpers.signals import WEBHOOK_IS_RUNNING, WEBHOOK_IS_STOPPED
 from lucky_bot.helpers.misc import ThreadTemplate
+from lucky_bot.helpers.signals import WEBHOOK_IS_RUNNING, WEBHOOK_IS_STOPPED
 from lucky_bot.helpers.constants import (
-    REPLIT, REPLIT_URL, WEBHOOK_ENDPOINT,
-    ADDRESS, PORT, API, WEBHOOK_SECRET, WebhookException,
+    REPLIT, REPLIT_URL, ADDRESS, PORT, API,
+    WEBHOOK_ENDPOINT, WEBHOOK_SECRET, WebhookException,
 )
 from lucky_bot.flask_config import FLASK_APP
 
@@ -38,9 +38,10 @@ class WebhookThread(ThreadTemplate):
 
             self._set_the_signal()
             self._test_exception()
-
             self.serving = True
             self._test_exception_after_serving()
+
+            # here the thread is waiting for a server.shutdown() call
             self._start_server()
 
         except Exception as exc:
@@ -76,6 +77,8 @@ class WebhookThread(ThreadTemplate):
             host=ADDRESS,
             port=PORT,
             app=FLASK_APP,
+            threaded=False,
+            processes=1,
         )
 
     def _start_server(self):
@@ -91,11 +94,12 @@ class WebhookThread(ThreadTemplate):
     def _shutdown(self):
         if self.serving:
             self.server.shutdown()
-        elif self.server:
+        elif self.server and not self.serving:
             self.server.socket.close()
 
     @staticmethod
     def _remove_webhook():
+        ''' Wrapped for testing. '''
         TeleBot(API, threaded=False).remove_webhook()
 
     def _close_tunnel(self):

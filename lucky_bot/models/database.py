@@ -10,8 +10,9 @@ import logging
 from logs.config import console, event
 logger = logging.getLogger(__name__)
 
-db_engine = create_engine(f'sqlite:///{DB_FILE}', future=True)
-main_db_session = sessionmaker(bind=db_engine)
+DB_ENGINE = create_engine(f'sqlite:///{DB_FILE}', future=True)
+
+DB_SESSION = sessionmaker(bind=DB_ENGINE)
 
 MainBase = declarative_base()
 

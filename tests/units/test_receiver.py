@@ -98,6 +98,7 @@ class TestWebhook(ThreadTestTemplate):
             raise TestException(f'The time to raise exception in the webhook has passed.')
 
         self.assertRaises(ThreadException, self.thread_obj.merge)
+        self.assertFalse(self.thread_obj.is_alive())
         ngrok.connect.assert_called_once()
         self.assertIsNotNone(self.thread_obj.webhook_url)
         self.assertEqual(TeleBot.call_count, 3)
@@ -125,6 +126,7 @@ class TestWebhook(ThreadTestTemplate):
             raise TestException(f'The time to raise exception in the webhook has passed.')
 
         self.assertRaises(ThreadException, self.thread_obj.merge)
+        self.assertFalse(self.thread_obj.is_alive())
         self.assertIsNone(self.thread_obj.tunnel)
         self.assertFalse(self.thread_obj.webhook)
         self.assertIsNone(self.thread_obj.server)
@@ -144,6 +146,7 @@ class TestWebhook(ThreadTestTemplate):
             raise TestException(f'The time to raise exception in the webhook has passed.')
 
         self.assertRaises(ThreadException, self.thread_obj.merge)
+        self.assertFalse(self.thread_obj.is_alive())
         self.assertIsNotNone(self.thread_obj.tunnel)
         self.assertFalse(self.thread_obj.webhook)
         self.assertIsNone(self.thread_obj.server)
@@ -163,6 +166,7 @@ class TestWebhook(ThreadTestTemplate):
             raise TestException(f'The time to raise exception in the webhook has passed.')
 
         self.assertRaises(ThreadException, self.thread_obj.merge)
+        self.assertFalse(self.thread_obj.is_alive())
         self.assertIsNotNone(self.thread_obj.tunnel)
         self.assertTrue(self.thread_obj.webhook)
         self.assertIsNone(self.thread_obj.server)
@@ -182,6 +186,7 @@ class TestWebhook(ThreadTestTemplate):
             raise TestException(f'The time to raise exception in the webhook has passed.')
 
         self.assertRaises(ThreadException, self.thread_obj.merge)
+        self.assertFalse(self.thread_obj.is_alive())
         self.assertIsNotNone(self.thread_obj.tunnel)
         self.assertTrue(self.thread_obj.webhook)
         self.assertIsNotNone(self.thread_obj.server)
@@ -201,6 +206,7 @@ class TestWebhook(ThreadTestTemplate):
             raise TestException(f'The time to raise exception in the webhook has passed.')
 
         self.assertRaises(ThreadException, self.thread_obj.merge)
+        self.assertFalse(self.thread_obj.is_alive())
         self.assertIsNotNone(self.thread_obj.tunnel)
         self.assertTrue(self.thread_obj.webhook)
         self.assertIsNotNone(self.thread_obj.server)
@@ -219,6 +225,7 @@ class TestWebhook(ThreadTestTemplate):
             raise TestException(f'The time to stop the webhook has passed.')
 
         self.thread_obj.merge()
+        self.assertFalse(self.thread_obj.is_alive())
         self.assertIsNotNone(self.thread_obj.tunnel)
         self.assertTrue(self.thread_obj.webhook)
         self.assertIsNotNone(self.thread_obj.server)

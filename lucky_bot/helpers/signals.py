@@ -23,19 +23,17 @@ class SignalTgMessage(Event):
 # Threading signals
 SENDER_IS_RUNNING = SignalThreadStarted()
 UPDATER_IS_RUNNING = SignalThreadStarted()
-INPUT_CONTROLLER_IS_RUNNING = SignalThreadStarted()
+CONTROLLER_IS_RUNNING = SignalThreadStarted()
 WEBHOOK_IS_RUNNING = SignalThreadStarted()
 
 SENDER_IS_STOPPED = SignalThreadStopped()
 UPDATER_IS_STOPPED = SignalThreadStopped()
-INPUT_CONTROLLER_IS_STOPPED = SignalThreadStopped()
+CONTROLLER_IS_STOPPED = SignalThreadStopped()
 WEBHOOK_IS_STOPPED = SignalThreadStopped()
 
 ALL_THREADS_ARE_GO = SignalThreadsAreStarted()
-
-EXIT_SIGNAL = SignalExit()
-
 ALL_DONE_SIGNAL = SignalAllDone()
+EXIT_SIGNAL = SignalExit()
 
 # Other
 NEW_TELEGRAM_MESSAGE = SignalTgMessage()

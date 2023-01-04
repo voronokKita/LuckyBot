@@ -12,8 +12,8 @@ else:
     TESTING = False
 
 if TESTING:
-    # NOTE: :memory: db is not working,
-    # because a werkzeug server - make_server(), - is running in another process,
+    # NOTE: :memory: db is not working, because
+    # a werkzeug server - make_server(), - is running in another process,
     # i.e. in another memory area.
     DB_FILE = PROJECT_DIR / 'tests' / 'fixtures' / 'test_data.sqlite3'
     INPUT_MQ_FILE = PROJECT_DIR / 'tests' / 'fixtures' / 'test_imq.sqlite3'
@@ -32,11 +32,11 @@ WEBHOOK_ENDPOINT = '/webhook'
 WEBHOOK_WAS_SET = re.compile('was set|already set')
 
 if not REPLIT:
-    API = PROJECT_DIR / 'resources' / '.api'
+    API = PROJECT_DIR / 'resources' / '.tgapi'
     with open(API) as f:
         API = f.read().strip()
 else:
-    API = os.environ['API']
+    API = os.environ['TGAPI']
 
 WEBHOOK_SECRET = PROJECT_DIR / 'resources' / '.webhook_secret_token'
 with open(WEBHOOK_SECRET) as f:
