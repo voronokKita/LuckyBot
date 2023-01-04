@@ -3,7 +3,7 @@
 
 ### OS ###
 .directory
-diagram.json
+design.json
 resources/
 .api
 .webhook_secret_token
@@ -11,6 +11,9 @@ data/
 data.sqlite3
 input_message_queue.sqlite3
 output_message_queue.sqlite3
+test_data.sqlite3
+test_imq.sqlite3
+test_omq.sqlite3
 
 ### Flask ###
 instance/*
