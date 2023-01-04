@@ -1,3 +1,5 @@
+- Test logs.
+- Delete old logs.
 - Do no delete test db file.
 - Webhook: change abstract telebot to the bot.
 - allowed_updates parameter in telebot webhook.

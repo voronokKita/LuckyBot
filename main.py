@@ -15,7 +15,7 @@ from lucky_bot.controller import ControllerThread
 from lucky_bot.webhook import WebhookThread
 
 import logging
-from logs.config import console, event
+from logs.config import console, event, clear_old_logs
 logger = logging.getLogger(__name__)
 
 
@@ -61,21 +61,10 @@ def main():
     ]
 
     # run all the threads;
-    active_threads = []
-    for unit in threads:
-        console(f'start the {unit["thread"]}')
-        unit['thread'].start()
-        active_threads.append(unit)
-        if unit['running'].wait(TREAD_RUNNING_TIMEOUT):
-            if EXIT_SIGNAL.is_set():
-                thread_loading_interrupted(active_threads)
-        else:
-            thread_loading_timeout(unit['thread'], active_threads)
-
-    del threads
-    ALL_THREADS_ARE_GO.set()
+    active_threads = run_the_threads(threads)
     console('all work has started (´｡• ω •｡`)')
     event.info('normal start')
+    ALL_THREADS_ARE_GO.set()
 
     # just sleep and wait for the exit signal;
     if EXIT_SIGNAL.wait():
@@ -85,6 +74,23 @@ def main():
 
     # done.
     finish_the_work(active_threads)
+
+
+def run_the_threads(threads):
+    active_threads = []
+    for unit in threads:
+        console(f'start the {unit["thread"]}')
+        unit['thread'].start()
+        active_threads.append(unit)
+
+        if unit['running'].wait(TREAD_RUNNING_TIMEOUT):
+            if EXIT_SIGNAL.is_set():
+                thread_loading_interrupted(active_threads)
+        else:
+            thread_loading_timeout(unit['thread'], active_threads)
+
+    del threads
+    return active_threads
 
 
 def thread_loading_timeout(thread, active_threads):
@@ -139,4 +145,5 @@ def stop_active_threads(threads):
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, exit_signal)
     signal.signal(signal.SIGTSTP, exit_signal)
+    clear_old_logs()
     main()

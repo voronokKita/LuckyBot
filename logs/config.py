@@ -3,7 +3,7 @@ import logging.config
 
 from lucky_bot.helpers.constants import (
     TESTING, LOG_EVENTS_FILE, LOG_TELEBOT_FILE,
-    LOG_WERKZEUG_FILE, LOG_EXCEPTIONS_FILE
+    LOG_WERKZEUG_FILE, LOG_EXCEPTIONS_FILE, LOG_LIMIT,
 )
 
 
@@ -151,7 +151,37 @@ event = logging.getLogger('event')
 werkzeug_logger = logging.getLogger('werkzeug')
 telebot_logger = logging.getLogger('TeleBot')
 
+
 def console(msg):
+    if TESTING:
+        return
     if not isinstance(msg, str):
         msg = str(msg)
     debugger.debug(msg)
+
+
+def clear_old_logs():
+    if TESTING:
+        return
+
+    files = [LOG_EVENTS_FILE, LOG_TELEBOT_FILE,
+             LOG_WERKZEUG_FILE, LOG_EXCEPTIONS_FILE]
+
+    for logfile in files:
+        limit = False
+        lines = None
+        with logfile.open('r') as f:
+            for count, line in enumerate(f):
+                pass
+            if count > LOG_LIMIT:
+                limit = True
+                f.seek(0)
+                lines = f.readlines()
+
+        if not limit:
+            continue
+
+        with logfile.open('w') as f:
+            f.write('--------- old lines has ben removed ---------\n')
+            lines_to_save = count - LOG_LIMIT // 2
+            f.writelines(lines[lines_to_save:])

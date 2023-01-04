@@ -43,6 +43,7 @@ with open(WEBHOOK_SECRET) as f:
     WEBHOOK_SECRET = f.read().strip()
 
 # Logs
+LOG_LIMIT = 1000
 LOG_EVENTS_FILE = PROJECT_DIR / 'logs' / 'events.log'
 LOG_EXCEPTIONS_FILE = PROJECT_DIR / 'logs' / 'exceptions.log'
 LOG_WERKZEUG_FILE = PROJECT_DIR / 'logs' / 'werkzeug.log'
