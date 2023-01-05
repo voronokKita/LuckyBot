@@ -1,4 +1,3 @@
-- Delete ThreadException.
 - Admin command interface.
 - Test logs.
 
@@ -14,3 +13,4 @@ DONE - Delete old logs.
 DONE - Do not delete the test db file, drop a table instead.
 PASS - allowed_updates parameter in telebot webhook.
 DONE - Webhook: change abstract telebot to the bot.
+DONE - Delete ThreadException.

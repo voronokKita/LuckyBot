@@ -25,6 +25,8 @@ result = unittest.TextTestRunner(verbosity=2).run(
     loader.loadTestsFromModule(test_base)
 )
 if result.wasSuccessful() is False:
+    # don't go farther if the base tests are failed;
+    # some important objects must be mocked
     sys.exit(1)
 
 modules_to_test = {

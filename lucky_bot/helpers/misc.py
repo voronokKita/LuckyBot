@@ -5,6 +5,7 @@ from lucky_bot.helpers.constants import ThreadException
 
 
 class ThreadTemplate(threading.Thread):
+    ''' Base class for all the threads. '''
     exception = None
     is_running_signal = None
     is_stopped_signal = None
@@ -34,11 +35,17 @@ class ThreadTemplate(threading.Thread):
             EXIT_SIGNAL.set()
         if self.is_stopped_signal.wait(10):
             pass
+
         threading.Thread.join(self, 5)
         if self.exception:
-            raise ThreadException(self.exception)
+            raise self.exception
         elif self.is_alive():
             raise ThreadException(f'Stop timeout: {self}.')
+
+    @classmethod
+    def _set_the_signal(cls):
+        ''' Signal is wrapped for testing purposes. '''
+        cls.is_running_signal.set()
 
     @staticmethod
     def _test_exception():
@@ -47,9 +54,3 @@ class ThreadTemplate(threading.Thread):
     @staticmethod
     def _test_exception_before_signal():
         pass
-
-    @classmethod
-    def _set_the_signal(cls):
-        ''' Signal is wrapped for testing purposes. '''
-        cls.is_running_signal.set()
-

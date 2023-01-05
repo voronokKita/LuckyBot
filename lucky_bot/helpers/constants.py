@@ -11,6 +11,7 @@ if [arg for arg in sys.argv if 'test' in arg]:
 else:
     TESTING = False
 
+# Databases
 if TESTING:
     # NOTE: :memory: db is not working, because
     # a werkzeug server - make_server(), - is running in another process,
