@@ -23,6 +23,9 @@ Case 4
 /list -> responder select data -> 'list message'
 
 Case 5
+/note [n] > responder select data -> 'text message'
+
+Case 6
 /delete [n, n+1] -> responder delete data -> 'OK or ERROR message'
 
 Case exception
@@ -30,6 +33,9 @@ some text or wrong command -> responder -> 'help message'
 
 Case exception
 some command after add/ -> execute command
+
+Case sender exception
+/delete_user -> responder delete user
 '''
 
 class TestInputControllerBase(ThreadTestTemplate):

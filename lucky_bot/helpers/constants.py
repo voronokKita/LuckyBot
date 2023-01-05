@@ -52,6 +52,27 @@ LOG_TELEBOT_FILE = PROJECT_DIR / 'logs' / 'pyTelegramBotAPI.log'
 # Main
 TREAD_RUNNING_TIMEOUT = 10
 
+# Telegram request errors
+"""
+400 - Bad Request: chat not found
+400 - Bad request: user not found
+400 - Bad request: Group migrated to supergroup
+400 - Bad request: Invalid file id
+400 - Bad request: Message not modified
+400 - Bad request: Wrong parameter action in request
+401 - Unauthorized
+403 - Forbidden: user is deactivated
+403 - Forbidden: bot was kicked
+403 - Forbidden: bot blocked by user
+403 - Forbidden: bot can't send messages to bots
+409 - Conflict: Terminated by other long poll
+429 - Too many requests
+"""
+TG_WRONG_TOKEN = re.compile('Unauthorized')
+TG_UID_NOT_FOUND = re.compile('not found')
+TG_BOT_BLOCKED = re.compile('kicked|blocked|deactivated')
+TG_BOT_TIMEOUT = re.compile('Too many requests')
+
 # Exceptions
 class TestException(Exception):
     ''' For testing purposes. '''
@@ -73,3 +94,21 @@ class FlaskException(ThreadException):
 
 class SenderException(ThreadException):
     ''' Something wrong in the sender thread. '''
+
+class StopTheSenderGently(SenderException):
+    ''' Exit from the sender body() without an error. '''
+
+class DispatcherWrongToken(Exception):
+    ''' Wrong API token from ApiTelegramException. '''
+
+class DispatcherNoAccess(Exception):
+    ''' "Uid not found" or "bot blocked" from ApiTelegramException. '''
+
+class DispatcherTimeout(Exception):
+    ''' Timeout ApiTelegramException. '''
+
+class DispatcherUndefinedExc(Exception):
+    ''' Undefined ApiTelegramException. '''
+
+class DispatcherException(Exception):
+    ''' Normal exception while sending message. '''

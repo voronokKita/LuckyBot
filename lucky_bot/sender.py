@@ -3,9 +3,13 @@ from lucky_bot.helpers.signals import (
     SENDER_IS_RUNNING, SENDER_IS_STOPPED, EXIT_SIGNAL,
     NEW_MESSAGE_TO_SEND,
 )
-from lucky_bot.helpers.constants import SenderException
+from lucky_bot.helpers.constants import (
+    SenderException, DispatcherWrongToken, DispatcherNoAccess,
+    DispatcherTimeout, DispatcherUndefinedExc, DispatcherException,
+    StopTheSenderGently,
+)
 from lucky_bot.models.output_mq import OutputQueue
-from lucky_bot.bot_config import send_message
+from lucky_bot import dispatcher
 
 import logging
 from logs.config import console, event
@@ -34,7 +38,13 @@ class SenderThread(ThreadTemplate):
                 NEW_MESSAGE_TO_SEND.clear()
                 self._test_sender_cycle()
 
+        except StopTheSenderGently:
+            EXIT_SIGNAL.set()
+        except DispatcherException as exc:
+            raise exc
         except Exception as exc:
+            event.error('sender: exception')
+            console('sender: exception')
             raise SenderException(exc)
 
     def merge(self):
@@ -48,17 +58,44 @@ class SenderThread(ThreadTemplate):
         while True:
             msg_obj = OutputQueue.get_first_message()
             if msg_obj:
-                self._process_a_message(msg_obj)
+                self._process_a_delivery(msg_obj)
             else:
                 break
 
     @staticmethod
-    def _process_a_message(msg_obj):
-        result = send_message(msg_obj.destination, msg_obj.text)
-        if result is True:
+    def _process_a_delivery(msg_obj):
+        try:
+            dispatcher.send_message(msg_obj.destination, msg_obj.text)
+
+        except DispatcherException as exc:
+            event.error('sender: stopping because of dispatcher exception')
+            console('sender: stopping because of dispatcher exception')
+            raise exc
+
+        except DispatcherWrongToken:
+            event.error('sender: stopping because of api error')
+            console('sender: stopping because of api error')
+            raise StopTheSenderGently
+
+        except DispatcherTimeout:
+            event.warning('sender: stopping because of tg timeout')
+            console('sender: stopping because of tg timeout')
+            raise StopTheSenderGently
+
+        except DispatcherUndefinedExc:
+            msg = 'sender: deleting the broken message; delete the uid manually if the exception persists'
+            event.warning(msg)
+            console(msg)
             OutputQueue.delete_message(msg_obj)
-            return
-        # TODO if False
+
+        except DispatcherNoAccess:
+            event.warning('sender: deleting the inaccessible uid')
+            console('sender: deleting the inaccessible uid')
+            OutputQueue.delete_message(msg_obj)
+            # TODO delete a uid request
+
+        else:
+            OutputQueue.delete_message(msg_obj)
 
     def _test_sender_cycle(self):
         pass

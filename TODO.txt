@@ -1,5 +1,6 @@
+- Delete ThreadException.
+- Admin command interface.
 - Test logs.
-
 
 DONE - Run the threads in order: sender, updater, input controller and webhook in the last.
 DONE - Test thread timeout in the main.
