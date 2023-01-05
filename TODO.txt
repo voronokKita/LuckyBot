@@ -1,3 +1,5 @@
+- Need more logging.
+- Sender: delete a uid request.
 - Admin command interface.
 - Test logs.
 

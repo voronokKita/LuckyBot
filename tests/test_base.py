@@ -61,6 +61,7 @@ class TestProjectBase(unittest.TestCase):
         from lucky_bot import responder
         from lucky_bot import updater
         from lucky_bot import sender
+        from lucky_bot import dispatcher
         import main
 
         # threads
@@ -94,7 +95,6 @@ class TestProjectBase(unittest.TestCase):
         from lucky_bot.sender import dispatcher
         from lucky_bot.sender import OutputQueue
         from lucky_bot.models.output_mq import OutputQueue
-
         self.assertTrue(hasattr(OutputQueue, 'get_first_message'))
         self.assertTrue(hasattr(SenderThread, '_process_all_messages'))
         # in the dispatcher

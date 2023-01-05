@@ -1,10 +1,11 @@
 import unittest
 
 from lucky_bot.helpers.signals import EXIT_SIGNAL, NEW_MESSAGE_TO_SEND
-from lucky_bot.helpers.constants import TestException, ThreadException
+from lucky_bot.helpers.constants import TestException
 
 
 class ThreadTestTemplate(unittest.TestCase):
+    ''' Base tests for any thread. '''
     thread_class = None
     is_running_signal = None
     is_stopped_signal = None

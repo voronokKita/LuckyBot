@@ -68,7 +68,7 @@ def main():
 
     # just sleep and wait for the exit signal;
     if EXIT_SIGNAL.wait():
-        console('shutting down...')
+        console('main: shutting down...')
         event.info('exit signal')
         pass
 
@@ -94,7 +94,7 @@ def run_the_threads(threads):
 
 
 def thread_loading_timeout(thread, active_threads):
-    console(f'{thread} loading timeout, shutting down...')
+    console(f'main: {thread} loading timeout, shutting down...')
     event.warning(f'{thread} loading timeout')
 
     EXIT_SIGNAL.set()
@@ -103,7 +103,7 @@ def thread_loading_timeout(thread, active_threads):
 
 
 def thread_loading_interrupted(active_threads):
-    console('exit signal, shutting down...')
+    console('main: exit signal, shutting down...')
     event.warning('exit signal is set')
 
     main_msg = 'Failed to start the threads: exit signal.'
@@ -112,18 +112,22 @@ def thread_loading_interrupted(active_threads):
 
 def finish_the_work(active_threads, main_exec=None):
     exception_in_threads = stop_active_threads(active_threads)
-    ALL_DONE_SIGNAL.set()
     console('go to sleep (´-ω-｀)…zZZ')
     event.info('xxx STOP xxx]')
 
-    if main_exec and exception_in_threads:
-        raise exception_in_threads from main_exec
-    elif main_exec:
-        raise main_exec
-    elif exception_in_threads:
-        raise exception_in_threads
+    try:
+        if main_exec and exception_in_threads:
+            raise exception_in_threads from main_exec
+        elif main_exec:
+            raise main_exec
+        elif exception_in_threads:
+            raise exception_in_threads
+    except Exception as exc:
+        raise exc
     else:
         sys.exit(0)
+    finally:
+        ALL_DONE_SIGNAL.set()
 
 
 def stop_active_threads(threads):
@@ -133,12 +137,12 @@ def stop_active_threads(threads):
     for unit in threads:
         try:
             unit['thread'].merge()
-        except Exception as e:
-            msg = f'exception in {unit["thread"]}'
+        except Exception as exc:
+            msg = f'main: exception in {unit["thread"]}'
             logger.exception(msg)
             event.error(msg)
             console(msg)
-            last_exception = e
+            last_exception = exc
     return last_exception
 
 

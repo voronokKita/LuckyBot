@@ -3,12 +3,12 @@ from pyngrok.ngrok import NgrokTunnel
 from pyngrok.exception import PyngrokNgrokURLError
 from werkzeug.serving import make_server, BaseWSGIServer
 
-from lucky_bot.helpers.misc import ThreadTemplate
-from lucky_bot.helpers.signals import WEBHOOK_IS_RUNNING, WEBHOOK_IS_STOPPED
 from lucky_bot.helpers.constants import (
     REPLIT, REPLIT_URL, ADDRESS, PORT,
     WEBHOOK_ENDPOINT, WEBHOOK_SECRET, WebhookException,
 )
+from lucky_bot.helpers.signals import WEBHOOK_IS_RUNNING, WEBHOOK_IS_STOPPED
+from lucky_bot.helpers.misc import ThreadTemplate
 from lucky_bot.flask_config import FLASK_APP
 from lucky_bot.bot_config import BOT
 
@@ -37,7 +37,7 @@ class WebhookThread(ThreadTemplate):
             self._make_server()
 
             self._set_the_signal()
-            self._test_exception()
+            self._test_exception_after_signal()
             self.serving = True
             self._test_exception_after_serving()
 
@@ -51,6 +51,7 @@ class WebhookThread(ThreadTemplate):
             self._close_connections()
 
     def merge(self):
+        ''' May raise exceptions, if any. '''
         self._shutdown()
         super().merge()
 

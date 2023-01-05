@@ -7,7 +7,7 @@ from lucky_bot.helpers.constants import (
 )
 
 
-def get_config():
+def normal_logger():
     class DetailedExceptionFilter(logging.Filter):
         blacklist = {'werkzeug', 'TeleBot', 'event'}
         def filter(self, record):
@@ -34,7 +34,6 @@ def get_config():
         'version': 1,
         'disable_existing_loggers': False,
         'formatters': {
-            # 'console_debug': {'format': '[DEBUG] {message} [/DEBUG]', 'style': '{'},
             'event_to_file': {'format': '-- {asctime} {levelname} {message}', 'style': '{'},
             'exception_to_file': {
                 'format': '\n[{levelname}] {asctime}\n'
@@ -43,14 +42,8 @@ def get_config():
             },
         },
         'handlers': {
-            # 'console': {
-            #     'level': 'INFO',
-            #     'class': 'logging.StreamHandler',
-            #     'stream': 'ext://sys.stdout',  # default is stderr
-            # },
             'console_debug': {
                 'level': 'DEBUG',
-                # 'formatter': 'console_debug',
                 'class': 'logging.StreamHandler',
                 'stream': 'ext://sys.stdout',
             },
@@ -142,7 +135,7 @@ def dummy_logger():
 if TESTING:
     config = dummy_logger()
 else:
-    config = get_config()
+    config = normal_logger()
 
 logging.config.dictConfig(config)
 
@@ -184,4 +177,6 @@ def clear_old_logs():
         with logfile.open('w') as f:
             f.write('--------- old lines has ben removed ---------\n')
             lines_to_save = count - LOG_LIMIT // 2
-            f.writelines(lines[lines_to_save:])
+            f.writelines(
+                lines[lines_to_save:]
+            )

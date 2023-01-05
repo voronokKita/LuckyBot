@@ -78,14 +78,15 @@ TG_BOT_TIMEOUT = re.compile('Too many requests')
 class TestException(Exception):
     ''' For testing purposes. '''
 
+class ThreadException(Exception):
+    ''' For the threads, except main. '''
+
 class MainException(Exception):
     ''' For a main.py '''
 
+
 class WebhookWrongRequest(Exception):
     ''' Wrong request format. '''
-
-class ThreadException(Exception):
-    ''' For the threads, except main. '''
 
 class WebhookException(ThreadException):
     ''' Something wrong in the webhook thread. '''
@@ -93,11 +94,13 @@ class WebhookException(ThreadException):
 class FlaskException(ThreadException):
     ''' Something wrong in the flask app. '''
 
+
 class SenderException(ThreadException):
     ''' Something wrong in the sender thread. '''
 
 class StopTheSenderGently(SenderException):
     ''' Exit from the sender body() without an error. '''
+
 
 class DispatcherWrongToken(Exception):
     ''' Wrong API token from ApiTelegramException. '''

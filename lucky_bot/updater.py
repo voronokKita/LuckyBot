@@ -15,6 +15,6 @@ class UpdaterThread(ThreadTemplate):
 
     def body(self):
         self._set_the_signal()
-        self._test_exception()
+        self._test_exception_after_signal()
         if EXIT_SIGNAL.wait():
             pass

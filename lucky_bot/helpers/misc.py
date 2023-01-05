@@ -1,7 +1,7 @@
 import threading
 
-from lucky_bot.helpers.signals import EXIT_SIGNAL
 from lucky_bot.helpers.constants import ThreadException
+from lucky_bot.helpers.signals import EXIT_SIGNAL
 
 
 class ThreadTemplate(threading.Thread):
@@ -16,7 +16,7 @@ class ThreadTemplate(threading.Thread):
     def body(self):
         ''' Must be overwritten. '''
         self._set_the_signal()
-        self._test_exception()
+        self._test_exception_after_signal()
         if EXIT_SIGNAL.wait():
             pass
 
@@ -48,9 +48,9 @@ class ThreadTemplate(threading.Thread):
         cls.is_running_signal.set()
 
     @staticmethod
-    def _test_exception():
+    def _test_exception_before_signal():
         pass
 
     @staticmethod
-    def _test_exception_before_signal():
+    def _test_exception_after_signal():
         pass
