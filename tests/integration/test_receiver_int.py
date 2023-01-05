@@ -1,4 +1,4 @@
-""" python -m unittest tests.integration.test_webhook_int """
+""" python -m unittest tests.integration.test_receiver_int """
 import os
 import unittest
 from unittest.mock import patch
@@ -20,7 +20,7 @@ from lucky_bot.models.input_mq import InputQueue
 from tests.units.test_receiver import mock_ngrok, mock_telebot
 
 
-@patch('lucky_bot.webhook.TeleBot', new_callable=mock_telebot)
+@patch('lucky_bot.webhook.BOT', new_callable=mock_telebot)
 @patch('lucky_bot.webhook.ngrok', new_callable=mock_ngrok)
 class TestReceiverServing(unittest.TestCase):
     @classmethod
@@ -55,8 +55,7 @@ class TestReceiverServing(unittest.TestCase):
                    WEBHOOK_IS_RUNNING, WEBHOOK_IS_STOPPED]
         [signal.clear() for signal in signals if signal.is_set()]
 
-    @patch('lucky_bot.webhook.WebhookThread._remove_webhook')
-    def test_receiver_integration(self, remove_webhook, ngrok, TeleBot):
+    def test_receiver_integration(self, ngrok, bot):
         self.thread_obj.start()
 
         # assert normal start
@@ -67,8 +66,8 @@ class TestReceiverServing(unittest.TestCase):
         ngrok.connect.assert_called_once()
         self.assertEqual(self.thread_obj.webhook_url, 'http://0.0.0.0' + WEBHOOK_ENDPOINT)
 
-        remove_webhook.assert_called_once()
-        TeleBot.assert_called_once()
+        bot.remove_webhook.assert_called_once()
+        bot.set_webhook.assert_called_once()
         self.assertTrue(self.thread_obj.webhook)
 
         self.assertIsNotNone(self.thread_obj.server)
@@ -104,7 +103,7 @@ class TestReceiverServing(unittest.TestCase):
             raise TestException(f'The time to stop the {self.thread_obj} has passed.')
 
         self.assertFalse(self.thread_obj.serving)
-        self.assertEqual(remove_webhook.call_count, 2)
+        self.assertEqual(bot.remove_webhook.call_count, 2)
         ngrok.disconnect.assert_called_once()
         ngrok.kill.assert_called_once()
 

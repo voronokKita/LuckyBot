@@ -1,4 +1,4 @@
-""" python -m unittest tests.units.test_webhook """
+""" python -m unittest tests.units.test_receiver """
 import unittest
 from unittest.mock import patch, Mock
 
@@ -9,7 +9,7 @@ from lucky_bot.helpers.signals import (
 )
 from lucky_bot.helpers.constants import (
     TestException, ThreadException, FlaskException,
-    REPLIT, PORT, API, WEBHOOK_SECRET,
+    REPLIT, PORT, WEBHOOK_SECRET,
     WEBHOOK_ENDPOINT, PROJECT_DIR,
 )
 from lucky_bot.flask_config import FLASK_APP
@@ -27,11 +27,9 @@ def mock_ngrok():
 
 
 def mock_telebot():
-    instance = Mock()
-    instance.set_webhook.return_value = True
-    TeleBot = Mock()
-    TeleBot.return_value = instance
-    return TeleBot
+    bot = Mock()
+    bot.set_webhook.return_value = True
+    return bot
 
 
 def mock_serving():
@@ -41,7 +39,7 @@ def mock_serving():
 
 
 @patch('lucky_bot.webhook.WebhookThread._start_server', new_callable=mock_serving)
-@patch('lucky_bot.webhook.TeleBot', new_callable=mock_telebot)
+@patch('lucky_bot.webhook.BOT', new_callable=mock_telebot)
 @patch('lucky_bot.webhook.ngrok', new_callable=mock_ngrok)
 class TestWebhook(ThreadTestTemplate):
     thread_class = WebhookThread
@@ -72,25 +70,21 @@ class TestWebhook(ThreadTestTemplate):
         ngrok.disconnect.assert_called_once_with('http://0.0.0.0')
         ngrok.kill.assert_called_once()
 
-    def test_setting_webhook(self, foo, TeleBot, *args):
+    def test_setting_webhook(self, foo, bot, *args):
         self.thread_obj.webhook_url = 'http://0.0.0.0/webhook'
         self.thread_obj._set_webhook()
         self.thread_obj._remove_webhook()
 
-        self.assertEqual(TeleBot.call_count, 3)
-        TeleBot.assert_called_with(API, threaded=False)
-
-        instance = TeleBot()
-        self.assertEqual(instance.remove_webhook.call_count, 2)
-        instance.set_webhook.assert_called_once_with(
+        self.assertEqual(bot.remove_webhook.call_count, 2)
+        bot.set_webhook.assert_called_once_with(
             url=self.thread_obj.webhook_url,
             max_connections=10,
             secret_token=WEBHOOK_SECRET,
         )
 
-    def test_tunnel_and_setting_webhook_exception(self, ngrok, TeleBot, *args):
+    def test_tunnel_and_setting_webhook_exception(self, ngrok, bot, *args):
         self.assertFalse(REPLIT)
-        TeleBot().set_webhook.return_value = False
+        bot.set_webhook.return_value = False
 
         self.thread_obj.start()
         if not WEBHOOK_IS_STOPPED.wait(10):
@@ -101,10 +95,8 @@ class TestWebhook(ThreadTestTemplate):
         self.assertFalse(self.thread_obj.is_alive())
         ngrok.connect.assert_called_once()
         self.assertIsNotNone(self.thread_obj.webhook_url)
-        self.assertEqual(TeleBot.call_count, 3)
 
-        instance = TeleBot()
-        self.assertEqual(instance.remove_webhook.call_count, 1)
+        self.assertEqual(bot.remove_webhook.call_count, 1)
         ngrok.disconnect.assert_called_once()
         ngrok.kill.assert_called_once()
 

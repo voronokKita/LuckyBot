@@ -1,16 +1,16 @@
 from pyngrok import ngrok
 from pyngrok.ngrok import NgrokTunnel
 from pyngrok.exception import PyngrokNgrokURLError
-from telebot import TeleBot
 from werkzeug.serving import make_server, BaseWSGIServer
 
 from lucky_bot.helpers.misc import ThreadTemplate
 from lucky_bot.helpers.signals import WEBHOOK_IS_RUNNING, WEBHOOK_IS_STOPPED
 from lucky_bot.helpers.constants import (
-    REPLIT, REPLIT_URL, ADDRESS, PORT, API,
+    REPLIT, REPLIT_URL, ADDRESS, PORT,
     WEBHOOK_ENDPOINT, WEBHOOK_SECRET, WebhookException,
 )
 from lucky_bot.flask_config import FLASK_APP
+from lucky_bot.bot_config import BOT
 
 import logging
 from logs.config import console
@@ -64,7 +64,7 @@ class WebhookThread(ThreadTemplate):
 
     def _set_webhook(self):
         self._remove_webhook()
-        self.webhook = TeleBot(API, threaded=False).set_webhook(
+        self.webhook = BOT.set_webhook(
             url=self.webhook_url,
             max_connections=10,
             secret_token=WEBHOOK_SECRET,
@@ -100,7 +100,7 @@ class WebhookThread(ThreadTemplate):
     @staticmethod
     def _remove_webhook():
         ''' Wrapped for testing. '''
-        TeleBot(API, threaded=False).remove_webhook()
+        BOT.remove_webhook()
 
     def _close_tunnel(self):
         ''' Formally, ngrok doesn't need to be closet, but let it be. '''

@@ -64,7 +64,7 @@ class TestProjectBase(unittest.TestCase):
 
         #! Important things to be mocked
         from lucky_bot.webhook import ngrok
-        from lucky_bot.webhook import TeleBot
+        from lucky_bot.webhook import BOT
         from lucky_bot.webhook import WebhookThread
         self.assertTrue(hasattr(WebhookThread, '_make_tunnel'))
         self.assertTrue(hasattr(WebhookThread, '_set_webhook'))

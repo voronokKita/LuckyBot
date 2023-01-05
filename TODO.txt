@@ -1,5 +1,4 @@
 - Test logs.
-- Webhook: change abstract telebot to the bot.
 
 
 DONE - Run the threads in order: sender, updater, input controller and webhook in the last.
@@ -13,3 +12,4 @@ DONE - Webhook messages db & model.
 DONE - Delete old logs.
 DONE - Do not delete the test db file, drop a table instead.
 PASS - allowed_updates parameter in telebot webhook.
+DONE - Webhook: change abstract telebot to the bot.

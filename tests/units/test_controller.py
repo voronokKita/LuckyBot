@@ -1,4 +1,4 @@
-""" python -m unittest tests.units.test_input_controller """
+""" python -m unittest tests.units.test_controller """
 from unittest.mock import patch
 
 from lucky_bot.controller import ControllerThread
