@@ -15,11 +15,11 @@ from logs.config import console, event
 logger = logging.getLogger(__name__)
 
 
-def send_message(uid: int, text: str, file=None) -> True | Exception:
-    attempt = 3
-    while attempt > -1:
+def send_message(uid: int, text: str, file=None):
+    attempt = 0
+    while attempt < 3:
         try:
-            attempt -= 1
+            attempt += 1
             BOT.send_message(uid, text)
 
         except ApiTelegramException as aexc:
@@ -43,7 +43,7 @@ def send_message(uid: int, text: str, file=None) -> True | Exception:
                 raise DispatcherNoAccess(msg)
 
             elif TG_BOT_TIMEOUT.search(aexc.description):
-                if attempt >= 0:
+                if attempt < 3:
                     time.sleep(10)
                     continue
                 else:
@@ -53,7 +53,7 @@ def send_message(uid: int, text: str, file=None) -> True | Exception:
                     raise DispatcherTimeout(msg)
 
             else:
-                if attempt >= 0:
+                if attempt < 3:
                     time.sleep(1)
                     continue
                 else:

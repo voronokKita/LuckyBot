@@ -63,6 +63,7 @@ class TestProjectBase(unittest.TestCase):
         import main
 
         #! Important things to be mocked
+        # in the webhook
         from lucky_bot.webhook import ngrok
         from lucky_bot.webhook import BOT
         from lucky_bot.webhook import WebhookThread
@@ -72,11 +73,15 @@ class TestProjectBase(unittest.TestCase):
         self.assertTrue(hasattr(WebhookThread, '_start_server'))
         self.assertTrue(hasattr(WebhookThread, '_remove_webhook'))
         self.assertTrue(hasattr(WebhookThread, '_close_tunnel'))
+        # in the flask app
         from lucky_bot.flask_config import InputQueue
 
-        from lucky_bot.sender import send_message
+        # in the sender
+        from lucky_bot.sender import dispatcher
         from lucky_bot.sender import OutputQueue
         from lucky_bot.models.output_mq import OutputQueue
-        self.assertTrue(hasattr(OutputQueue, 'get_first_message'))
         from lucky_bot.sender import SenderThread
+        self.assertTrue(hasattr(OutputQueue, 'get_first_message'))
         self.assertTrue(hasattr(SenderThread, '_process_all_messages'))
+        # in the dispatcher
+        from lucky_bot.dispatcher import BOT

@@ -4,9 +4,9 @@ from lucky_bot.helpers.signals import (
     NEW_MESSAGE_TO_SEND,
 )
 from lucky_bot.helpers.constants import (
-    SenderException, DispatcherWrongToken, DispatcherNoAccess,
-    DispatcherTimeout, DispatcherUndefinedExc, DispatcherException,
-    StopTheSenderGently,
+    SenderException, StopTheSenderGently,
+    DispatcherWrongToken, DispatcherNoAccess, DispatcherTimeout,
+    DispatcherUndefinedExc, DispatcherException,
 )
 from lucky_bot.models.output_mq import OutputQueue
 from lucky_bot import dispatcher
