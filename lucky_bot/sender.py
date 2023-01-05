@@ -26,6 +26,8 @@ class SenderThread(ThreadTemplate):
     def body(self):
         try:
             self._process_all_messages()
+            if NEW_MESSAGE_TO_SEND.is_set():
+                NEW_MESSAGE_TO_SEND.clear()
             self._set_the_signal()
             self._test_exception_after_signal()
 
