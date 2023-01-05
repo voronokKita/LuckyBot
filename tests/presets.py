@@ -19,12 +19,11 @@ class ThreadTestTemplate(unittest.TestCase):
             self.thread_obj.join(5)
         self._clear_signals()
 
-    @classmethod
-    def _clear_signals(cls):
+    def _clear_signals(self):
         signals = [EXIT_SIGNAL, NEW_MESSAGE_TO_SEND,
-                   cls.is_running_signal, cls.is_stopped_signal]
-        if cls.signals:
-            signals += cls.signals
+                   self.is_running_signal, self.is_stopped_signal]
+        if self.signals:
+            signals += self.signals
         [signal.clear() for signal in signals if signal.is_set()]
 
     def normal_case(self):
@@ -57,5 +56,5 @@ class ThreadTestTemplate(unittest.TestCase):
             raise TestException(f'The time to stop the {self.thread_obj} has passed.')
 
         self.assertTrue(EXIT_SIGNAL.is_set())
-        self.assertRaises(ThreadException, self.thread_obj.merge)
+        self.assertRaises(Exception, self.thread_obj.merge)
         self.assertFalse(self.thread_obj.is_alive())

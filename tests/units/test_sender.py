@@ -35,14 +35,14 @@ class TestSenderBase(ThreadTestTemplate):
         super().exception_case(test_exception)
 
     @patch('lucky_bot.sender.SenderThread._test_sender_cycle')
-    @patch('lucky_bot.sender.send_message')
+    @patch('lucky_bot.sender.dispatcher')
     @patch('lucky_bot.sender.OutputQueue')
-    def test_sender_normal_message(self, mock_OutputQueue, send_message, sender_cycle):
+    def test_sender_normal_message(self, mock_OutputQueue, disp, sender_cycle):
         msg_obj = Mock()
         msg_obj.destination = 42
         msg_obj.text = 'hello'
         mock_OutputQueue.get_first_message.side_effect = [msg_obj, None]
-        send_message.return_value = True
+        disp.send_message.return_value = True
 
         self.thread_obj.start()
         if not SENDER_IS_RUNNING.wait(10):
@@ -50,7 +50,7 @@ class TestSenderBase(ThreadTestTemplate):
             raise TestException(f'The time to start the {self.thread_obj} has passed.')
 
         self.assertFalse(EXIT_SIGNAL.is_set())
-        send_message.assert_called_once_with(42, 'hello')
+        disp.send_message.assert_called_once_with(42, 'hello')
         mock_OutputQueue.delete_message.assert_called_once_with(msg_obj)
 
         EXIT_SIGNAL.set()
@@ -78,25 +78,16 @@ class SenderMessageQueue(unittest.TestCase):
         OutputQueue.add_message(42, 'bar', 2)
         OutputQueue.add_message(42, 'baz', 3)
 
-        msg_obj = OutputQueue.get_first_message()
-        self.assertIsNotNone(msg_obj, msg='foo')
-        self.assertEqual(msg_obj.text, 'foo')
-        OutputQueue.delete_message(msg_obj)
-
-        msg_obj = OutputQueue.get_first_message()
-        self.assertIsNotNone(msg_obj, msg='bar')
-        self.assertEqual(msg_obj.text, 'bar')
-        OutputQueue.delete_message(msg_obj)
-
-        msg_obj = OutputQueue.get_first_message()
-        self.assertIsNotNone(msg_obj, msg='baz')
-        self.assertEqual(msg_obj.text, 'baz')
-        OutputQueue.delete_message(msg_obj)
+        for message in ['foo', 'bar', 'baz']:
+            msg_obj = OutputQueue.get_first_message()
+            self.assertIsNotNone(msg_obj, msg=message)
+            self.assertEqual(msg_obj.text, message)
+            OutputQueue.delete_message(msg_obj)
 
         result = OutputQueue.get_first_message()
         self.assertIsNone(result)
 
-    def from_queue_to_sender(self):
+    def from_queue_to_sender(self):  # TODO
         pass
 
 
