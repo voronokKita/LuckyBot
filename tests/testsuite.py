@@ -13,8 +13,7 @@ sys.path.append(str(BASE_DIR))
 
 from tests import test_base
 from tests.units import (
-    test_receiver, test_controller, test_updater,
-    test_sender,
+    test_receiver, test_controller, test_updater, test_sender,
 )
 from tests.integration import test_main, test_receiver_int
 

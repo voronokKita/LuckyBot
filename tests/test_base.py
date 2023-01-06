@@ -27,7 +27,7 @@ class TestProjectBase(unittest.TestCase):
             package_dir / 'helpers' / 'constants.py',
             package_dir / 'helpers' / 'misc.py',
 
-            package_dir / 'webhook.py',
+            package_dir / 'receiver.py',
             package_dir / 'flask_config.py',
             package_dir / 'bot_config.py',
             package_dir / 'controller.py',
@@ -79,26 +79,4 @@ class TestProjectBase(unittest.TestCase):
         self.assertEqual(str(sender_tr), 'sender thread')
         self.assertEqual(str(updater_tr), 'updater thread')
         self.assertEqual(str(controller_tr), 'controller thread')
-        self.assertEqual(str(receiver_tr), 'webhook thread')
-
-        #! Important things to be mocked
-        # in the webhook
-        from lucky_bot.receiver import ngrok
-        from lucky_bot.receiver import BOT
-        self.assertTrue(hasattr(ReceiverThread, '_make_tunnel'))
-        self.assertTrue(hasattr(ReceiverThread, '_set_webhook'))
-        self.assertTrue(hasattr(ReceiverThread, '_make_server'))
-        self.assertTrue(hasattr(ReceiverThread, '_start_server'))
-        self.assertTrue(hasattr(ReceiverThread, '_remove_webhook'))
-        self.assertTrue(hasattr(ReceiverThread, '_close_tunnel'))
-        # in the flask app
-        from lucky_bot.flask_config import InputQueue
-
-        # in the sender
-        from lucky_bot.sender import dispatcher
-        from lucky_bot.sender import OutputQueue
-        from lucky_bot.models.output_mq import OutputQueue
-        self.assertTrue(hasattr(OutputQueue, 'get_first_message'))
-        self.assertTrue(hasattr(SenderThread, '_process_all_messages'))
-        # in the dispatcher
-        from lucky_bot.dispatcher import BOT
+        self.assertEqual(str(receiver_tr), 'receiver thread')

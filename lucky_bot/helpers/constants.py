@@ -78,11 +78,11 @@ TG_BOT_TIMEOUT = re.compile('Too many requests')
 class TestException(Exception):
     ''' For testing purposes. '''
 
-class ThreadException(Exception):
-    ''' For the threads, except main. '''
-
 class MainException(Exception):
     ''' For a main.py '''
+
+class ThreadException(Exception):
+    ''' For the threads, except main. '''
 
 
 class WebhookWrongRequest(Exception):
@@ -91,7 +91,7 @@ class WebhookWrongRequest(Exception):
 class ReceiverException(ThreadException):
     ''' Something wrong in the receiver thread. '''
 
-class FlaskException(ThreadException):
+class FlaskException(Exception):
     ''' Something wrong in the flask app. '''
 
 
