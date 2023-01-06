@@ -1,5 +1,6 @@
+- Catch an exception from a werkzeug app.
 - Need more logging.
-- Sender: delete a uid request.
+- Sender: the delete a uid request.
 - Admin command interface.
 - Test logs.
 
