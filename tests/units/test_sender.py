@@ -18,7 +18,7 @@ from lucky_bot.models.output_mq import OutputQueue
 from lucky_bot import dispatcher
 from lucky_bot.sender import SenderThread
 
-from tests.presets import ThreadTestTemplate
+from tests.presets import ThreadTestTemplate, ThreadSmallTestTemplate
 
 
 @patch('lucky_bot.sender.SenderThread._process_all_messages')
@@ -41,20 +41,11 @@ class TestSenderThreadBase(ThreadTestTemplate):
 @patch('lucky_bot.sender.SenderThread._test_sender_cycle')
 @patch('lucky_bot.sender.dispatcher')
 @patch('lucky_bot.sender.OutputQueue')
-class TestSender(unittest.TestCase):
-    def setUp(self):
-        self.sender = SenderThread()
-
-    def tearDown(self):
-        if self.sender.is_alive():
-            self.sender.merge()
-        self._clear_signals()
-
-    @staticmethod
-    def _clear_signals():
-        signals = [EXIT_SIGNAL, NEW_MESSAGE_TO_SEND,
-                   SENDER_IS_RUNNING, SENDER_IS_STOPPED]
-        [signal.clear() for signal in signals if signal.is_set()]
+class TestSender(ThreadSmallTestTemplate):
+    thread_class = SenderThread
+    is_running_signal = SENDER_IS_RUNNING
+    is_stopped_signal = SENDER_IS_STOPPED
+    signals = [NEW_MESSAGE_TO_SEND]
 
     def test_sender_normal_message(self, mock_OutputQueue, disp, sender_cycle):
         msg_obj = Mock()
@@ -63,9 +54,9 @@ class TestSender(unittest.TestCase):
         mock_OutputQueue.get_first_message.side_effect = [msg_obj, None]
         NEW_MESSAGE_TO_SEND.set()
 
-        self.sender.start()
+        self.thread_obj.start()
         if not SENDER_IS_RUNNING.wait(10):
-            self.sender.merge()
+            self.thread_obj.merge()
             raise TestException('The time to start the sender has passed.')
 
         self.assertFalse(NEW_MESSAGE_TO_SEND.is_set(), msg='first msg')
@@ -86,11 +77,10 @@ class TestSender(unittest.TestCase):
         EXIT_SIGNAL.set()
         NEW_MESSAGE_TO_SEND.set()
         if not SENDER_IS_STOPPED.wait(10):
-            self.sender.merge()
+            self.thread_obj.merge()
             raise TestException('The time to stop the sender has passed.')
 
-        self.sender.merge()
-        self.assertFalse(self.sender.is_alive())
+        self.thread_obj.merge()
         sender_cycle.assert_called_once()
 
     @patch('lucky_bot.sender.SenderThread._process_a_delivery')
@@ -98,31 +88,29 @@ class TestSender(unittest.TestCase):
         mock_OutputQueue.get_first_message.side_effect = [Mock(), None]
         func.side_effect = StopTheSenderGently('please')
 
-        self.sender.start()
+        self.thread_obj.start()
         if not SENDER_IS_STOPPED.wait(10):
-            self.sender.merge()
+            self.thread_obj.merge()
             raise TestException('The time to stop the sender has passed.')
 
         self.assertFalse(SENDER_IS_RUNNING.is_set(), msg='exception before this signal')
         sender_cycle.assert_not_called()
         self.assertTrue(EXIT_SIGNAL.is_set())
-        self.assertFalse(self.sender.is_alive())
-        self.sender.merge()  # no exceptions
+        self.thread_obj.merge()  # no exceptions
 
     def test_sender_exception_in_dispatcher(self, mock_OutputQueue, disp, sender_cycle):
         mock_OutputQueue.get_first_message.side_effect = [Mock(), None]
         disp.send_message.side_effect = DispatcherException('boom')
 
-        self.sender.start()
+        self.thread_obj.start()
         if not SENDER_IS_STOPPED.wait(10):
-            self.sender.merge()
+            self.thread_obj.merge()
             raise TestException('The time to stop the sender has passed.')
 
         self.assertFalse(SENDER_IS_RUNNING.is_set(), msg='exception before this signal')
         sender_cycle.assert_not_called()
         self.assertTrue(EXIT_SIGNAL.is_set())
-        self.assertFalse(self.sender.is_alive())
-        self.assertRaises(DispatcherException, self.sender.merge)
+        self.assertRaises(DispatcherException, self.thread_obj.merge)
 
 
 @patch('lucky_bot.sender.OutputQueue')

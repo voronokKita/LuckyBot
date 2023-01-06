@@ -88,8 +88,8 @@ class MainException(Exception):
 class WebhookWrongRequest(Exception):
     ''' Wrong request format. '''
 
-class WebhookException(ThreadException):
-    ''' Something wrong in the webhook thread. '''
+class ReceiverException(ThreadException):
+    ''' Something wrong in the receiver thread. '''
 
 class FlaskException(ThreadException):
     ''' Something wrong in the flask app. '''

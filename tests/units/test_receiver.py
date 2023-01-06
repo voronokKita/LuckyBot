@@ -2,20 +2,21 @@
 import unittest
 from unittest.mock import patch, Mock
 
-from lucky_bot.webhook import WebhookThread
+from lucky_bot.receiver import ReceiverThread
 from lucky_bot.helpers.signals import (
-    WEBHOOK_IS_RUNNING, WEBHOOK_IS_STOPPED,
+    RECEIVER_IS_RUNNING, RECEIVER_IS_STOPPED,
     EXIT_SIGNAL, NEW_TELEGRAM_MESSAGE,
 )
 from lucky_bot.helpers.constants import (
-    TestException, ThreadException, FlaskException,
+    TestException, ThreadException,
+    ReceiverException, FlaskException,
     REPLIT, PORT, WEBHOOK_SECRET,
     WEBHOOK_ENDPOINT, PROJECT_DIR,
 )
 from lucky_bot.flask_config import FLASK_APP
 from lucky_bot.models.input_mq import InputQueue
 
-from tests.presets import ThreadTestTemplate
+from tests.presets import ThreadTestTemplate, ThreadSmallTestTemplate
 
 
 def mock_ngrok():
@@ -38,13 +39,14 @@ def mock_serving():
     return start_server
 
 
-@patch('lucky_bot.webhook.WebhookThread._start_server', new_callable=mock_serving)
-@patch('lucky_bot.webhook.BOT', new_callable=mock_telebot)
-@patch('lucky_bot.webhook.ngrok', new_callable=mock_ngrok)
-class TestWebhook(ThreadTestTemplate):
-    thread_class = WebhookThread
-    is_running_signal = WEBHOOK_IS_RUNNING
-    is_stopped_signal = WEBHOOK_IS_STOPPED
+@patch('lucky_bot.receiver.ReceiverThread._start_server', new_callable=mock_serving)
+@patch('lucky_bot.receiver.ReceiverThread._make_server', Mock())
+@patch('lucky_bot.receiver.BOT', new_callable=mock_telebot)
+@patch('lucky_bot.receiver.ngrok', new_callable=mock_ngrok)
+class TestReceiverThreadBase(ThreadTestTemplate):
+    thread_class = ReceiverThread
+    is_running_signal = RECEIVER_IS_RUNNING
+    is_stopped_signal = RECEIVER_IS_STOPPED
     signals = [NEW_TELEGRAM_MESSAGE]
 
     def tearDown(self):
@@ -52,57 +54,97 @@ class TestWebhook(ThreadTestTemplate):
             self.thread_obj.server.socket.close()
         super().tearDown()
 
-    def test_webhook_normal_start(self, *args):
+    def test_receiver_normal_start(self, *args):
         super().normal_case()
 
-    @patch('lucky_bot.helpers.misc.ThreadTemplate._test_exception')
-    def test_webhook_normal_exception(self, test_exception, *args):
+    @patch('lucky_bot.helpers.misc.ThreadTemplate._test_exception_after_signal')
+    def test_receiver_normal_exception(self, test_exception, *args):
         super().exception_case(test_exception)
 
-    def test_webhook_forced_merge(self, *args):
+    def test_receiver_forced_merge(self, *args):
         super().forced_merge()
 
-    def test_webhook_tunnel(self, ngrok, *args):
-        self.assertFalse(REPLIT)
 
-        self.thread_obj._make_tunnel()
-        self.thread_obj._close_tunnel()
+@patch('lucky_bot.receiver.ReceiverThread._start_server', new_callable=mock_serving)
+@patch('lucky_bot.receiver.ReceiverThread._make_server')
+@patch('lucky_bot.receiver.ReceiverThread._set_webhook')
+@patch('lucky_bot.receiver.ngrok', new_callable=mock_ngrok)
+class TestTunnel(ThreadSmallTestTemplate):
+    thread_class = ReceiverThread
+    is_running_signal = RECEIVER_IS_RUNNING
+    is_stopped_signal = RECEIVER_IS_STOPPED
+    signals = [NEW_TELEGRAM_MESSAGE]
+
+    def setUp(self):
+        self.assertFalse(REPLIT)
+        super().setUp()
+
+    def test_receiver_tunnel_setup(self, ngrok, *args):
+        self.thread_obj.start()
+        if not RECEIVER_IS_RUNNING.wait(10):
+            self.thread_obj.merge()
+            raise TestException('The time to start the receiver has passed.')
 
         ngrok.connect.assert_called_once_with(PORT, proto='http', bind_tls=True)
         self.assertEqual(self.thread_obj.webhook_url, 'http://0.0.0.0' + WEBHOOK_ENDPOINT)
-        ngrok.disconnect.assert_called_once_with('http://0.0.0.0')
-        ngrok.kill.assert_called_once()
+        self.assertTrue(self.thread_obj.serving)
+        self.thread_obj.merge()
 
-    def test_setting_webhook(self, foo, bot, *args):
-        self.thread_obj.webhook_url = 'http://0.0.0.0/webhook'
-        self.thread_obj._set_webhook()
-        self.thread_obj._remove_webhook()
+    def test_receiver_tunnel_exception(self, ngrok, set_webhook, *args):
+        ngrok.connect.side_effect = TestException('boom')
+        self.thread_obj.start()
+        if not RECEIVER_IS_STOPPED.wait(10):
+            self.thread_obj.merge()
+            raise TestException('The time to stop the receiver has passed.')
 
-        self.assertEqual(bot.remove_webhook.call_count, 2)
+        ngrok.connect.assert_called_once()
+        set_webhook.assert_not_called()
+        self.assertRaises(ReceiverException, self.thread_obj.merge)
+
+
+@patch('lucky_bot.receiver.ReceiverThread._start_server', new_callable=mock_serving)
+@patch('lucky_bot.receiver.ReceiverThread._make_server')
+@patch('lucky_bot.receiver.BOT', new_callable=mock_telebot)
+@patch('lucky_bot.receiver.ngrok', new_callable=mock_ngrok)
+class TestWebhook(ThreadSmallTestTemplate):
+    thread_class = ReceiverThread
+    is_running_signal = RECEIVER_IS_RUNNING
+    is_stopped_signal = RECEIVER_IS_STOPPED
+    signals = [NEW_TELEGRAM_MESSAGE]
+
+    def test_receiver_setting_webhook(self, ngrok, bot, *args):
+        self.thread_obj.start()
+        if not RECEIVER_IS_RUNNING.wait(10):
+            self.thread_obj.merge()
+            raise TestException('The time to start the receiver has passed.')
+
+        ngrok.connect.assert_called_once()
         bot.set_webhook.assert_called_once_with(
-            url=self.thread_obj.webhook_url,
+            url='http://0.0.0.0'+WEBHOOK_ENDPOINT,
             max_connections=10,
-            secret_token=WEBHOOK_SECRET,
+            secret_token=WEBHOOK_SECRET
         )
+        self.assertTrue(self.thread_obj.serving)
+        self.thread_obj.merge()
 
-    def test_tunnel_and_setting_webhook_exception(self, ngrok, bot, *args):
-        self.assertFalse(REPLIT)
+    def test_receiver_webhook_exception(self, ngrok, bot, make_server, *args):
         bot.set_webhook.return_value = False
 
         self.thread_obj.start()
-        if not WEBHOOK_IS_STOPPED.wait(10):
+        if not RECEIVER_IS_STOPPED.wait(10):
             self.thread_obj.merge()
-            raise TestException(f'The time to raise exception in the webhook has passed.')
+            raise TestException('The time to stop the receiver has passed.')
 
-        self.assertRaises(ThreadException, self.thread_obj.merge)
-        self.assertFalse(self.thread_obj.is_alive())
         ngrok.connect.assert_called_once()
-        self.assertIsNotNone(self.thread_obj.webhook_url)
-
-        self.assertEqual(bot.remove_webhook.call_count, 1)
+        bot.remove_webhook.assert_called_once()
+        bot.set_webhook.assert_called_once()
+        make_server.assert_not_called()
         ngrok.disconnect.assert_called_once()
         ngrok.kill.assert_called_once()
+        self.assertRaises(ReceiverException, self.thread_obj.merge)
 
+
+class TestReceiver(unittest.TestCase):  # BROKEN
     def test_that_server_created(self, *args):
         self.assertIsNotNone(FLASK_APP)
         self.thread_obj._make_server()
@@ -116,7 +158,7 @@ class TestWebhook(ThreadTestTemplate):
         make_tunnel.side_effect = TestException('boom')
 
         self.thread_obj.start()
-        if not WEBHOOK_IS_STOPPED.wait(10):
+        if not RECEIVER_IS_STOPPED.wait(10):
             self.thread_obj.merge()
             raise TestException(f'The time to raise exception in the webhook has passed.')
 
@@ -136,7 +178,7 @@ class TestWebhook(ThreadTestTemplate):
         set_webhook.side_effect = TestException('boom')
 
         self.thread_obj.start()
-        if not WEBHOOK_IS_STOPPED.wait(10):
+        if not RECEIVER_IS_STOPPED.wait(10):
             self.thread_obj.merge()
             raise TestException(f'The time to raise exception in the webhook has passed.')
 
@@ -156,7 +198,7 @@ class TestWebhook(ThreadTestTemplate):
         make_server.side_effect = TestException('boom')
 
         self.thread_obj.start()
-        if not WEBHOOK_IS_STOPPED.wait(10):
+        if not RECEIVER_IS_STOPPED.wait(10):
             self.thread_obj.merge()
             raise TestException(f'The time to raise exception in the webhook has passed.')
 
@@ -176,7 +218,7 @@ class TestWebhook(ThreadTestTemplate):
         test_exception.side_effect = TestException('boom')
 
         self.thread_obj.start()
-        if not WEBHOOK_IS_STOPPED.wait(10):
+        if not RECEIVER_IS_STOPPED.wait(10):
             self.thread_obj.merge()
             raise TestException(f'The time to raise exception in the webhook has passed.')
 
@@ -196,7 +238,7 @@ class TestWebhook(ThreadTestTemplate):
         test_exception.side_effect = TestException('boom')
 
         self.thread_obj.start()
-        if not WEBHOOK_IS_STOPPED.wait(10):
+        if not RECEIVER_IS_STOPPED.wait(10):
             self.thread_obj.merge()
             raise TestException(f'The time to raise exception in the webhook has passed.')
 
@@ -215,7 +257,7 @@ class TestWebhook(ThreadTestTemplate):
     def test_complete_webhook_start_and_merge(self, remove_webhook, close_tunnel, *args):
         self.thread_obj.start()
         EXIT_SIGNAL.set()
-        if not WEBHOOK_IS_STOPPED.wait(10):
+        if not RECEIVER_IS_STOPPED.wait(10):
             self.thread_obj.merge()
             raise TestException(f'The time to stop the webhook has passed.')
 
@@ -251,16 +293,12 @@ class TestFlaskApp(unittest.TestCase):
         FLASK_APP.config['TESTING'] = False
         FLASK_APP.config['DEBUG'] = False
 
-    def test_flask_app(self, *args):
+    def test_flask_app_ping(self, *args):
         response = self.client.get('/ping')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.text, 'pong')
 
-    def test_flask_app_wrong_request(self, *args):
-        response = self.client.post(WEBHOOK_ENDPOINT, data=r'junk')
-        self.assertEqual(response.status_code, 400)
-
-    def test_flask_app_normal_request(self, *args):
+    def test_flask_app_normal_request(self, imq):
         response = self.client.post(
             WEBHOOK_ENDPOINT,
             headers={'Content-Type': 'application/json',
@@ -268,10 +306,21 @@ class TestFlaskApp(unittest.TestCase):
             data=self.telegram_request.encode(),
         )
         self.assertEqual(response.status_code, 200)
+        imq.add_message.assert_called_once()
+
+    def test_flask_app_wrong_request(self, *args):
+        response = self.client.post(WEBHOOK_ENDPOINT, data=r'junk')
+        self.assertEqual(response.status_code, 400)
+
+    @patch('lucky_bot.flask_config.get_message_data')
+    def test_flask_app_get_msg_exception(self, get_message, *args):
+        get_message.side_effect = TestException('boom')
+        with self.assertRaises(FlaskException):
+            response = self.client.post(WEBHOOK_ENDPOINT, data=r'junk')
+        self.assertTrue(EXIT_SIGNAL.is_set())
 
     @patch('lucky_bot.flask_config.test_exception')
-    @patch('lucky_bot.flask_config.test_flag')
-    def test_flask_app_exception_case(self, test_flag, test_exception, *args):
+    def test_flask_app_save_msg_exception(self, test_exception, *args):
         test_exception.side_effect = TestException('boom')
         with self.assertRaises(FlaskException):
             response = self.client.post(
@@ -280,38 +329,26 @@ class TestFlaskApp(unittest.TestCase):
                          'X-Telegram-Bot-Api-Secret-Token': WEBHOOK_SECRET},
                 data=self.telegram_request.encode(),
             )
-        test_flag.assert_called_once()
         self.assertTrue(EXIT_SIGNAL.is_set())
 
 
 class TestReceiverMessageQueue(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        fixture = PROJECT_DIR / 'tests' / 'fixtures' / 'telegram_request.json'
-        with open(fixture) as f:
-            cls.telegram_request = f.read().strip()
-
     def setUp(self):
         InputQueue.set_up()
-        self.client = FLASK_APP.test_client()
 
     def tearDown(self):
         InputQueue.tear_down()
-        signals = [EXIT_SIGNAL, NEW_TELEGRAM_MESSAGE]
-        [signal.clear() for signal in signals if signal.is_set()]
 
-    def test_input_queue_works(self):
-        response = self.client.post(
-            WEBHOOK_ENDPOINT,
-            headers={'Content-Type': 'application/json',
-                     'X-Telegram-Bot-Api-Secret-Token': WEBHOOK_SECRET},
-            data=self.telegram_request.encode(),
-        )
-        self.assertEqual(response.status_code, 200)
+    def test_output_queue_works(self):
+        InputQueue.add_message('foo', 1)
+        InputQueue.add_message('bar', 2)
+        InputQueue.add_message('baz', 3)
 
-        msg_obj = InputQueue.get_first_message()
-        self.assertIsNotNone(msg_obj)
+        for message in ['foo', 'bar', 'baz']:
+            msg_obj = InputQueue.get_first_message()
+            self.assertIsNotNone(msg_obj, msg=message)
+            self.assertEqual(msg_obj.data, message)
+            InputQueue.delete_message(msg_obj)
 
-        InputQueue.delete_message(msg_obj)
         result = InputQueue.get_first_message()
         self.assertIsNone(result)

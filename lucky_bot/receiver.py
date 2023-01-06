@@ -5,9 +5,10 @@ from werkzeug.serving import make_server, BaseWSGIServer
 
 from lucky_bot.helpers.constants import (
     REPLIT, REPLIT_URL, ADDRESS, PORT,
-    WEBHOOK_ENDPOINT, WEBHOOK_SECRET, WebhookException,
+    WEBHOOK_ENDPOINT, WEBHOOK_SECRET,
+    ReceiverException,
 )
-from lucky_bot.helpers.signals import WEBHOOK_IS_RUNNING, WEBHOOK_IS_STOPPED
+from lucky_bot.helpers.signals import RECEIVER_IS_RUNNING, RECEIVER_IS_STOPPED
 from lucky_bot.helpers.misc import ThreadTemplate
 from lucky_bot.flask_config import FLASK_APP
 from lucky_bot.bot_config import BOT
@@ -17,9 +18,9 @@ from logs.config import console
 logger = logging.getLogger(__name__)
 
 
-class WebhookThread(ThreadTemplate):
-    is_running_signal = WEBHOOK_IS_RUNNING
-    is_stopped_signal = WEBHOOK_IS_STOPPED
+class ReceiverThread(ThreadTemplate):
+    is_running_signal = RECEIVER_IS_RUNNING
+    is_stopped_signal = RECEIVER_IS_STOPPED
 
     tunnel: NgrokTunnel = None
     webhook_url: str = None
@@ -28,7 +29,7 @@ class WebhookThread(ThreadTemplate):
     serving: bool = False
 
     def __str__(self):
-        return 'webhook thread'
+        return 'receiver thread'
 
     def body(self):
         try:
@@ -45,14 +46,18 @@ class WebhookThread(ThreadTemplate):
             self._start_server()
 
         except Exception as exc:
-            raise WebhookException(exc)
+            raise ReceiverException(exc)
         finally:
+            # after server shutdowns either way
             self.serving = False
             self._close_connections()
 
     def merge(self):
         ''' May raise exceptions, if any. '''
-        self._shutdown()
+        if self.server:
+            self._shutdown_server()
+        if self.tunnel or self.webhook:
+            self._close_connections()
         super().merge()
 
     def _make_tunnel(self):
@@ -71,7 +76,7 @@ class WebhookThread(ThreadTemplate):
             secret_token=WEBHOOK_SECRET,
         )
         if self.webhook is not True:
-            raise WebhookException(f"Can't set the webhook: {self.webhook}")
+            raise ReceiverException(f"Can't set the webhook: {self.webhook}")
 
     def _make_server(self):
         self.server = make_server(
@@ -86,17 +91,22 @@ class WebhookThread(ThreadTemplate):
         ''' Wrapped for testing. '''
         self.server.serve_forever(poll_interval=2)
 
+    def _shutdown_server(self):
+        if self.serving:
+            self.server.shutdown()
+            self.serving = False
+        elif not self.serving:
+            self.server.socket.close()
+        self.server = None
+
     def _close_connections(self):
         if self.webhook:
             self._remove_webhook()
+            self.webhook = False
+            self.webhook_url = None
         if self.tunnel:
             self._close_tunnel()
-
-    def _shutdown(self):
-        if self.serving:
-            self.server.shutdown()
-        elif self.server and not self.serving:
-            self.server.socket.close()
+            self.tunnel = None
 
     @staticmethod
     def _remove_webhook():

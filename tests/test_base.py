@@ -53,7 +53,7 @@ class TestProjectBase(unittest.TestCase):
         from lucky_bot.models import input_mq
         from lucky_bot.models import output_mq
 
-        from lucky_bot import webhook
+        from lucky_bot import receiver
         from lucky_bot import flask_config
         from lucky_bot import bot_config
         from lucky_bot import controller
@@ -64,30 +64,33 @@ class TestProjectBase(unittest.TestCase):
         from lucky_bot import dispatcher
         import main
 
+        from lucky_bot.helpers.constants import REPLIT
+        self.assertFalse(REPLIT)
+
         # threads
         from lucky_bot.sender import SenderThread
         from lucky_bot.updater import UpdaterThread
         from lucky_bot.controller import ControllerThread
-        from lucky_bot.webhook import WebhookThread
-        sender = SenderThread()
-        updater = UpdaterThread()
-        controller = ControllerThread()
-        webhook = WebhookThread()
-        self.assertEqual(str(sender), 'sender thread')
-        self.assertEqual(str(updater), 'updater thread')
-        self.assertEqual(str(controller), 'controller thread')
-        self.assertEqual(str(webhook), 'webhook thread')
+        from lucky_bot.receiver import ReceiverThread
+        sender_tr = SenderThread()
+        updater_tr = UpdaterThread()
+        controller_tr = ControllerThread()
+        receiver_tr = ReceiverThread()
+        self.assertEqual(str(sender_tr), 'sender thread')
+        self.assertEqual(str(updater_tr), 'updater thread')
+        self.assertEqual(str(controller_tr), 'controller thread')
+        self.assertEqual(str(receiver_tr), 'webhook thread')
 
         #! Important things to be mocked
         # in the webhook
-        from lucky_bot.webhook import ngrok
-        from lucky_bot.webhook import BOT
-        self.assertTrue(hasattr(WebhookThread, '_make_tunnel'))
-        self.assertTrue(hasattr(WebhookThread, '_set_webhook'))
-        self.assertTrue(hasattr(WebhookThread, '_make_server'))
-        self.assertTrue(hasattr(WebhookThread, '_start_server'))
-        self.assertTrue(hasattr(WebhookThread, '_remove_webhook'))
-        self.assertTrue(hasattr(WebhookThread, '_close_tunnel'))
+        from lucky_bot.receiver import ngrok
+        from lucky_bot.receiver import BOT
+        self.assertTrue(hasattr(ReceiverThread, '_make_tunnel'))
+        self.assertTrue(hasattr(ReceiverThread, '_set_webhook'))
+        self.assertTrue(hasattr(ReceiverThread, '_make_server'))
+        self.assertTrue(hasattr(ReceiverThread, '_start_server'))
+        self.assertTrue(hasattr(ReceiverThread, '_remove_webhook'))
+        self.assertTrue(hasattr(ReceiverThread, '_close_tunnel'))
         # in the flask app
         from lucky_bot.flask_config import InputQueue
 

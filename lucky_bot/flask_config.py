@@ -17,7 +17,6 @@ import logging
 from logs.config import console, event
 logger = logging.getLogger(__name__)
 
-def test_flag(): pass
 def test_exception(): pass
 
 
@@ -29,7 +28,7 @@ FLASK_APP.config.update(
     PROPAGATE_EXCEPTIONS=True,
     SECRET_KEY=secrets.token_urlsafe(randint(40, 60)),
     LOGGER_NAME=__name__,
-    MAX_CONTENT_LENGTH=10*1024*1024,
+    MAX_CONTENT_LENGTH=15*1024*1024,
 )
 
 
@@ -49,9 +48,7 @@ def get_message_data() -> str:
 
 def save_message_to_queue(data):
     try:
-        test_flag()
         test_exception()
-
         d = json.loads(data)
         date = d['message']['date']
         InputQueue.add_message(data, date)
@@ -69,13 +66,15 @@ def inbox():
         data = get_message_data()
 
     except WebhookWrongRequest:
-        msg = 'wrong webhook request: %s' % request.get_data().decode('utf-8')
+        msg = 'flask: wrong request: %s' % request.get_data().decode('utf-8')
         console(msg)
         event.warning(msg)
         flask.abort(400)
     except Exception as exc:
-        logger.exception('error parsing request')
-        event.error('error parsing request')
+        msg = 'flask: error parsing request'
+        logger.exception(msg)
+        event.error(msg)
+        console(msg)
         EXIT_SIGNAL.set()
         raise FlaskException(exc)
 

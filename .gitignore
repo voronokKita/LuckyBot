@@ -3,6 +3,8 @@
 
 ### OS ###
 .directory
+
+### Locals ###
 design.json
 resources/
 .api

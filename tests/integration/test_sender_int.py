@@ -1,6 +1,5 @@
 """ python -m unittest tests.integration.test_sender_int """
 import time
-import unittest
 from unittest.mock import patch
 
 from telebot.apihelper import ApiTelegramException
@@ -13,32 +12,31 @@ from lucky_bot.helpers.signals import (
 from lucky_bot.models.output_mq import OutputQueue
 from lucky_bot.sender import SenderThread
 
+from tests.presets import ThreadSmallTestTemplate
+
 
 @patch('lucky_bot.sender.SenderThread._test_sender_cycle')
 @patch('lucky_bot.dispatcher.BOT')
-class TestSenderWorks(unittest.TestCase):
+class TestSenderWorks(ThreadSmallTestTemplate):
+    thread_class = SenderThread
+    is_running_signal = SENDER_IS_RUNNING
+    is_stopped_signal = SENDER_IS_STOPPED
+    signals = [NEW_MESSAGE_TO_SEND]
+
     def setUp(self):
         OutputQueue.set_up()
-        self.sender = SenderThread()
+        super().setUp()
 
     def tearDown(self):
-        if self.sender.is_alive():
-            self.sender.merge()
-        self._clear_signals()
+        super().tearDown()
         OutputQueue.tear_down()
-
-    @staticmethod
-    def _clear_signals():
-        signals = [EXIT_SIGNAL, NEW_MESSAGE_TO_SEND,
-                   SENDER_IS_RUNNING, SENDER_IS_STOPPED]
-        [signal.clear() for signal in signals if signal.is_set()]
 
     def test_sender_integration_normal_case(self, disp_bot, sender_cycle):
         OutputQueue.add_message(42, 'hello', 1)
 
-        self.sender.start()
+        self.thread_obj.start()
         if not SENDER_IS_RUNNING.wait(10):
-            self.sender.merge()
+            self.thread_obj.merge()
             raise TestException('The time to start the sender has passed.')
 
         disp_bot.send_message.assert_called_once_with(42, 'hello')
@@ -59,37 +57,34 @@ class TestSenderWorks(unittest.TestCase):
         EXIT_SIGNAL.set()
         NEW_MESSAGE_TO_SEND.set()
         if not SENDER_IS_STOPPED.wait(10):
-            self.sender.merge()
+            self.thread_obj.merge()
             raise TestException('The time to stop the sender has passed.')
 
-        self.sender.merge()
-        self.assertFalse(self.sender.is_alive())
+        self.thread_obj.merge()
 
     def test_sender_forced_merge(self, *args):
-        self.sender.start()
+        self.thread_obj.start()
         if not SENDER_IS_RUNNING.wait(10):
-            self.sender.merge()
+            self.thread_obj.merge()
             raise TestException('The time to start the sender has passed.')
 
-        self.sender.merge()
+        self.thread_obj.merge()
         self.assertTrue(EXIT_SIGNAL.is_set())
-        self.assertFalse(self.sender.is_alive())
 
     def test_sender_cycle_exception(self, arg1, sender_cycle):
         sender_cycle.side_effect = TestException('boom')
 
-        self.sender.start()
+        self.thread_obj.start()
         if not SENDER_IS_RUNNING.wait(10):
-            self.sender.merge()
+            self.thread_obj.merge()
             raise TestException('The time to start the sender has passed.')
 
         NEW_MESSAGE_TO_SEND.set()
         if not SENDER_IS_STOPPED.wait(10):
-            self.sender.merge()
+            self.thread_obj.merge()
             raise TestException('The time to stop the sender has passed.')
 
-        self.assertFalse(self.sender.is_alive())
-        self.assertRaises(SenderException, self.sender.merge)
+        self.assertRaises(SenderException, self.thread_obj.merge)
 
     def test_sender_stops_gently(self, disp_bot, *args):
         OutputQueue.add_message(42, 'hello', 1)
@@ -99,28 +94,26 @@ class TestSenderWorks(unittest.TestCase):
         )
         disp_bot.send_message.side_effect = exc
 
-        self.sender.start()
+        self.thread_obj.start()
         if not SENDER_IS_STOPPED.wait(10):
-            self.sender.merge()
+            self.thread_obj.merge()
             raise TestException('The time to stop the sender has passed.')
 
         self.assertFalse(NEW_MESSAGE_TO_SEND.is_set())
         self.assertFalse(SENDER_IS_RUNNING.is_set())
         self.assertTrue(EXIT_SIGNAL.is_set())
-        self.assertFalse(self.sender.is_alive())
-        self.sender.merge()  # no exceptions
+        self.thread_obj.merge()  # no exceptions
 
     def test_sender_dispatcher_exception(self, disp_bot, sender_cycle):
         OutputQueue.add_message(42, 'hello', 1)
         disp_bot.send_message.side_effect = TestException('boom')
 
-        self.sender.start()
+        self.thread_obj.start()
         if not SENDER_IS_STOPPED.wait(10):
-            self.sender.merge()
+            self.thread_obj.merge()
             raise TestException('The time to stop the sender has passed.')
 
         self.assertFalse(NEW_MESSAGE_TO_SEND.is_set())
         self.assertFalse(SENDER_IS_RUNNING.is_set())
         self.assertTrue(EXIT_SIGNAL.is_set())
-        self.assertFalse(self.sender.is_alive())
-        self.assertRaises(DispatcherException, self.sender.merge)
+        self.assertRaises(DispatcherException, self.thread_obj.merge)

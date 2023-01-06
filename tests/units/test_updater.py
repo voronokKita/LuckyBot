@@ -15,7 +15,7 @@ class TestUpdaterThreadBase(ThreadTestTemplate):
     def test_updater_normal_start(self):
         super().normal_case()
 
-    @patch('lucky_bot.helpers.misc.ThreadTemplate._test_exception')
+    @patch('lucky_bot.helpers.misc.ThreadTemplate._test_exception_after_signal')
     def test_updater_exception_case(self, test_exception):
         super().exception_case(test_exception)
 

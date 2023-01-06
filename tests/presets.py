@@ -16,9 +16,9 @@ class ThreadTestTemplate(unittest.TestCase):
 
     def tearDown(self):
         if self.thread_obj.is_alive():
-            EXIT_SIGNAL.set()
-            self.thread_obj.join(5)
+            self.thread_obj.merge()
         self._clear_signals()
+        self.assertFalse(self.thread_obj.is_alive())
 
     def _clear_signals(self):
         signals = [EXIT_SIGNAL, NEW_MESSAGE_TO_SEND,
@@ -70,3 +70,26 @@ class ThreadTestTemplate(unittest.TestCase):
         self.thread_obj.merge()
         self.assertTrue(EXIT_SIGNAL.is_set())
         self.assertFalse(self.thread_obj.is_alive())
+
+
+class ThreadSmallTestTemplate(unittest.TestCase):
+    ''' Small preset for thread testing. '''
+    thread_class = None
+    is_running_signal = None
+    is_stopped_signal = None
+    signals = []
+
+    def setUp(self):
+        self.thread_obj = self.thread_class()
+
+    def tearDown(self):
+        if self.thread_obj.is_alive():
+            self.thread_obj.merge()
+        self._clear_signals()
+        self.assertFalse(self.thread_obj.is_alive())
+
+    def _clear_signals(self):
+        signals = [EXIT_SIGNAL, self.is_running_signal, self.is_stopped_signal]
+        if self.signals:
+            signals += self.signals
+        [signal.clear() for signal in signals if signal.is_set()]
