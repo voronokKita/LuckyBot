@@ -38,15 +38,18 @@ Case sender exception
 /delete_user -> responder delete user
 '''
 
-class TestInputControllerBase(ThreadTestTemplate):
+class TestControllerThreadBase(ThreadTestTemplate):
     thread_class = ControllerThread
     is_running_signal = CONTROLLER_IS_RUNNING
     is_stopped_signal = CONTROLLER_IS_STOPPED
 
-    def test_input_controller_normal_start(self):
+    def test_controller_normal_start(self):
         super().normal_case()
 
     @patch('lucky_bot.helpers.misc.ThreadTemplate._test_exception')
-    def test_input_controller_exception_case(self, test_exception):
+    def test_controller_exception_case(self, test_exception):
         super().exception_case(test_exception)
+
+    def test_controller_forced_merge(self, *args):
+        super().forced_merge()
 

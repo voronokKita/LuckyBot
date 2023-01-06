@@ -1,27 +1,17 @@
 """ python -m unittest tests.integration.test_sender_int """
 import time
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 
 from telebot.apihelper import ApiTelegramException
 
-from lucky_bot.helpers.constants import (
-    TestException, DispatcherTimeout,
-    DispatcherUndefinedExc, DispatcherException,
-    StopTheSenderGently, DispatcherWrongToken, DispatcherNoAccess,
-)
+from lucky_bot.helpers.constants import TestException, SenderException, DispatcherException
 from lucky_bot.helpers.signals import (
     SENDER_IS_RUNNING, SENDER_IS_STOPPED,
     EXIT_SIGNAL, NEW_MESSAGE_TO_SEND,
 )
 from lucky_bot.models.output_mq import OutputQueue
-from lucky_bot import dispatcher
 from lucky_bot.sender import SenderThread
-
-from tests.presets import ThreadTestTemplate
-
-
-# TODO NEW_MESSAGE_TO_SEND cycle in normal tests
 
 
 @patch('lucky_bot.sender.SenderThread._test_sender_cycle')
@@ -58,11 +48,11 @@ class TestSenderWorks(unittest.TestCase):
 
         OutputQueue.add_message(42, 'world', 2)
         NEW_MESSAGE_TO_SEND.set()
-        time.sleep(0.1)
+        time.sleep(0.2)
 
         sender_cycle.assert_called_once()
-        self.assertFalse(NEW_MESSAGE_TO_SEND.is_set(), msg='second msg')
-        self.assertFalse(EXIT_SIGNAL.is_set(), msg='second msg')
+        self.assertFalse(NEW_MESSAGE_TO_SEND.is_set(), msg='cycle')
+        self.assertFalse(EXIT_SIGNAL.is_set(), msg='cycle')
         self.assertEqual(disp_bot.send_message.call_count, 2)
         disp_bot.send_message.assert_called_with(42, 'world')
 
@@ -73,7 +63,64 @@ class TestSenderWorks(unittest.TestCase):
             raise TestException('The time to stop the sender has passed.')
 
         self.sender.merge()
+        self.assertFalse(self.sender.is_alive())
 
+    def test_sender_forced_merge(self, *args):
+        self.sender.start()
+        if not SENDER_IS_RUNNING.wait(10):
+            self.sender.merge()
+            raise TestException('The time to start the sender has passed.')
 
+        self.sender.merge()
+        self.assertTrue(EXIT_SIGNAL.is_set())
+        self.assertFalse(self.sender.is_alive())
 
+    def test_sender_cycle_exception(self, arg1, sender_cycle):
+        sender_cycle.side_effect = TestException('boom')
 
+        self.sender.start()
+        if not SENDER_IS_RUNNING.wait(10):
+            self.sender.merge()
+            raise TestException('The time to start the sender has passed.')
+
+        NEW_MESSAGE_TO_SEND.set()
+        if not SENDER_IS_STOPPED.wait(10):
+            self.sender.merge()
+            raise TestException('The time to stop the sender has passed.')
+
+        self.assertFalse(self.sender.is_alive())
+        self.assertRaises(SenderException, self.sender.merge)
+
+    def test_sender_stops_gently(self, disp_bot, *args):
+        OutputQueue.add_message(42, 'hello', 1)
+        exc = ApiTelegramException(
+            function_name='foo', result='bar',
+            result_json={'error_code': 401, 'description': 'Unauthorized'}
+        )
+        disp_bot.send_message.side_effect = exc
+
+        self.sender.start()
+        if not SENDER_IS_STOPPED.wait(10):
+            self.sender.merge()
+            raise TestException('The time to stop the sender has passed.')
+
+        self.assertFalse(NEW_MESSAGE_TO_SEND.is_set())
+        self.assertFalse(SENDER_IS_RUNNING.is_set())
+        self.assertTrue(EXIT_SIGNAL.is_set())
+        self.assertFalse(self.sender.is_alive())
+        self.sender.merge()  # no exceptions
+
+    def test_sender_dispatcher_exception(self, disp_bot, sender_cycle):
+        OutputQueue.add_message(42, 'hello', 1)
+        disp_bot.send_message.side_effect = TestException('boom')
+
+        self.sender.start()
+        if not SENDER_IS_STOPPED.wait(10):
+            self.sender.merge()
+            raise TestException('The time to stop the sender has passed.')
+
+        self.assertFalse(NEW_MESSAGE_TO_SEND.is_set())
+        self.assertFalse(SENDER_IS_RUNNING.is_set())
+        self.assertTrue(EXIT_SIGNAL.is_set())
+        self.assertFalse(self.sender.is_alive())
+        self.assertRaises(DispatcherException, self.sender.merge)

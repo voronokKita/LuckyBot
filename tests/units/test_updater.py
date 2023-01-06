@@ -7,7 +7,7 @@ from lucky_bot.helpers.signals import UPDATER_IS_RUNNING, UPDATER_IS_STOPPED
 from tests.presets import ThreadTestTemplate
 
 
-class TestUpdaterBase(ThreadTestTemplate):
+class TestUpdaterThreadBase(ThreadTestTemplate):
     thread_class = UpdaterThread
     is_running_signal = UPDATER_IS_RUNNING
     is_stopped_signal = UPDATER_IS_STOPPED
@@ -18,3 +18,6 @@ class TestUpdaterBase(ThreadTestTemplate):
     @patch('lucky_bot.helpers.misc.ThreadTemplate._test_exception')
     def test_updater_exception_case(self, test_exception):
         super().exception_case(test_exception)
+
+    def test_updater_forced_merge(self, *args):
+        super().forced_merge()

@@ -1,6 +1,7 @@
 """ python -m unittest tests.units.test_sender """
 import unittest
 from unittest.mock import patch, Mock
+from time import sleep
 
 from telebot.apihelper import ApiTelegramException
 
@@ -33,6 +34,9 @@ class TestSenderThreadBase(ThreadTestTemplate):
     def test_sender_exception_case(self, test_exception, *args):
         super().exception_case(test_exception)
 
+    def test_sender_forced_merge(self, *args):
+        super().forced_merge()
+
 
 @patch('lucky_bot.sender.SenderThread._test_sender_cycle')
 @patch('lucky_bot.sender.dispatcher')
@@ -57,16 +61,27 @@ class TestSender(unittest.TestCase):
         msg_obj.destination = 42
         msg_obj.text = 'hello'
         mock_OutputQueue.get_first_message.side_effect = [msg_obj, None]
-        disp.send_message.return_value = True
+        NEW_MESSAGE_TO_SEND.set()
 
         self.sender.start()
         if not SENDER_IS_RUNNING.wait(10):
             self.sender.merge()
             raise TestException('The time to start the sender has passed.')
 
-        self.assertFalse(EXIT_SIGNAL.is_set())
+        self.assertFalse(NEW_MESSAGE_TO_SEND.is_set(), msg='first msg')
+        self.assertFalse(EXIT_SIGNAL.is_set(), msg='first msg')
         disp.send_message.assert_called_once_with(42, 'hello')
         mock_OutputQueue.delete_message.assert_called_once_with(msg_obj)
+        sender_cycle.assert_not_called()
+
+        mock_OutputQueue.get_first_message.side_effect = [msg_obj, None]
+        NEW_MESSAGE_TO_SEND.set()
+        sleep(0.2)
+        self.assertFalse(NEW_MESSAGE_TO_SEND.is_set(), msg='cycle')
+        self.assertFalse(EXIT_SIGNAL.is_set(), msg='cycle')
+        self.assertEqual(disp.send_message.call_count, 2, msg='cycle')
+        self.assertEqual(mock_OutputQueue.delete_message.call_count, 2, msg='cycle')
+        sender_cycle.assert_called_once()
 
         EXIT_SIGNAL.set()
         NEW_MESSAGE_TO_SEND.set()
@@ -74,9 +89,9 @@ class TestSender(unittest.TestCase):
             self.sender.merge()
             raise TestException('The time to stop the sender has passed.')
 
-        sender_cycle.assert_not_called()
         self.sender.merge()
         self.assertFalse(self.sender.is_alive())
+        sender_cycle.assert_called_once()
 
     @patch('lucky_bot.sender.SenderThread._process_a_delivery')
     def test_sender_exception_stop_gently(self, func, mock_OutputQueue, disp, sender_cycle):
@@ -156,28 +171,6 @@ class TestSenderCallToDispatcher(unittest.TestCase):
         queue.delete_message.assert_called_once_with(msg_obj)
 
 
-class TestSenderMessageQueue(unittest.TestCase):
-    def setUp(self):
-        OutputQueue.set_up()
-
-    def tearDown(self):
-        OutputQueue.tear_down()
-
-    def test_output_queue_works(self):
-        OutputQueue.add_message(42, 'foo', 1)
-        OutputQueue.add_message(42, 'bar', 2)
-        OutputQueue.add_message(42, 'baz', 3)
-
-        for message in ['foo', 'bar', 'baz']:
-            msg_obj = OutputQueue.get_first_message()
-            self.assertIsNotNone(msg_obj, msg=message)
-            self.assertEqual(msg_obj.text, message)
-            OutputQueue.delete_message(msg_obj)
-
-        result = OutputQueue.get_first_message()
-        self.assertIsNone(result)
-
-
 @patch('lucky_bot.dispatcher.time')
 @patch('lucky_bot.dispatcher.BOT')
 class TestDispatcher(unittest.TestCase):
@@ -230,3 +223,25 @@ class TestDispatcher(unittest.TestCase):
         )
         bot.send_message.side_effect = exc
         self.assertRaises(DispatcherWrongToken, dispatcher.send_message, 42, 'hello')
+
+
+class TestSenderMessageQueue(unittest.TestCase):
+    def setUp(self):
+        OutputQueue.set_up()
+
+    def tearDown(self):
+        OutputQueue.tear_down()
+
+    def test_output_queue_works(self):
+        OutputQueue.add_message(42, 'foo', 1)
+        OutputQueue.add_message(42, 'bar', 2)
+        OutputQueue.add_message(42, 'baz', 3)
+
+        for message in ['foo', 'bar', 'baz']:
+            msg_obj = OutputQueue.get_first_message()
+            self.assertIsNotNone(msg_obj, msg=message)
+            self.assertEqual(msg_obj.text, message)
+            OutputQueue.delete_message(msg_obj)
+
+        result = OutputQueue.get_first_message()
+        self.assertIsNone(result)

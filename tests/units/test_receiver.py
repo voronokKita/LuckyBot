@@ -59,6 +59,9 @@ class TestWebhook(ThreadTestTemplate):
     def test_webhook_normal_exception(self, test_exception, *args):
         super().exception_case(test_exception)
 
+    def test_webhook_forced_merge(self, *args):
+        super().forced_merge()
+
     def test_webhook_tunnel(self, ngrok, *args):
         self.assertFalse(REPLIT)
 

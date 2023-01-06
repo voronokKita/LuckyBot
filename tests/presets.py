@@ -37,12 +37,13 @@ class ThreadTestTemplate(unittest.TestCase):
         EXIT_SIGNAL.set()
         if str(self.thread_obj) == 'sender thread':
             NEW_MESSAGE_TO_SEND.set()
+
         if not self.is_stopped_signal.wait(10):
             self.thread_obj.merge()
             raise TestException(f'The time to stop the {self.thread_obj} has passed.')
 
-        self.thread_obj.merge()
         self.assertFalse(self.thread_obj.is_alive())
+        self.thread_obj.merge()
 
     def exception_case(self, test_exception):
         test_exception.side_effect = TestException('boom')
@@ -57,5 +58,15 @@ class ThreadTestTemplate(unittest.TestCase):
             raise TestException(f'The time to stop the {self.thread_obj} has passed.')
 
         self.assertTrue(EXIT_SIGNAL.is_set())
+        self.assertFalse(self.thread_obj.is_alive())
         self.assertRaises(Exception, self.thread_obj.merge)
+
+    def forced_merge(self, *args):
+        self.thread_obj.start()
+        if not self.is_running_signal.wait(10):
+            self.thread_obj.merge()
+            raise TestException('The time to start the sender has passed.')
+
+        self.thread_obj.merge()
+        self.assertTrue(EXIT_SIGNAL.is_set())
         self.assertFalse(self.thread_obj.is_alive())
