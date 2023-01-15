@@ -1,3 +1,7 @@
+""" Responder.
+
+Process commands.
+"""
 import sys
 
 import logging

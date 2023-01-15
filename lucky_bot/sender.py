@@ -1,3 +1,8 @@
+""" Sender.
+
+A module that handles output messages to Telegram.
+Integrated with the Output Message Queue and Dispatcher.
+"""
 from lucky_bot.helpers.constants import (
     SenderException, StopTheSenderGently,
     DispatcherWrongToken, DispatcherNoAccess, DispatcherTimeout,
@@ -24,6 +29,20 @@ class SenderThread(ThreadTemplate):
         return 'sender thread'
 
     def body(self):
+        """
+        Description:
+            0. Check the Output Message Queue; Dispatch any messages;
+            1. Clear NEW_MESSAGE_TO_SEND, is set;
+            2. Set the SENDER_IS_RUNNING signal;
+            3. Loop and wait for the NEW_MESSAGE_TO_SEND signal.
+
+            To break the sender from the loop and stop its work,
+            the NEW_MESSAGE_TO_SEND signal must be set after the EXIT_SIGNAL.
+
+        Raises:
+            DispatcherException: propagation
+            SenderException
+        """
         try:
             self._process_all_messages()
             if NEW_MESSAGE_TO_SEND.is_set():
@@ -50,7 +69,6 @@ class SenderThread(ThreadTemplate):
             raise SenderException(exc)
 
     def merge(self):
-        ''' May raise exceptions, if any. '''
         if not EXIT_SIGNAL.is_set():
             EXIT_SIGNAL.set()
         if not NEW_MESSAGE_TO_SEND.is_set():
@@ -62,11 +80,19 @@ class SenderThread(ThreadTemplate):
             msg_obj = OutputQueue.get_first_message()
             if msg_obj:
                 self._process_a_delivery(msg_obj)
+                OutputQueue.delete_message(msg_obj)
             else:
                 break
 
     @staticmethod
     def _process_a_delivery(msg_obj):
+        """ Calls Dispatcher and handles its exceptions.
+
+        Raises:
+            DispatcherException: propagation
+            StopTheSenderGently
+        """
+
         try:
             dispatcher.send_message(msg_obj.destination, msg_obj.text)
 
@@ -84,12 +110,10 @@ class SenderThread(ThreadTemplate):
             msg = 'sender: deleting the broken message; delete the uid manually if the exception persists'
             event.warning(msg)
             console(msg)
-            OutputQueue.delete_message(msg_obj)
 
         except DispatcherNoAccess:
             event.info('sender: deleting the inaccessible uid')
             console('sender: deleting the inaccessible uid')
-            OutputQueue.delete_message(msg_obj)
             # TODO delete a uid request
 
         except (DispatcherException, Exception) as exc:
@@ -99,9 +123,6 @@ class SenderThread(ThreadTemplate):
                 raise exc
             else:
                 raise DispatcherException(exc)
-
-        else:
-            OutputQueue.delete_message(msg_obj)
 
     @staticmethod
     def _test_sender_cycle():

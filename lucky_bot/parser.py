@@ -1,3 +1,7 @@
+""" Parser.
+
+Processes data and inserts it into the main database.
+"""
 import sys
 
 import logging

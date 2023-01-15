@@ -113,50 +113,42 @@ class TestSender(ThreadSmallTestTemplate):
         self.assertRaises(DispatcherException, self.thread_obj.merge)
 
 
-@patch('lucky_bot.sender.OutputQueue')
 @patch('lucky_bot.sender.dispatcher')
 class TestSenderCallToDispatcher(unittest.TestCase):
     ''' The dispatcher exceptions that are caught in sender after a call. '''
 
-    def test_sender_call_exception_wrong_token(self, disp, queue):
+    def test_sender_call_exception_wrong_token(self, disp):
         disp.send_message.side_effect = DispatcherWrongToken('boom')
         self.assertRaises(StopTheSenderGently, SenderThread._process_a_delivery, Mock())
-        queue.delete_message.assert_not_called()
 
-    def test_sender_call_exception_timeout(self, disp, queue):
+    def test_sender_call_exception_timeout(self, disp):
         disp.send_message.side_effect = DispatcherTimeout('boom')
         self.assertRaises(StopTheSenderGently, SenderThread._process_a_delivery, Mock())
-        queue.delete_message.assert_not_called()
 
-    def test_sender_call_exception_undefined(self, disp, queue):
+    def test_sender_call_exception_undefined(self, disp):
         disp.send_message.side_effect = DispatcherUndefinedExc('boom')
         SenderThread._process_a_delivery(Mock())
-        queue.delete_message.assert_called_once()
 
-    def test_sender_call_exception_access(self, disp, queue):
+    def test_sender_call_exception_access(self, disp):
         disp.send_message.side_effect = DispatcherNoAccess('boom')
         SenderThread._process_a_delivery(Mock())
-        queue.delete_message.assert_called_once()
         # TODO delete a uid request
 
-    def test_sender_call_exception_in_dispatcher(self, disp, queue):
+    def test_sender_call_exception_in_dispatcher(self, disp):
         disp.send_message.side_effect = DispatcherException('boom')
         self.assertRaises(DispatcherException, SenderThread._process_a_delivery, Mock())
-        queue.delete_message.assert_not_called()
 
-    def test_sender_call_exception_normal(self, disp, queue):
+    def test_sender_call_exception_normal(self, disp):
         disp.send_message.side_effect = Exception('boom')
         self.assertRaises(DispatcherException, SenderThread._process_a_delivery, Mock())
-        queue.delete_message.assert_not_called()
 
-    def test_sender_call_dispatcher_normal(self, disp, queue):
+    def test_sender_call_dispatcher_normal(self, disp):
         msg_obj = Mock()
         msg_obj.destination = 42
         msg_obj.text = 'hello'
 
         SenderThread._process_a_delivery(msg_obj)
         disp.send_message.assert_called_once_with(42, 'hello')
-        queue.delete_message.assert_called_once_with(msg_obj)
 
 
 @patch('lucky_bot.dispatcher.time')

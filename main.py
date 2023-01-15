@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class MainAsThread(threading.Thread):
-    ''' The main reason for this class is testing. '''
+    """ The main reason for this class is testing. """
     exception = None
 
     def __str__(self):
@@ -86,10 +86,11 @@ def run_the_threads(threads):
         if unit['running'].wait(TREAD_RUNNING_TIMEOUT):
             if EXIT_SIGNAL.is_set():
                 thread_loading_interrupted(active_threads)
+            else:
+                pass
         else:
             thread_loading_timeout(unit['thread'], active_threads)
 
-    del threads
     return active_threads
 
 
@@ -122,6 +123,8 @@ def finish_the_work(active_threads, main_exec=None):
             raise main_exec
         elif exception_in_threads:
             raise exception_in_threads
+        else:
+            pass
     except Exception as exc:
         raise exc
     else:

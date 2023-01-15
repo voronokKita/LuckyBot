@@ -1,3 +1,7 @@
+""" Output Message Queue.
+
+Save a message from the program, for future sending to Telegram.
+"""
 from sqlalchemy import create_engine, Column, Integer, Text, BLOB
 from sqlalchemy.orm import declarative_base, sessionmaker, Query
 
@@ -27,6 +31,8 @@ class OutgoingMessage(OMQBase):
 
 
 class OutputQueue:
+    """ Wrapper for the queries to the Output Message Queue. """
+
     @staticmethod
     def set_up():
         OMQBase.metadata.create_all(OMQ_ENGINE)
@@ -44,7 +50,7 @@ class OutputQueue:
 
     @staticmethod
     def get_first_message() -> Query | None:
-        ''' FIFO '''
+        """ FIFO """
         with OMQ_SESSION() as session:
             msg_obj = session.query(OutgoingMessage)\
                 .order_by(OutgoingMessage.time).first()

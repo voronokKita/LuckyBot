@@ -1,3 +1,7 @@
+""" Input Message Queue.
+
+Save a message data from Telegram, or internal and admin command, for future processing.
+"""
 from sqlalchemy import create_engine, Column, Integer, Text
 from sqlalchemy.orm import declarative_base, sessionmaker, Query
 
@@ -13,18 +17,20 @@ IMQ_SESSION = sessionmaker(bind=IMQ_ENGINE)
 IMQBase = declarative_base()
 
 
-class TGMessage(IMQBase):
-    __tablename__ = 'messages_from_telegram'
+class IncomingMessage(IMQBase):
+    __tablename__ = 'incoming_messages'
 
     id = Column(Integer, primary_key=True)
-    data = Column('message_data', Text, nullable=False)
+    data = Column('message_body', Text, nullable=False)
     time = Column('message_date', Integer, nullable=False)
 
     def __str__(self):
-        return f'<tg message id-{self.id!r}>'
+        return f'<input message id-{self.id!r}>'
 
 
 class InputQueue:
+    """ Wrapper for the queries to the Input Message Queue. """
+
     @staticmethod
     def set_up():
         IMQBase.metadata.create_all(IMQ_ENGINE)
@@ -36,15 +42,16 @@ class InputQueue:
 
     @staticmethod
     def add_message(data, date):
-        msg_obj = TGMessage(data=data, time=date)
+        msg_obj = IncomingMessage(data=data, time=date)
         with IMQ_SESSION.begin() as session:
             session.add(msg_obj)
 
     @staticmethod
     def get_first_message() -> Query | None:
-        ''' FIFO '''
+        """ FIFO """
         with IMQ_SESSION() as session:
-            msg_obj = session.query(TGMessage).order_by(TGMessage.time).first()
+            msg_obj = session.query(IncomingMessage)\
+                .order_by(IncomingMessage.time).first()
             return msg_obj
 
     @staticmethod

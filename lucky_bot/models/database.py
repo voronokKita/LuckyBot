@@ -1,3 +1,4 @@
+""" Main database and its model. """
 from sqlalchemy import (
     create_engine,
     Column, Integer, Text,

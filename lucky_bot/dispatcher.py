@@ -1,3 +1,4 @@
+""" Dispatcher. """
 import time
 
 from telebot.apihelper import ApiTelegramException
@@ -16,10 +17,20 @@ logger = logging.getLogger(__name__)
 
 
 def send_message(uid: int, text: str, file=None):
+    """
+    Send a message to Telegram and handle exceptions.
+
+    Raises:
+        DispatcherException
+        DispatcherWrongToken
+        DispatcherNoAccess
+        DispatcherTimeout
+        DispatcherUndefinedExc
+    """
     attempt = 0
     while attempt < 3:
+        attempt += 1
         try:
-            attempt += 1
             BOT.send_message(uid, text)
 
         except ApiTelegramException as aexc:

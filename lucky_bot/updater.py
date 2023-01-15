@@ -1,3 +1,7 @@
+""" Updater.
+
+A module that handles the distribution of messages to the users on a schedule.
+"""
 from lucky_bot.helpers.signals import UPDATER_IS_RUNNING, UPDATER_IS_STOPPED, EXIT_SIGNAL
 from lucky_bot.helpers.misc import ThreadTemplate
 

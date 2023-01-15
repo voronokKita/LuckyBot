@@ -1,3 +1,7 @@
+""" Flask based webhook.
+
+Calls the Input Message Queue to save a telegram message data.
+"""
 import json
 import secrets
 from random import randint
@@ -33,6 +37,10 @@ FLASK_APP.config.update(
 
 
 def get_message_data() -> str:
+    """
+    Ensures that a request and its data both are correct.
+    Raises: WebhookWrongRequest
+    """
     h1 = request.headers.get('content-type')
     h2 = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
     if not h1 == 'application/json' and h2 == WEBHOOK_SECRET:
@@ -47,6 +55,10 @@ def get_message_data() -> str:
 
 
 def save_message_to_queue(data):
+    """
+    Tries to save a message data to the Input Message Queue.
+    Raises: FlaskException
+    """
     try:
         test_exception()
         d = json.loads(data)
@@ -80,7 +92,6 @@ def inbox():
 
     else:
         save_message_to_queue(data)
-        # if not NEW_TELEGRAM_MESSAGE.is_set():
         NEW_TELEGRAM_MESSAGE.set()
         console('new tg message')
         return '', 200

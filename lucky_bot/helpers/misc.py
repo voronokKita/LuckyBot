@@ -1,3 +1,4 @@
+""" If it's not a constant, a setting variable, an exception, or a signal, then it goes here. """
 import threading
 
 from lucky_bot.helpers.constants import ThreadException
@@ -5,7 +6,21 @@ from lucky_bot.helpers.signals import EXIT_SIGNAL
 
 
 class ThreadTemplate(threading.Thread):
-    ''' Base class for all the threads. '''
+    """
+    Base class for all the threads.
+
+    Attributes:
+        is_running_signal (threading.Event): an Event for this thread to start its work
+        is_stopped_signal (threading.Event): an Event for this thread to stop its work
+        exception (None): if an exception is caught, it will be saved here and raised after self.merge()
+
+    Notes:
+        The Events for the thread must be specified in a child class.
+        The start and stop events behave differently in each thread.
+        A thread may need to do some work before signaling its start.
+        And after the stop signal, it may take a few ticks
+        before the self.is_alive() will return False.
+    """
     exception = None
     is_running_signal = None
     is_stopped_signal = None
@@ -14,13 +29,18 @@ class ThreadTemplate(threading.Thread):
         threading.Thread.__init__(self)
 
     def body(self):
-        ''' Must be overwritten. '''
+        """ All work goes here. Must be overwritten in a child class. """
         self._set_the_signal()
         self._test_exception_after_signal()
         if EXIT_SIGNAL.wait():
             pass
 
     def run(self):
+        """
+        Will run the thread.
+        After the thread either finishes its work or raises an exception,
+        the self.is_stopped_signal will be set.
+        """
         try:
             self._test_exception_before_signal()
             self.body()
@@ -31,12 +51,18 @@ class ThreadTemplate(threading.Thread):
             self.is_stopped_signal.set()
 
     def merge(self):
+        """
+        Will stop the work and call the Thread.join(self)
+        Will raise an exception, if any.
+        All Exceptions declared in helpers.constants.py
+        """
         if not EXIT_SIGNAL.is_set():
             EXIT_SIGNAL.set()
         if self.is_stopped_signal.wait(10):
             pass
 
         threading.Thread.join(self, 5)
+
         if self.exception:
             raise self.exception
         elif self.is_alive():
@@ -44,7 +70,7 @@ class ThreadTemplate(threading.Thread):
 
     @classmethod
     def _set_the_signal(cls):
-        ''' Signal is wrapped for testing purposes. '''
+        """ Signal is wrapped for testing purposes. """
         cls.is_running_signal.set()
 
     @staticmethod

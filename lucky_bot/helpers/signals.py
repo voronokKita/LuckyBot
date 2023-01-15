@@ -1,26 +1,27 @@
+""" All the threading.Event settings. """
 from threading import Event
 
 
 class SignalThreadStarted(Event):
-    ''' Thread started successfully. '''
+    """ Thread started successfully. """
 
 class SignalThreadStopped(Event):
-    ''' Thread stopped successfully. '''
+    """ Thread stopped successfully. """
 
 class SignalThreadsAreStarted(Event):
-    ''' All the threads - receiver, input controller, updater and sender, - are started. '''
+    """ All the threads - receiver, controller, updater and sender, - are started. """
 
 class SignalExit(Event):
-    ''' Some event is demanding to stop the program. '''
+    """ Some event is demanding to stop the program. """
 
 class SignalAllDone(Event):
-    ''' main.py signaling just before the exit. '''
+    """ main.py signaling just before the exit. """
 
 class SignalTgMessage(Event):
-    ''' A new telegram message in the receiver message queue (rmq). '''
+    """ A new telegram message in the receiver message queue (rmq). """
 
 class SignalMessageToSend(Event):
-    ''' A new message to telegram in the sender message queue (smq). '''
+    """ A new message to telegram in the sender message queue (smq). """
 
 
 # Threading signals
@@ -35,15 +36,18 @@ CONTROLLER_IS_STOPPED = SignalThreadStopped()
 RECEIVER_IS_STOPPED = SignalThreadStopped()
 
 ALL_THREADS_ARE_GO = SignalThreadsAreStarted()
-ALL_DONE_SIGNAL = SignalAllDone()
-EXIT_SIGNAL = SignalExit()
+
 
 # Other
 NEW_TELEGRAM_MESSAGE = SignalTgMessage()
 NEW_MESSAGE_TO_SEND = SignalMessageToSend()
 
+EXIT_SIGNAL = SignalExit()
+
+ALL_DONE_SIGNAL = SignalAllDone()
+
 
 def exit_signal(signal_=None, frame=None):
-    ''' System SIGINT and SIGTSTP. '''
+    """ System SIGINT and SIGTSTP. """
     print()
     EXIT_SIGNAL.set()
