@@ -1,6 +1,6 @@
 """ Output Message Queue.
 
-Save a message from the program, for future sending to Telegram.
+Saves a message from the program, for future sending to Telegram.
 """
 from sqlalchemy import create_engine, Column, Integer, Text, BLOB
 from sqlalchemy.orm import declarative_base, sessionmaker, Query

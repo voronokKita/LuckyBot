@@ -1,6 +1,5 @@
-""" Sender.
+""" Sender thread.
 
-A module that handles output messages to Telegram.
 Integrated with the Output Message Queue and Dispatcher.
 """
 from lucky_bot.helpers.constants import (
@@ -13,8 +12,9 @@ from lucky_bot.helpers.signals import (
     NEW_MESSAGE_TO_SEND, EXIT_SIGNAL,
 )
 from lucky_bot.helpers.misc import ThreadTemplate
-from lucky_bot.models.output_mq import OutputQueue
-from lucky_bot import dispatcher
+
+from lucky_bot.sender import OutputQueue
+from lucky_bot.sender import dispatcher
 
 import logging
 from logs.config import console, event

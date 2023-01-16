@@ -9,14 +9,14 @@ from lucky_bot.helpers.signals import (
     SENDER_IS_RUNNING, SENDER_IS_STOPPED,
     EXIT_SIGNAL, NEW_MESSAGE_TO_SEND,
 )
-from lucky_bot.models.output_mq import OutputQueue
+from lucky_bot.sender import OutputQueue
 from lucky_bot.sender import SenderThread
 
 from tests.presets import ThreadSmallTestTemplate
 
 
-@patch('lucky_bot.sender.SenderThread._test_sender_cycle')
-@patch('lucky_bot.dispatcher.BOT')
+@patch('lucky_bot.sender.sender.SenderThread._test_sender_cycle')
+@patch('lucky_bot.sender.dispatcher.BOT')
 class TestSenderWorks(ThreadSmallTestTemplate):
     thread_class = SenderThread
     is_running_signal = SENDER_IS_RUNNING

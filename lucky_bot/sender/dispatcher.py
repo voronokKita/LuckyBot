@@ -1,4 +1,4 @@
-""" Dispatcher. """
+""" Telegram messaging Dispatcher. """
 import time
 
 from telebot.apihelper import ApiTelegramException

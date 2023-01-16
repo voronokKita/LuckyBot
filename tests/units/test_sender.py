@@ -14,14 +14,14 @@ from lucky_bot.helpers.signals import (
     SENDER_IS_RUNNING, SENDER_IS_STOPPED,
     EXIT_SIGNAL, NEW_MESSAGE_TO_SEND,
 )
-from lucky_bot.models.output_mq import OutputQueue
-from lucky_bot import dispatcher
+from lucky_bot.sender import OutputQueue
+from lucky_bot.sender import dispatcher
 from lucky_bot.sender import SenderThread
 
 from tests.presets import ThreadTestTemplate, ThreadSmallTestTemplate
 
 
-@patch('lucky_bot.sender.SenderThread._process_all_messages')
+@patch('lucky_bot.sender.sender.SenderThread._process_all_messages')
 class TestSenderThreadBase(ThreadTestTemplate):
     thread_class = SenderThread
     is_running_signal = SENDER_IS_RUNNING
@@ -30,7 +30,7 @@ class TestSenderThreadBase(ThreadTestTemplate):
     def test_sender_normal_start(self, *args):
         super().normal_case()
 
-    @patch('lucky_bot.sender.SenderThread._test_exception_after_signal')
+    @patch('lucky_bot.sender.sender.SenderThread._test_exception_after_signal')
     def test_sender_exception_case(self, test_exception, *args):
         super().exception_case(test_exception)
 
@@ -38,9 +38,9 @@ class TestSenderThreadBase(ThreadTestTemplate):
         super().forced_merge()
 
 
-@patch('lucky_bot.sender.SenderThread._test_sender_cycle')
-@patch('lucky_bot.sender.dispatcher')
-@patch('lucky_bot.sender.OutputQueue')
+@patch('lucky_bot.sender.sender.SenderThread._test_sender_cycle')
+@patch('lucky_bot.sender.sender.dispatcher')
+@patch('lucky_bot.sender.sender.OutputQueue')
 class TestSender(ThreadSmallTestTemplate):
     thread_class = SenderThread
     is_running_signal = SENDER_IS_RUNNING
@@ -83,7 +83,7 @@ class TestSender(ThreadSmallTestTemplate):
         self.thread_obj.merge()
         sender_cycle.assert_called_once()
 
-    @patch('lucky_bot.sender.SenderThread._process_a_delivery')
+    @patch('lucky_bot.sender.sender.SenderThread._process_a_delivery')
     def test_sender_exception_stop_gently(self, func, mock_OutputQueue, disp, sender_cycle):
         mock_OutputQueue.get_first_message.side_effect = [Mock(), None]
         func.side_effect = StopTheSenderGently('please')
@@ -113,7 +113,7 @@ class TestSender(ThreadSmallTestTemplate):
         self.assertRaises(DispatcherException, self.thread_obj.merge)
 
 
-@patch('lucky_bot.sender.dispatcher')
+@patch('lucky_bot.sender.sender.dispatcher')
 class TestSenderCallToDispatcher(unittest.TestCase):
     ''' The dispatcher exceptions that are caught in sender after a call. '''
 
@@ -151,8 +151,8 @@ class TestSenderCallToDispatcher(unittest.TestCase):
         disp.send_message.assert_called_once_with(42, 'hello')
 
 
-@patch('lucky_bot.dispatcher.time')
-@patch('lucky_bot.dispatcher.BOT')
+@patch('lucky_bot.sender.dispatcher.time')
+@patch('lucky_bot.sender.dispatcher.BOT')
 class TestDispatcher(unittest.TestCase):
     def test_dispatcher_normal_case(self, bot, *args):
         dispatcher.send_message(42, 'hello')
