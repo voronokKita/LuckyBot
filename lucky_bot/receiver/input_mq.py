@@ -1,5 +1,4 @@
 """ Input Message Queue.
-
 Saves a message data from Telegram, or internal and admin commands, for future processing.
 """
 from sqlalchemy import create_engine, Column, Integer, Text

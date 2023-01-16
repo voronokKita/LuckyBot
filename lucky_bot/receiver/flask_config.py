@@ -1,5 +1,4 @@
 """ Flask based webhook.
-
 Calls the Input Message Queue to save a telegram message data.
 """
 import json

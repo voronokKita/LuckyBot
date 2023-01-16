@@ -9,7 +9,7 @@ from lucky_bot.helpers.constants import (
     DispatcherWrongToken, DispatcherNoAccess, DispatcherTimeout,
     DispatcherUndefinedExc, DispatcherException,
 )
-from lucky_bot.bot_config import BOT
+from lucky_bot import BOT
 
 import logging
 from logs.config import console, event

@@ -24,6 +24,7 @@ class TestProjectBase(unittest.TestCase):
             package_dir / 'helpers' / 'misc.py',
 
             package_dir / 'database.py',
+            package_dir / 'bot_init.py',
 
             package_dir / 'receiver' / 'input_mq.py',
             package_dir / 'receiver' / 'flask_config.py',
@@ -35,10 +36,10 @@ class TestProjectBase(unittest.TestCase):
 
             package_dir / 'updater' / 'updater.py',
 
-            package_dir / 'bot_config.py',
-            package_dir / 'controller.py',
-            package_dir / 'responder.py',
-            package_dir / 'parser.py',
+            package_dir / 'controller' / 'bot_handlers.py',
+            package_dir / 'controller' / 'parser.py',
+            package_dir / 'controller' / 'responder.py',
+            package_dir / 'controller' / 'controller.py',
             ]
         for f in files:
             self.assertTrue(f.exists(), msg=f)
@@ -52,7 +53,8 @@ class TestProjectBase(unittest.TestCase):
         from lucky_bot.helpers import constants
         from lucky_bot.helpers import misc
 
-        from lucky_bot import database
+        from lucky_bot import MainDB
+        from lucky_bot import BOT
 
         from lucky_bot.receiver import InputQueue
         from lucky_bot.receiver import FLASK_APP
@@ -62,11 +64,13 @@ class TestProjectBase(unittest.TestCase):
         from lucky_bot.sender import dispatcher
         from lucky_bot import sender
 
-        from lucky_bot import bot_config
-        from lucky_bot import controller
-        from lucky_bot import parser
-        from lucky_bot import responder
         from lucky_bot import updater
+
+        from lucky_bot.controller import bot_handlers
+        from lucky_bot.controller import parser
+        from lucky_bot.controller import responder
+        from lucky_bot import controller
+
         import main
 
         from lucky_bot.helpers.constants import REPLIT

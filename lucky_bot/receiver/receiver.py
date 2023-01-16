@@ -1,5 +1,4 @@
 """ Receiver thread.
-
 Integrated with the Flask app and the Input Message Queue.
 """
 from pyngrok import ngrok
@@ -14,7 +13,7 @@ from lucky_bot.helpers.constants import (
 )
 from lucky_bot.helpers.signals import RECEIVER_IS_RUNNING, RECEIVER_IS_STOPPED
 from lucky_bot.helpers.misc import ThreadTemplate
-from lucky_bot.bot_config import BOT
+from lucky_bot import BOT
 
 from lucky_bot.receiver import FLASK_APP
 

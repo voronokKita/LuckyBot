@@ -1,7 +1,7 @@
 """ python -m unittest tests.units.test_database """
 import unittest
 
-from lucky_bot.database import MainDB
+from lucky_bot import MainDB
 
 
 class TestMainDatabase(unittest.TestCase):

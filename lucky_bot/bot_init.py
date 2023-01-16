@@ -1,4 +1,4 @@
-""" pyTelegramBotAPI configuration. """
+""" pyTelegramBotAPI initialisation. """
 import telebot
 
 from lucky_bot.helpers.constants import API

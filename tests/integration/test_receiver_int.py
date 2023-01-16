@@ -6,8 +6,8 @@ from unittest.mock import patch
 import requests
 
 from lucky_bot.helpers.constants import (
-    TestException, ADDRESS, PORT, FlaskException,
-    WEBHOOK_SECRET, WEBHOOK_ENDPOINT, PROJECT_DIR,
+    TestException, ADDRESS, PORT, PROJECT_DIR,
+    WEBHOOK_SECRET, WEBHOOK_ENDPOINT,
 )
 from lucky_bot.helpers.signals import (
     RECEIVER_IS_RUNNING, RECEIVER_IS_STOPPED,

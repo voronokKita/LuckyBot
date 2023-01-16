@@ -1,5 +1,4 @@
 """ Receiver.
-
 A module that handles input messages from Telegram.
 """
 from .input_mq import InputQueue

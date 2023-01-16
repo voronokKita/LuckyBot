@@ -1,6 +1,4 @@
-""" Controller.
-
-A module that handles incoming Telegram messages, the internal and admin commands.
+""" Controller thread.
 Integrated with the Input Messages Queue, Parser and Responder.
 """
 from lucky_bot.helpers.signals import CONTROLLER_IS_RUNNING, CONTROLLER_IS_STOPPED, EXIT_SIGNAL

@@ -1,8 +1,8 @@
 """ python -m unittest tests.units.test_controller """
 from unittest.mock import patch
 
-from lucky_bot.controller import ControllerThread
 from lucky_bot.helpers.signals import CONTROLLER_IS_RUNNING, CONTROLLER_IS_STOPPED
+from lucky_bot.controller import ControllerThread
 
 from tests.presets import ThreadTestTemplate
 
