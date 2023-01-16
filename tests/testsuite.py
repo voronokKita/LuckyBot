@@ -13,7 +13,7 @@ sys.path.append(str(BASE_DIR))
 
 from tests import test_base
 from tests.units import (
-    test_receiver, test_controller, test_updater, test_sender,
+    test_receiver, test_controller, test_updater, test_sender, test_database,
 )
 from tests.integration import test_main, test_receiver_int
 
@@ -29,6 +29,7 @@ if result.wasSuccessful() is False:
     sys.exit(1)
 
 modules_to_test = {
+    test_database,
     test_sender,
     test_updater,
     test_controller,

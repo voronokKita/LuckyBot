@@ -11,7 +11,6 @@ from sqlalchemy.exc import IntegrityError
 from lucky_bot.helpers.constants import DB_FILE, TESTING
 
 import logging
-from logs.config import console, event
 logger = logging.getLogger(__name__)
 
 DB_ENGINE = create_engine(f'sqlite:///{DB_FILE}', future=True)
@@ -28,7 +27,12 @@ class User(MainBase):
     tg_id = Column('telegram_id', Integer, nullable=False, unique=True, index=True)
     last_note = Column('last_note_num', Integer, nullable=False, default=0)
 
-    notes = relationship('Note', back_populates='user', cascade='all, delete-orphan')
+    notes = relationship(
+        'Note',
+        back_populates='user',
+        cascade='all, delete-orphan',
+        order_by='Note.number',
+    )
 
     def __str__(self):
         return f'<user #{self.tg_id!r}>'
@@ -64,6 +68,7 @@ class MainDB:
 
     @staticmethod
     def add_user(uid) -> bool:
+        """ Will return False if the user already exists. """
         try:
             with DB_SESSION.begin() as session:
                 user = User(tg_id=uid)
@@ -81,6 +86,7 @@ class MainDB:
 
     @staticmethod
     def add_note(uid, text, file=None) -> True:
+        """ Will crete a new user, if the user does not exist. """
         with DB_SESSION.begin() as session:
             user = session.query(User).filter(User.tg_id == uid).first()
             if not user:
@@ -90,17 +96,56 @@ class MainDB:
             note = Note(
                 number=user.last_note + 1,
                 text=text,
-                date=datetime.now(timezone.utc),  # TODO
+                date=datetime.now(timezone.utc).replace(microsecond=0),
             )
             user.notes.append(note)
             user.last_note += 1
         return True
 
     @staticmethod
-    def get_user_notes(uid) -> Query | None:
+    def get_user_notes(uid) -> list | None:
+        """ Notes are ordered by the Note.number, ascending. """
         with DB_SESSION() as session:
             user = session.query(User).filter(User.tg_id == uid).first()
-            if user:
-                return user.notes
-            else:
+            if not user:
                 return None
+            else:
+                return user.notes
+
+    @staticmethod
+    def delete_user_note(uid, note_num) -> bool:
+        """ Will return False if not found. """
+        with DB_SESSION.begin() as session:
+            note = session.query(Note).join(User)\
+                .filter(User.tg_id == uid, Note.number == note_num)\
+                .first()
+            if not note:
+                return False
+            else:
+                session.delete(note)
+        return True
+
+    @staticmethod
+    def delete_user(uid) -> bool:
+        """ Will return False if not found. """
+        with DB_SESSION.begin() as session:
+            user = session.query(User).filter(User.tg_id == uid).first()
+            if not user:
+                return False
+            else:
+                session.delete(user)
+        return True
+
+    @staticmethod
+    def update_user_note(uid, note_num, new_text) -> bool:
+        """ Will return False if not found. """
+        with DB_SESSION.begin() as session:
+            note = session.query(Note).join(User) \
+                .filter(User.tg_id == uid, Note.number == note_num) \
+                .first()
+            if not note:
+                return False
+            else:
+                note.text = new_text
+                note.date = datetime.now(timezone.utc).replace(microsecond=0)
+        return True
