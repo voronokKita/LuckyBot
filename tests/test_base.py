@@ -33,7 +33,7 @@ class TestProjectBase(unittest.TestCase):
             package_dir / 'sender' / 'dispatcher.py',
             package_dir / 'sender' / 'sender.py',
 
-            package_dir / 'updater.py',
+            package_dir / 'updater' / 'updater.py',
 
             package_dir / 'bot_config.py',
             package_dir / 'controller.py',
