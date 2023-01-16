@@ -17,7 +17,7 @@ from lucky_bot.sender import OutputQueue
 from lucky_bot.sender import dispatcher
 
 import logging
-from logs.config import console, event
+from logs import console, event
 logger = logging.getLogger(__name__)
 
 

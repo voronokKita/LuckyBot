@@ -15,7 +15,7 @@ from lucky_bot.controller import ControllerThread
 from lucky_bot.receiver import ReceiverThread
 
 import logging
-from logs.config import console, event, clear_old_logs
+from logs import console, event, clear_old_logs
 logger = logging.getLogger(__name__)
 
 

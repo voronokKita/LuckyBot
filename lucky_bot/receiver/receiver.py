@@ -18,7 +18,7 @@ from lucky_bot import BOT
 from lucky_bot.receiver import FLASK_APP
 
 import logging
-from logs.config import console
+from logs import console
 logger = logging.getLogger(__name__)
 
 

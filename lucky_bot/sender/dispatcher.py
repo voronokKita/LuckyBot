@@ -12,7 +12,7 @@ from lucky_bot.helpers.constants import (
 from lucky_bot import BOT
 
 import logging
-from logs.config import console, event
+from logs import console, event
 logger = logging.getLogger(__name__)
 
 

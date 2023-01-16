@@ -5,7 +5,7 @@ from lucky_bot.helpers.signals import CONTROLLER_IS_RUNNING, CONTROLLER_IS_STOPP
 from lucky_bot.helpers.misc import ThreadTemplate
 
 import logging
-from logs.config import console, event
+from logs import console, event
 logger = logging.getLogger(__name__)
 
 

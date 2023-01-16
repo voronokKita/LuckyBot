@@ -18,7 +18,7 @@ from lucky_bot.helpers.signals import NEW_TELEGRAM_MESSAGE, EXIT_SIGNAL
 from lucky_bot.receiver import InputQueue
 
 import logging
-from logs.config import console, event
+from logs import console, event
 logger = logging.getLogger(__name__)
 
 def test_exception(): pass
