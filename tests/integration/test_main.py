@@ -16,10 +16,10 @@ from tests.units.test_receiver import mock_ngrok, mock_telebot, mock_serving
 
 
 @patch('lucky_bot.sender.SenderThread._process_all_messages')
-@patch('lucky_bot.receiver.ReceiverThread._remove_webhook')
-@patch('lucky_bot.receiver.ReceiverThread._start_server', new_callable=mock_serving)
-@patch('lucky_bot.receiver.BOT', new_callable=mock_telebot)
-@patch('lucky_bot.receiver.ngrok', new_callable=mock_ngrok)
+@patch('lucky_bot.receiver.receiver.ReceiverThread._remove_webhook')
+@patch('lucky_bot.receiver.receiver.ReceiverThread._start_server', new_callable=mock_serving)
+@patch('lucky_bot.receiver.receiver.BOT', new_callable=mock_telebot)
+@patch('lucky_bot.receiver.receiver.ngrok', new_callable=mock_ngrok)
 class TestMain(unittest.TestCase):
     signals = [
         ALL_THREADS_ARE_GO, ALL_DONE_SIGNAL, EXIT_SIGNAL,

@@ -15,7 +15,8 @@ from lucky_bot.helpers.constants import (
     WebhookWrongRequest, FlaskException
 )
 from lucky_bot.helpers.signals import NEW_TELEGRAM_MESSAGE, EXIT_SIGNAL
-from lucky_bot.models.input_mq import InputQueue
+
+from lucky_bot.receiver import InputQueue
 
 import logging
 from logs.config import console, event

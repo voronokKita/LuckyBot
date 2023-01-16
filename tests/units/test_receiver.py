@@ -12,8 +12,8 @@ from lucky_bot.helpers.constants import (
     REPLIT, ADDRESS, PORT, PROJECT_DIR,
     WEBHOOK_SECRET, WEBHOOK_ENDPOINT,
 )
-from lucky_bot.flask_config import FLASK_APP
-from lucky_bot.models.input_mq import InputQueue
+from lucky_bot.receiver import FLASK_APP
+from lucky_bot.receiver import InputQueue
 
 from tests.presets import ThreadTestTemplate, ThreadSmallTestTemplate
 
@@ -38,10 +38,10 @@ def mock_serving():
     return start_server
 
 
-@patch('lucky_bot.receiver.ReceiverThread._start_server', new_callable=mock_serving)
-@patch('lucky_bot.receiver.ReceiverThread._make_server', Mock())
-@patch('lucky_bot.receiver.BOT', new_callable=mock_telebot)
-@patch('lucky_bot.receiver.ngrok', new_callable=mock_ngrok)
+@patch('lucky_bot.receiver.receiver.ReceiverThread._start_server', new_callable=mock_serving)
+@patch('lucky_bot.receiver.receiver.ReceiverThread._make_server', Mock())
+@patch('lucky_bot.receiver.receiver.BOT', new_callable=mock_telebot)
+@patch('lucky_bot.receiver.receiver.ngrok', new_callable=mock_ngrok)
 class TestReceiverThreadBase(ThreadTestTemplate):
     thread_class = ReceiverThread
     is_running_signal = RECEIVER_IS_RUNNING
@@ -64,10 +64,10 @@ class TestReceiverThreadBase(ThreadTestTemplate):
         super().forced_merge()
 
 
-@patch('lucky_bot.receiver.ReceiverThread._start_server', new_callable=mock_serving)
-@patch('lucky_bot.receiver.ReceiverThread._make_server')
-@patch('lucky_bot.receiver.ReceiverThread._set_webhook')
-@patch('lucky_bot.receiver.ngrok', new_callable=mock_ngrok)
+@patch('lucky_bot.receiver.receiver.ReceiverThread._start_server', new_callable=mock_serving)
+@patch('lucky_bot.receiver.receiver.ReceiverThread._make_server')
+@patch('lucky_bot.receiver.receiver.ReceiverThread._set_webhook')
+@patch('lucky_bot.receiver.receiver.ngrok', new_callable=mock_ngrok)
 class TestTunnel(ThreadSmallTestTemplate):
     thread_class = ReceiverThread
     is_running_signal = RECEIVER_IS_RUNNING
@@ -111,10 +111,10 @@ class TestTunnel(ThreadSmallTestTemplate):
         ngrok.kill.assert_not_called()
 
 
-@patch('lucky_bot.receiver.ReceiverThread._start_server', new_callable=mock_serving)
-@patch('lucky_bot.receiver.ReceiverThread._make_server')
-@patch('lucky_bot.receiver.BOT', new_callable=mock_telebot)
-@patch('lucky_bot.receiver.ngrok', new_callable=mock_ngrok)
+@patch('lucky_bot.receiver.receiver.ReceiverThread._start_server', new_callable=mock_serving)
+@patch('lucky_bot.receiver.receiver.ReceiverThread._make_server')
+@patch('lucky_bot.receiver.receiver.BOT', new_callable=mock_telebot)
+@patch('lucky_bot.receiver.receiver.ngrok', new_callable=mock_ngrok)
 class TestWebhook(ThreadSmallTestTemplate):
     thread_class = ReceiverThread
     is_running_signal = RECEIVER_IS_RUNNING
@@ -161,9 +161,9 @@ class TestWebhook(ThreadSmallTestTemplate):
         self.assertRaises(ReceiverException, self.thread_obj.merge)
 
 
-@patch('lucky_bot.receiver.ReceiverThread._start_server', new_callable=mock_serving)
-@patch('lucky_bot.receiver.BOT', new_callable=mock_telebot)
-@patch('lucky_bot.receiver.ngrok', new_callable=mock_ngrok)
+@patch('lucky_bot.receiver.receiver.ReceiverThread._start_server', new_callable=mock_serving)
+@patch('lucky_bot.receiver.receiver.BOT', new_callable=mock_telebot)
+@patch('lucky_bot.receiver.receiver.ngrok', new_callable=mock_ngrok)
 class TestServer(ThreadSmallTestTemplate):
     thread_class = ReceiverThread
     is_running_signal = RECEIVER_IS_RUNNING
@@ -208,7 +208,7 @@ class TestServer(ThreadSmallTestTemplate):
         self.thread_obj.merge()
         self.assertIsNone(self.thread_obj.server)
 
-    @patch('lucky_bot.receiver.ReceiverThread._make_server')
+    @patch('lucky_bot.receiver.receiver.ReceiverThread._make_server')
     def test_receiver_making_server_exception(self, make_server, ngrok, bot, *args):
         make_server.side_effect = TestException('boom')
 
@@ -229,7 +229,7 @@ class TestServer(ThreadSmallTestTemplate):
         self.assertIsNone(self.thread_obj.server)
         self.assertRaises(ReceiverException, self.thread_obj.merge)
 
-    @patch('lucky_bot.receiver.ReceiverThread._test_exception_after_serving')
+    @patch('lucky_bot.receiver.receiver.ReceiverThread._test_exception_after_serving')
     def test_receiver_starting_server_exception(self, start_serving, ngrok, bot, *args):
         start_serving.side_effect = TestException('boom')
 
@@ -253,7 +253,7 @@ class TestServer(ThreadSmallTestTemplate):
         self.assertIsNone(self.thread_obj.server)
 
 
-@patch('lucky_bot.flask_config.InputQueue')
+@patch('lucky_bot.receiver.flask_config.InputQueue')
 class TestFlaskApp(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -293,14 +293,14 @@ class TestFlaskApp(unittest.TestCase):
         response = self.client.post(WEBHOOK_ENDPOINT, data=r'junk')
         self.assertEqual(response.status_code, 400)
 
-    @patch('lucky_bot.flask_config.get_message_data')
+    @patch('lucky_bot.receiver.flask_config.get_message_data')
     def test_flask_app_get_msg_exception(self, get_message, *args):
         get_message.side_effect = TestException('boom')
         with self.assertRaises(FlaskException):
             response = self.client.post(WEBHOOK_ENDPOINT, data=r'junk')
         self.assertTrue(EXIT_SIGNAL.is_set())
 
-    @patch('lucky_bot.flask_config.test_exception')
+    @patch('lucky_bot.receiver.flask_config.test_exception')
     def test_flask_app_save_msg_exception(self, test_exception, *args):
         test_exception.side_effect = TestException('boom')
         with self.assertRaises(FlaskException):

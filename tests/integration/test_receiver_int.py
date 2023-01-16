@@ -13,8 +13,8 @@ from lucky_bot.helpers.signals import (
     RECEIVER_IS_RUNNING, RECEIVER_IS_STOPPED,
     EXIT_SIGNAL, NEW_TELEGRAM_MESSAGE,
 )
-from lucky_bot.models.input_mq import InputQueue
-from lucky_bot.flask_config import FLASK_APP
+from lucky_bot.receiver import InputQueue
+from lucky_bot.receiver import FLASK_APP
 from lucky_bot.receiver import ReceiverThread
 
 from tests.units.test_receiver import mock_ngrok, mock_telebot
@@ -22,8 +22,8 @@ from tests.units.test_receiver import mock_ngrok, mock_telebot
 from tests.presets import ThreadSmallTestTemplate
 
 
-@patch('lucky_bot.receiver.BOT', new_callable=mock_telebot)
-@patch('lucky_bot.receiver.ngrok', new_callable=mock_ngrok)
+@patch('lucky_bot.receiver.receiver.BOT', new_callable=mock_telebot)
+@patch('lucky_bot.receiver.receiver.ngrok', new_callable=mock_ngrok)
 class TestReceiverServing(ThreadSmallTestTemplate):
     thread_class = ReceiverThread
     is_running_signal = RECEIVER_IS_RUNNING
@@ -118,7 +118,7 @@ class TestReceiverServing(ThreadSmallTestTemplate):
         self.thread_obj.merge()
         self.assertIsNone(self.thread_obj.server)
 
-    @patch('lucky_bot.flask_config.test_exception')
+    @patch('lucky_bot.receiver.flask_config.test_exception')
     def test_receiver_exception_in_flask_app(self, test_exception, ngrok, bot):
         test_exception.side_effect = TestException('boom')
 
