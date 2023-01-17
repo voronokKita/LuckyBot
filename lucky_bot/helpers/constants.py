@@ -123,3 +123,6 @@ class DispatcherUndefinedExc(DispatcherException):
 
 class ControllerException(Exception):
     """ Something wrong in the controller. """
+
+class TelebotHandlerException(ControllerException):
+    """ Something wrong in the telebot handlers. """

@@ -4,7 +4,7 @@ and with the Receiver's Input Messages Queue.
 """
 import telebot
 
-from lucky_bot.helpers.constants import ControllerException
+from lucky_bot.helpers.constants import ControllerException, TelebotHandlerException
 from lucky_bot.helpers.signals import (
     CONTROLLER_IS_RUNNING, CONTROLLER_IS_STOPPED,
     INCOMING_MESSAGE, EXIT_SIGNAL,
@@ -22,10 +22,10 @@ logger = logging.getLogger(__name__)
 
 '''
 Tg message 
-/start -> responder insert new uer -> 'hello message'
+/start -> responder clears old data, insert new uer -> 'hello message'
 
 Tg message
-/restart -> responder clears old data -> 'hello message'
+/restart -> responder clears old data, insert new uer -> 'hello message'
 
 Tg message
 /help -> responder -> 'help message'
@@ -78,6 +78,7 @@ class ControllerThread(ThreadTemplate):
             the INCOMING_MESSAGE signal must be set after the EXIT_SIGNAL.
 
         Raises:
+            TelebotHandlerException: propagation
             ControllerException
         """
         try:
@@ -97,6 +98,8 @@ class ControllerThread(ThreadTemplate):
                 INCOMING_MESSAGE.clear()
                 self._test_controller_cycle()
 
+        except TelebotHandlerException as exc:
+            raise exc
         except Exception as exc:
             event.error('controller: exception')
             console('controller: exception')
@@ -119,6 +122,12 @@ class ControllerThread(ThreadTemplate):
                 break
 
     def _process_the_message(self, msg_obj):
+        """
+        Calls the responder or the bot processor, depending on message data.
+
+        Raises:
+            TelebotHandlerException
+        """
         if msg_obj.data.startswith('/'):
             if msg_obj.data.startswith('/sender delete'):
                 tg_uid = msg_obj.data.removeprefix('/sender delete ')
@@ -127,8 +136,14 @@ class ControllerThread(ThreadTemplate):
                 # TODO
                 pass
         else:
-            update = telebot.types.Update.de_json(msg_obj.data)
-            BOT.process_new_updates([update])
+            try:
+                update = telebot.types.Update.de_json(msg_obj.data)
+                BOT.process_new_updates([update])
+            except Exception as exc:
+                msg = 'controller: exception in a telebot handler'
+                event.error(msg)
+                console(msg)
+                raise TelebotHandlerException(exc)
 
     @staticmethod
     def _test_controller_cycle():

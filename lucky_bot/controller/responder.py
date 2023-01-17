@@ -7,5 +7,8 @@ logger = logging.getLogger(__name__)
 
 
 class Respond:
-    def delete_user(self, tg_uid):
+    def delete_user(self, tg_uid, start_cmd=False):
+        pass
+
+    def send_message(self, tg_uid, text):
         pass

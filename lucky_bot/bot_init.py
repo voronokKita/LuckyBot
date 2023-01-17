@@ -7,4 +7,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class ExceptionHandler(telebot.ExceptionHandler):
+    def handle(self, exception):
+        pass
+
+
 BOT = telebot.TeleBot(API, threaded=False)

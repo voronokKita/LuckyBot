@@ -3,12 +3,18 @@ import unittest
 from unittest.mock import patch, Mock
 from time import sleep
 
-from lucky_bot.helpers.constants import TestException, ControllerException, PROJECT_DIR
+import telebot
+
+from lucky_bot.helpers.constants import (
+    TestException, ControllerException,
+    TelebotHandlerException, PROJECT_DIR,
+)
 from lucky_bot.helpers.signals import (
     CONTROLLER_IS_RUNNING, CONTROLLER_IS_STOPPED,
     INCOMING_MESSAGE, EXIT_SIGNAL,
 )
 from lucky_bot.controller import ControllerThread
+from lucky_bot import BOT
 
 from tests.presets import ThreadTestTemplate, ThreadSmallTestTemplate
 
@@ -104,7 +110,7 @@ class TestSender(ThreadSmallTestTemplate):
         self.assertFalse(CONTROLLER_IS_RUNNING.is_set(), msg='exception before this signal')
         controller_cycle.assert_not_called()
         self.assertTrue(EXIT_SIGNAL.is_set())
-        self.assertRaises(ControllerException, self.thread_obj.merge)
+        self.assertRaises(TelebotHandlerException, self.thread_obj.merge)
 
 
 @patch('lucky_bot.controller.controller.BOT')
@@ -129,3 +135,34 @@ class TestControllerCallToResponder(unittest.TestCase):
         self.msg_obj.data = self.telegram_request
         self.controller._process_the_message(self.msg_obj)
         bot.process_new_updates.assert_called_once()
+
+    def test_telegram_message_exception(self, arg, bot):
+        self.msg_obj.data = self.telegram_request
+        bot.process_new_updates.side_effect = TestException('boom')
+
+        self.assertRaises(TelebotHandlerException,
+                          self.controller._process_the_message,
+                          self.msg_obj)
+
+
+@patch('lucky_bot.controller.bot_handlers.time')
+@patch('lucky_bot.controller.bot_handlers.respond')
+class TestBotHandlers(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        fixtures = PROJECT_DIR / 'tests' / 'fixtures'
+        with open(fixtures / 'telegram_request.json') as f:
+            cls.telegram_text = f.read().strip()
+        with open(fixtures / 'telegram_start.json') as f:
+            cls.telegram_start = f.read().strip()
+
+    def test_start_cmd_exception(self, respond, *args):
+        respond.delete_user.side_effect = TestException('boom')
+        update = telebot.types.Update.de_json(self.telegram_start)
+        self.assertRaises(TestException, BOT.process_new_updates, [update])
+
+    def test_start_cmd(self, respond, *args):
+        update = telebot.types.Update.de_json(self.telegram_start)
+        BOT.process_new_updates([update])
+        respond.delete_user.assert_called_once()
+        self.assertEqual(respond.send_message.call_count, 3)
