@@ -146,6 +146,7 @@ class TestControllerCallToResponder(unittest.TestCase):
                           self.msg_obj)
 
 
+@patch('lucky_bot.controller.bot_handlers.parser')
 @patch('lucky_bot.controller.bot_handlers.respond')
 class TestBotHandlers(unittest.TestCase):
     @classmethod
@@ -159,20 +160,24 @@ class TestBotHandlers(unittest.TestCase):
             cls.telegram_start = f.read().strip()
         with open(fixtures / 'telegram_help.json') as f:
             cls.telegram_help = f.read().strip()
+        with open(fixtures / 'telegram_add.json') as f:
+            cls.telegram_add = f.read().strip()
+        with open(fixtures / 'telegram_add_blank.json') as f:
+            cls.telegram_add_blank = f.read().strip()
 
-    def test_start_cmd_exception(self, respond):
+    def test_start_cmd_exception(self, respond, *args):
         respond.delete_user.side_effect = TestException('boom')
         update = telebot.types.Update.de_json(self.telegram_start)
         self.assertRaises(TestException, BOT.process_new_updates, [update])
 
-    def test_start_cmd(self, respond):
+    def test_start_cmd(self, respond, *args):
         update = telebot.types.Update.de_json(self.telegram_start)
         BOT.process_new_updates([update])
         respond.delete_user.assert_called_once_with(self.uid, start_cmd=True)
         msg = TEXT_HELLO.format(username=self.username, help=TEXT_HELP)
         respond.send_message.assert_called_once_with(self.uid, msg)
 
-    def test_help_cmd(self, respond):
+    def test_help_cmd(self, respond, *args):
         update = telebot.types.Update.de_json(self.telegram_text)
         BOT.process_new_updates([update])
         respond.send_message.assert_called_once_with(self.uid, TEXT_HELP)
@@ -181,3 +186,16 @@ class TestBotHandlers(unittest.TestCase):
         BOT.process_new_updates([update])
         respond.send_message.assert_called_with(self.uid, TEXT_HELP)
         self.assertEqual(respond.send_message.call_count, 2)
+
+    def test_add_cmd(self, respond, parser):
+        parser.parse_note_and_insert.return_value = 'Done.'
+        update = telebot.types.Update.de_json(self.telegram_add)
+        BOT.process_new_updates([update])
+
+        parser.parse_note_and_insert.assert_called_once()
+        respond.send_message.assert_called_with(self.uid, 'Done.')
+
+    def test_add_cmd_blank(self, respond, *args):
+        update = telebot.types.Update.de_json(self.telegram_add_blank)
+        BOT.process_new_updates([update])
+        respond.send_message.assert_called_once_with(self.uid, TEXT_HELP)

@@ -20,38 +20,10 @@ from logs import console, event
 logger = logging.getLogger(__name__)
 
 
-'''
-Tg message 
-/start -> responder clears old data, insert new uer -> 'hello message'
-
-Tg message
-/restart -> responder clears old data, insert new uer -> 'hello message'
-
-Tg message
-/help -> responder -> 'help message'
-
-Tg message
-some text or wrong command -> responder -> 'help message'
-
-Tg message
-/add [text] -> parser inserts data -> responder -> 'OK or ERROR message'
-
-Tg message
-/update [number] [text] -> parser updates data -> responder -> 'OK or ERROR message'
-
-Tg message
-/delete [number, n+1] -> responder deletes data -> 'OK or ERROR message'
-
-Tg message
-/list -> responder selects data -> 'list or ERROR message'
-
-Tg message
-/show [number] -> responder selects data -> 'text or ERROR message'
-
+''' Commands
 
 Internal
 /sender delete [tg_uid] -> responder deletes data
-
 
 TODO FEATURE admin
 /admin something
