@@ -8,5 +8,9 @@ from logs import console, event
 logger = logging.getLogger(__name__)
 
 
-def parse_note_and_insert(text) -> str:
+def parse_note_and_insert(uid, text) -> str:
+    return 'Done.'
+
+
+def parse_note_and_update(uid, text, note_num) -> str:
     return 'Done.'

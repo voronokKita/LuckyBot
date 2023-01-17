@@ -1,5 +1,5 @@
 """ pyTelegramBotAPI update handlers. """
-import time
+import re
 
 import logging
 from logs import console, event
@@ -11,7 +11,7 @@ from lucky_bot.controller import Respond
 
 respond = Respond()
 
-''' Commands
+''' Commands:
 
 Tg message DONE
 /start -> responder clears old data, insert new uer -> 'hello message'
@@ -25,10 +25,10 @@ Tg message DONE
 Tg message DONE
 some text or wrong command -> responder -> 'help message'
 
-Tg message
+Tg message DONE
 /add [text] -> parser inserts data -> responder -> 'OK or ERROR message'
 
-Tg message
+Tg message DONE
 /update [number] [text] -> parser updates data -> responder -> 'OK or ERROR message'
 
 Tg message
@@ -69,7 +69,21 @@ def add_new_note(message):
         help(message)
         return
 
-    result = parser.parse_note_and_insert(message_text)
+    result = parser.parse_note_and_insert(uid, message_text)
+    respond.send_message(uid, result)
+
+
+@BOT.message_handler(commands=['update'])
+def update_user_note(message):
+    uid = message.chat.id
+    parts = re.findall(r'(\d+)\s+(.+)', message.text, flags=re.DOTALL)
+    if not parts:
+        help(message)
+        return
+    note_num = parts[0][0]
+    message_text = parts[0][1].strip()
+
+    result = parser.parse_note_and_update(uid, message_text, note_num)
     respond.send_message(uid, result)
 
 
