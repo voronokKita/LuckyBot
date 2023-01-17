@@ -13,7 +13,7 @@ from lucky_bot.helpers.constants import (
     WEBHOOK_ENDPOINT, WEBHOOK_SECRET,
     WebhookWrongRequest, FlaskException
 )
-from lucky_bot.helpers.signals import NEW_TELEGRAM_MESSAGE, EXIT_SIGNAL
+from lucky_bot.helpers.signals import INCOMING_MESSAGE, EXIT_SIGNAL
 
 from lucky_bot.receiver import InputQueue
 
@@ -92,7 +92,7 @@ def inbox():
 
     else:
         save_message_to_queue(data)
-        NEW_TELEGRAM_MESSAGE.set()
+        INCOMING_MESSAGE.set()
         console('new tg message')
         return '', 200
 

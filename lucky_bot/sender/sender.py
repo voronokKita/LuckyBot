@@ -32,7 +32,7 @@ class SenderThread(ThreadTemplate):
         """
         Description:
             0. Check the Output Message Queue; Dispatch any messages;
-            1. Clear NEW_MESSAGE_TO_SEND, is set;
+            1. Clear NEW_MESSAGE_TO_SEND, if set;
             2. Set the SENDER_IS_RUNNING signal;
             3. Loop and wait for the NEW_MESSAGE_TO_SEND signal.
 

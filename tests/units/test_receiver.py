@@ -4,7 +4,7 @@ from unittest.mock import patch, Mock
 
 from lucky_bot.helpers.signals import (
     RECEIVER_IS_RUNNING, RECEIVER_IS_STOPPED,
-    EXIT_SIGNAL, NEW_TELEGRAM_MESSAGE,
+    EXIT_SIGNAL, INCOMING_MESSAGE,
 )
 from lucky_bot.helpers.constants import (
     TestException, ReceiverException, FlaskException,
@@ -46,7 +46,7 @@ class TestReceiverThreadBase(ThreadTestTemplate):
     thread_class = ReceiverThread
     is_running_signal = RECEIVER_IS_RUNNING
     is_stopped_signal = RECEIVER_IS_STOPPED
-    signals = [NEW_TELEGRAM_MESSAGE]
+    signals = [INCOMING_MESSAGE]
 
     def tearDown(self):
         if self.thread_obj.server:
@@ -72,7 +72,7 @@ class TestTunnel(ThreadSmallTestTemplate):
     thread_class = ReceiverThread
     is_running_signal = RECEIVER_IS_RUNNING
     is_stopped_signal = RECEIVER_IS_STOPPED
-    signals = [NEW_TELEGRAM_MESSAGE]
+    signals = [INCOMING_MESSAGE]
 
     def setUp(self):
         self.assertFalse(REPLIT)
@@ -119,7 +119,7 @@ class TestWebhook(ThreadSmallTestTemplate):
     thread_class = ReceiverThread
     is_running_signal = RECEIVER_IS_RUNNING
     is_stopped_signal = RECEIVER_IS_STOPPED
-    signals = [NEW_TELEGRAM_MESSAGE]
+    signals = [INCOMING_MESSAGE]
 
     def test_receiver_setting_webhook(self, ngrok, bot, *args):
         self.thread_obj.start()
@@ -168,7 +168,7 @@ class TestServer(ThreadSmallTestTemplate):
     thread_class = ReceiverThread
     is_running_signal = RECEIVER_IS_RUNNING
     is_stopped_signal = RECEIVER_IS_STOPPED
-    signals = [NEW_TELEGRAM_MESSAGE]
+    signals = [INCOMING_MESSAGE]
 
     def setUp(self):
         self.assertIsNotNone(ADDRESS)
@@ -268,7 +268,7 @@ class TestFlaskApp(unittest.TestCase):
         self.client = FLASK_APP.test_client()
 
     def tearDown(self):
-        signals = [EXIT_SIGNAL, NEW_TELEGRAM_MESSAGE]
+        signals = [EXIT_SIGNAL, INCOMING_MESSAGE]
         [signal.clear() for signal in signals if signal.is_set()]
         FLASK_APP.config['ENV'] = 'production'
         FLASK_APP.config['TESTING'] = False

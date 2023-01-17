@@ -39,7 +39,7 @@ ALL_THREADS_ARE_GO = SignalThreadsAreStarted()
 
 
 # Other
-NEW_TELEGRAM_MESSAGE = SignalTgMessage()
+INCOMING_MESSAGE = SignalTgMessage()
 NEW_MESSAGE_TO_SEND = SignalMessageToSend()
 
 EXIT_SIGNAL = SignalExit()

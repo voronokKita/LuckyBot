@@ -11,7 +11,7 @@ from lucky_bot.helpers.constants import (
 )
 from lucky_bot.helpers.signals import (
     RECEIVER_IS_RUNNING, RECEIVER_IS_STOPPED,
-    EXIT_SIGNAL, NEW_TELEGRAM_MESSAGE,
+    EXIT_SIGNAL, INCOMING_MESSAGE,
 )
 from lucky_bot.receiver import InputQueue
 from lucky_bot.receiver import FLASK_APP
@@ -28,7 +28,7 @@ class TestReceiverServing(ThreadSmallTestTemplate):
     thread_class = ReceiverThread
     is_running_signal = RECEIVER_IS_RUNNING
     is_stopped_signal = RECEIVER_IS_STOPPED
-    signals = [NEW_TELEGRAM_MESSAGE]
+    signals = [INCOMING_MESSAGE]
 
     @classmethod
     def setUpClass(cls):
@@ -84,7 +84,7 @@ class TestReceiverServing(ThreadSmallTestTemplate):
         )
         self.assertFalse(EXIT_SIGNAL.is_set(), msg='post request')
         self.assertEqual(response.status_code, 200, msg='post request')
-        if not NEW_TELEGRAM_MESSAGE.wait(10):
+        if not INCOMING_MESSAGE.wait(10):
             self.thread_obj.merge()
             raise TestException('The request code 200, but there is no signal...')
 
@@ -164,7 +164,7 @@ class TestFlaskWithMessageQueue(unittest.TestCase):
 
     def tearDown(self):
         InputQueue.tear_down()
-        signals = [EXIT_SIGNAL, NEW_TELEGRAM_MESSAGE]
+        signals = [EXIT_SIGNAL, INCOMING_MESSAGE]
         [signal.clear() for signal in signals if signal.is_set()]
 
     def test_flask_with_imq_integration(self):
