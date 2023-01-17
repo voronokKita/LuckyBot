@@ -119,3 +119,7 @@ class DispatcherTimeout(DispatcherException):
 
 class DispatcherUndefinedExc(DispatcherException):
     """ Undefined ApiTelegramException. """
+
+
+class ControllerException(Exception):
+    """ Something wrong in the controller. """

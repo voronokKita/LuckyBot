@@ -45,7 +45,7 @@ class TestSender(ThreadSmallTestTemplate):
     thread_class = SenderThread
     is_running_signal = SENDER_IS_RUNNING
     is_stopped_signal = SENDER_IS_STOPPED
-    signals = [NEW_MESSAGE_TO_SEND]
+    other_signals = [NEW_MESSAGE_TO_SEND]
 
     def test_sender_normal_message(self, mock_OutputQueue, disp, sender_cycle):
         msg_obj = Mock()

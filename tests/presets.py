@@ -1,6 +1,6 @@
 import unittest
 
-from lucky_bot.helpers.signals import EXIT_SIGNAL, NEW_MESSAGE_TO_SEND
+from lucky_bot.helpers.signals import EXIT_SIGNAL, NEW_MESSAGE_TO_SEND, INCOMING_MESSAGE
 from lucky_bot.helpers.constants import TestException
 
 
@@ -9,7 +9,7 @@ class ThreadTestTemplate(unittest.TestCase):
     thread_class = None
     is_running_signal = None
     is_stopped_signal = None
-    signals = []
+    other_signals = []
 
     def setUp(self):
         self.thread_obj = self.thread_class()
@@ -21,10 +21,9 @@ class ThreadTestTemplate(unittest.TestCase):
         self.assertFalse(self.thread_obj.is_alive())
 
     def _clear_signals(self):
-        signals = [EXIT_SIGNAL, NEW_MESSAGE_TO_SEND,
-                   self.is_running_signal, self.is_stopped_signal]
-        if self.signals:
-            signals += self.signals
+        signals = [EXIT_SIGNAL, self.is_running_signal, self.is_stopped_signal]
+        if self.other_signals:
+            signals += self.other_signals
         [signal.clear() for signal in signals if signal.is_set()]
 
     def normal_case(self):
@@ -37,6 +36,8 @@ class ThreadTestTemplate(unittest.TestCase):
         EXIT_SIGNAL.set()
         if str(self.thread_obj) == 'sender thread':
             NEW_MESSAGE_TO_SEND.set()
+        elif str(self.thread_obj) == 'controller thread':
+            INCOMING_MESSAGE.set()
 
         if not self.is_stopped_signal.wait(10):
             self.thread_obj.merge()
@@ -77,7 +78,7 @@ class ThreadSmallTestTemplate(unittest.TestCase):
     thread_class = None
     is_running_signal = None
     is_stopped_signal = None
-    signals = []
+    other_signals = []
 
     def setUp(self):
         self.thread_obj = self.thread_class()
@@ -90,6 +91,6 @@ class ThreadSmallTestTemplate(unittest.TestCase):
 
     def _clear_signals(self):
         signals = [EXIT_SIGNAL, self.is_running_signal, self.is_stopped_signal]
-        if self.signals:
-            signals += self.signals
+        if self.other_signals:
+            signals += self.other_signals
         [signal.clear() for signal in signals if signal.is_set()]

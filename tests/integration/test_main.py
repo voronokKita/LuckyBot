@@ -9,12 +9,14 @@ from lucky_bot.helpers.signals import (
     UPDATER_IS_RUNNING, SENDER_IS_RUNNING,
     RECEIVER_IS_STOPPED, CONTROLLER_IS_STOPPED,
     UPDATER_IS_STOPPED, SENDER_IS_STOPPED,
+    INCOMING_MESSAGE, NEW_MESSAGE_TO_SEND,
 )
 from main import MainAsThread
 
 from tests.units.test_receiver import mock_ngrok, mock_telebot, mock_serving
 
 
+@patch('lucky_bot.controller.controller.ControllerThread._check_new_messages')
 @patch('lucky_bot.sender.sender.SenderThread._process_all_messages')
 @patch('lucky_bot.receiver.receiver.ReceiverThread._remove_webhook')
 @patch('lucky_bot.receiver.receiver.ReceiverThread._start_server', new_callable=mock_serving)
@@ -27,6 +29,7 @@ class TestMain(unittest.TestCase):
         UPDATER_IS_RUNNING, SENDER_IS_RUNNING,
         RECEIVER_IS_STOPPED, CONTROLLER_IS_STOPPED,
         UPDATER_IS_STOPPED, SENDER_IS_STOPPED,
+        INCOMING_MESSAGE, NEW_MESSAGE_TO_SEND,
     ]
 
     def setUp(self):

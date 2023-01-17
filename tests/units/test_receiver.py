@@ -46,7 +46,7 @@ class TestReceiverThreadBase(ThreadTestTemplate):
     thread_class = ReceiverThread
     is_running_signal = RECEIVER_IS_RUNNING
     is_stopped_signal = RECEIVER_IS_STOPPED
-    signals = [INCOMING_MESSAGE]
+    other_signals = [INCOMING_MESSAGE]
 
     def tearDown(self):
         if self.thread_obj.server:
@@ -72,7 +72,7 @@ class TestTunnel(ThreadSmallTestTemplate):
     thread_class = ReceiverThread
     is_running_signal = RECEIVER_IS_RUNNING
     is_stopped_signal = RECEIVER_IS_STOPPED
-    signals = [INCOMING_MESSAGE]
+    other_signals = [INCOMING_MESSAGE]
 
     def setUp(self):
         self.assertFalse(REPLIT)
@@ -119,7 +119,7 @@ class TestWebhook(ThreadSmallTestTemplate):
     thread_class = ReceiverThread
     is_running_signal = RECEIVER_IS_RUNNING
     is_stopped_signal = RECEIVER_IS_STOPPED
-    signals = [INCOMING_MESSAGE]
+    other_signals = [INCOMING_MESSAGE]
 
     def test_receiver_setting_webhook(self, ngrok, bot, *args):
         self.thread_obj.start()
@@ -168,7 +168,7 @@ class TestServer(ThreadSmallTestTemplate):
     thread_class = ReceiverThread
     is_running_signal = RECEIVER_IS_RUNNING
     is_stopped_signal = RECEIVER_IS_STOPPED
-    signals = [INCOMING_MESSAGE]
+    other_signals = [INCOMING_MESSAGE]
 
     def setUp(self):
         self.assertIsNotNone(ADDRESS)

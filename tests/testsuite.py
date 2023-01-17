@@ -16,7 +16,7 @@ from tests.units import (
     test_receiver, test_controller, test_updater,
     test_sender, test_database,
 )
-from tests.integration import test_main, test_receiver_int, test_sender_int
+from tests.integration import test_main, test_receiver_int, test_sender_int, test_controller_int
 
 
 loader = unittest.TestLoader()
@@ -38,6 +38,7 @@ modules_to_test = {
 
     test_sender_int,
     test_receiver_int,
+    test_controller_int,
     test_main,
 }
 suite_list = []

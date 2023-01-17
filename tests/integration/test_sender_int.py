@@ -21,7 +21,7 @@ class TestSenderWorks(ThreadSmallTestTemplate):
     thread_class = SenderThread
     is_running_signal = SENDER_IS_RUNNING
     is_stopped_signal = SENDER_IS_STOPPED
-    signals = [NEW_MESSAGE_TO_SEND]
+    other_signals = [NEW_MESSAGE_TO_SEND]
 
     def setUp(self):
         OutputQueue.set_up()

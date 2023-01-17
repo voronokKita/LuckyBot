@@ -1,3 +1,4 @@
+- Test networking.
 - Sender: the delete-a-uid request.
 - Admin command interface.
 - Test logs.
