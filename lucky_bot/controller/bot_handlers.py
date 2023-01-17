@@ -10,11 +10,13 @@ from lucky_bot.controller import Respond
 
 respond = Respond()
 
+TEXT_HELLO = '''Hello, @{username}!
 
-TEXT_HELLO = f"ⓘ The server may be slow so don't rush to use commands again " \
-             "if there is no immediate response. (´･ᴗ･ ` )"
+ⓘ The server may be slow so don't rush to use commands again if there is no immediate response. (´･ᴗ･ ` )
 
-TEST_HELP = f"Some help message"
+{help}'''
+
+TEXT_HELP = f"ⓘ Some help message"
 
 
 @BOT.message_handler(commands=['start', 'restart'])
@@ -22,10 +24,13 @@ def hello(message):
     event.info('message: /start')
     console('message: /start')
     uid = message.chat.id
-    respond.delete_user(uid, start_cmd=True)
 
-    respond.send_message(uid, f'Hello, @{message.chat.username}!')
-    time.sleep(0.5)
-    respond.send_message(uid, TEXT_HELLO)
-    time.sleep(0.5)
-    respond.send_message(uid, TEST_HELP)
+    respond.delete_user(uid, start_cmd=True)
+    text = TEXT_HELLO.format(username=message.chat.username, help=TEXT_HELP)
+    respond.send_message(uid, text)
+
+
+@BOT.message_handler(content_types=['text'])
+@BOT.message_handler(commands=['help'])
+def help(message):
+    respond.send_message(message.chat.id, TEXT_HELP)

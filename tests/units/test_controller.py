@@ -13,6 +13,7 @@ from lucky_bot.helpers.signals import (
     CONTROLLER_IS_RUNNING, CONTROLLER_IS_STOPPED,
     INCOMING_MESSAGE, EXIT_SIGNAL,
 )
+from lucky_bot.controller.bot_handlers import TEXT_HELLO, TEXT_HELP
 from lucky_bot.controller import ControllerThread
 from lucky_bot import BOT
 
@@ -145,24 +146,38 @@ class TestControllerCallToResponder(unittest.TestCase):
                           self.msg_obj)
 
 
-@patch('lucky_bot.controller.bot_handlers.time')
 @patch('lucky_bot.controller.bot_handlers.respond')
 class TestBotHandlers(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.uid = 1266575762
+        cls.username = 'john_doe'
         fixtures = PROJECT_DIR / 'tests' / 'fixtures'
         with open(fixtures / 'telegram_request.json') as f:
             cls.telegram_text = f.read().strip()
         with open(fixtures / 'telegram_start.json') as f:
             cls.telegram_start = f.read().strip()
+        with open(fixtures / 'telegram_help.json') as f:
+            cls.telegram_help = f.read().strip()
 
-    def test_start_cmd_exception(self, respond, *args):
+    def test_start_cmd_exception(self, respond):
         respond.delete_user.side_effect = TestException('boom')
         update = telebot.types.Update.de_json(self.telegram_start)
         self.assertRaises(TestException, BOT.process_new_updates, [update])
 
-    def test_start_cmd(self, respond, *args):
+    def test_start_cmd(self, respond):
         update = telebot.types.Update.de_json(self.telegram_start)
         BOT.process_new_updates([update])
-        respond.delete_user.assert_called_once()
-        self.assertEqual(respond.send_message.call_count, 3)
+        respond.delete_user.assert_called_once_with(self.uid, start_cmd=True)
+        msg = TEXT_HELLO.format(username=self.username, help=TEXT_HELP)
+        respond.send_message.assert_called_once_with(self.uid, msg)
+
+    def test_help_cmd(self, respond):
+        update = telebot.types.Update.de_json(self.telegram_text)
+        BOT.process_new_updates([update])
+        respond.send_message.assert_called_once_with(self.uid, TEXT_HELP)
+
+        update = telebot.types.Update.de_json(self.telegram_help)
+        BOT.process_new_updates([update])
+        respond.send_message.assert_called_with(self.uid, TEXT_HELP)
+        self.assertEqual(respond.send_message.call_count, 2)
