@@ -119,12 +119,13 @@ class ControllerThread(ThreadTemplate):
                 break
 
     def _process_the_message(self, msg_obj):
-        if msg_obj.data.startswith('/sender delete'):
-            tg_uid = msg_obj.data.removeprefix('/sender delete ')
-            self.respond.delete_user(int(tg_uid))
-        elif msg_obj.data.startswith('/admin'):
-            # TODO
-            pass
+        if msg_obj.data.startswith('/'):
+            if msg_obj.data.startswith('/sender delete'):
+                tg_uid = msg_obj.data.removeprefix('/sender delete ')
+                self.respond.delete_user(int(tg_uid))
+            elif msg_obj.data.startswith('/admin'):
+                # TODO
+                pass
         else:
             update = telebot.types.Update.de_json(msg_obj.data)
             BOT.process_new_updates([update])
