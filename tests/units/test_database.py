@@ -22,7 +22,7 @@ class TestMainDatabase(unittest.TestCase):
         self.assertIsNotNone(user)
         self.assertEqual(user.last_note, 0)
 
-    def test_db_new_note(self):
+    def test_db_add_and_get_notes(self):
         uid1 = 42
         self.assertIsNone(MainDB.get_user_notes(uid1))
 

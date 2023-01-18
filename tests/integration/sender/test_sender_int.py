@@ -1,4 +1,4 @@
-""" python -m unittest tests.integration.test_sender_int """
+""" python -m unittest tests.integration.sender.test_sender_int """
 import time
 from unittest.mock import patch
 

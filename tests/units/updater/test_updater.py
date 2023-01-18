@@ -1,4 +1,4 @@
-""" python -m unittest tests.units.test_updater """
+""" python -m unittest tests.units.updater.test_updater """
 from unittest.mock import patch
 
 from lucky_bot.updater import UpdaterThread

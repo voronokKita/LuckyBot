@@ -1,4 +1,4 @@
-""" python -m unittest tests.integration.test_controller_int """
+""" python -m unittest tests.integration.controller.test_controller_int """
 from unittest.mock import patch
 from time import sleep
 
@@ -59,7 +59,7 @@ class TestControllerWithMessageQueue(ThreadSmallTestTemplate):
 
         self.assertFalse(INCOMING_MESSAGE.is_set(), msg='first')
         self.assertFalse(EXIT_SIGNAL.is_set(), msg='first')
-        respond.delete_user.assert_called_once_with(42)
+        respond.delete_user.assert_called_once_with('42')
         bot.process_new_updates.assert_called_once()
         self.assertIsNone(InputQueue.get_first_message(), msg='first')
         controller_cycle.assert_not_called()

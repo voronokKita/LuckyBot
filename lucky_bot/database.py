@@ -218,3 +218,7 @@ class MainDB:
             return False
         else:
             return True
+
+
+if not TESTING and not DB_FILE.exists():
+    MainBase.set_up()
