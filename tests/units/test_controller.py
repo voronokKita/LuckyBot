@@ -6,8 +6,7 @@ from time import sleep
 import telebot
 
 from lucky_bot.helpers.constants import (
-    TestException, ControllerException,
-    TelebotHandlerException, PROJECT_DIR,
+    TestException, TelebotHandlerException, PROJECT_DIR,
 )
 from lucky_bot.helpers.signals import (
     CONTROLLER_IS_RUNNING, CONTROLLER_IS_STOPPED,
