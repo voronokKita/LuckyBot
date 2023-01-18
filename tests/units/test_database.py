@@ -34,6 +34,7 @@ class TestMainDatabase(unittest.TestCase):
         self.assertEqual(user1.last_note, 1, msg='first case')
 
         uid2 = 9
+        self.assertTrue(MainDB.add_user(uid2))
         self.assertTrue(MainDB.add_note(uid2, 'strongest'))
         self.assertTrue(MainDB.add_note(uid2, 'genius'))
         user2 = MainDB.get_user(uid2)
@@ -56,6 +57,7 @@ class TestMainDatabase(unittest.TestCase):
         self.assertFalse(MainDB.delete_user_note(uid, note_num=1), msg='1')
 
         # test two entries
+        self.assertTrue(MainDB.add_user(uid))
         self.assertTrue(MainDB.add_note(uid, 'hello'), msg='1')
         self.assertTrue(MainDB.add_note(uid, 'world'), msg='1')
 
@@ -153,6 +155,7 @@ class TestMainDatabase(unittest.TestCase):
         self.assertFalse(MainDB.update_user_note(uid, 0, 'null'), msg='first')
         self.assertFalse(MainDB.update_user_note(uid, 1, 'null'), msg='first')
 
+        self.assertTrue(MainDB.add_user(uid))
         self.assertTrue(MainDB.add_note(uid, 'foo'))
         self.assertTrue(MainDB.add_note(uid, 'bar'))
 
