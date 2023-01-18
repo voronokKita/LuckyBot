@@ -31,7 +31,7 @@ Tg message DONE
 Tg message DONE
 /update [number] [text] -> parser updates data -> responder -> 'OK or ERROR message'
 
-Tg message
+Tg message DONE
 /delete [number, n+1] -> responder deletes data -> 'OK or ERROR message'
 
 Tg message
@@ -101,6 +101,13 @@ def delete_user_notes(message):
         return
     else:
         respond.delete_notes(message.chat.id, notes_list)
+
+
+@BOT.message_handler(commands=['list'])
+def delete_user_notes(message):
+    event.info('message: /list')
+    console('message: /list')
+    respond.send_list(message.chat.id)
 
 
 @BOT.message_handler(commands=['help'])

@@ -172,6 +172,8 @@ class TestBotHandlers(unittest.TestCase):
             cls.telegram_delete = f.read().strip()
         with open(fixtures / 'telegram_delete_wrong.json') as f:
             cls.telegram_delete_wrong = f.read().strip()
+        with open(fixtures / 'telegram_list.json') as f:
+            cls.telegram_list = f.read().strip()
 
     def test_start_cmd_exception(self, respond, *args):
         respond.delete_user.side_effect = TestException('boom')
@@ -242,3 +244,9 @@ class TestBotHandlers(unittest.TestCase):
 
         respond.delete_notes.assert_not_called()
         respond.send_message.assert_called_once_with(self.uid, TEXT_HELP)
+
+    def test_list_cmd(self, respond, *args):
+        update = telebot.types.Update.de_json(self.telegram_list)
+        BOT.process_new_updates([update])
+
+        respond.send_list.assert_called_with(self.uid)

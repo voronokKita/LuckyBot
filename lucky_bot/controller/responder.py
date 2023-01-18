@@ -15,3 +15,6 @@ class Respond:
 
     def send_message(self, tg_uid, text):
         pass
+
+    def send_list(self, tg_uid):
+        pass
