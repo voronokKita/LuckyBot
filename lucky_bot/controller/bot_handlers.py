@@ -1,4 +1,23 @@
-""" pyTelegramBotAPI update handlers. """
+""" pyTelegramBotAPI update handlers.
+
+* /start -> responder clears old data, inserts new user -> 'hello message'
+
+* /restart -> responder clears old data, inserts new user -> 'hello message'
+
+* /help -> responder -> 'help message'
+
+* some text or wrong command -> responder -> 'help message'
+
+* /add [text] -> parser inserts data -> responder -> 'OK or ERROR message'
+
+* /update [number] [text] -> parser updates data -> responder -> 'OK or ERROR message'
+
+* /delete [number, ...] -> responder deletes data -> 'OK or ERROR message'
+
+* /list -> responder selects data -> 'list or none message'
+
+* /show [number] -> responder selects data -> 'text or ERROR message'
+"""
 import re
 
 import logging
@@ -10,36 +29,6 @@ from lucky_bot.controller import parser
 from lucky_bot.controller import Respond
 
 respond = Respond()
-
-''' Commands:
-
-Tg message DONE
-/start -> responder clears old data, insert new uer -> 'hello message'
-
-Tg message DONE
-/restart -> responder clears old data, insert new uer -> 'hello message'
-
-Tg message DONE
-/help -> responder -> 'help message'
-
-Tg message DONE
-some text or wrong command -> responder -> 'help message'
-
-Tg message DONE
-/add [text] -> parser inserts data -> responder -> 'OK or ERROR message'
-
-Tg message DONE
-/update [number] [text] -> parser updates data -> responder -> 'OK or ERROR message'
-
-Tg message DONE
-/delete [number, n+1] -> responder deletes data -> 'OK or ERROR message'
-
-Tg message
-/list -> responder selects data -> 'list or ERROR message'
-
-Tg message
-/show [number] -> responder selects data -> 'text or ERROR message'
-'''
 
 TEXT_HELLO = '''Hello, @{username}!
 
@@ -93,9 +82,10 @@ def update_user_note(message):
 
 @BOT.message_handler(commands=['delete'])
 def delete_user_notes(message):
+    """ Note: '/delete 1 2 text 3 4' results in [1,2,3,4] """
     event.info('message: /delete')
     console('message: /delete')
-    notes_list = re.findall(r'(\d+)+', message.text, flags=re.DOTALL)
+    notes_list = re.findall(r'(\d+)', message.text)
     if not notes_list:
         help(message)
         return
@@ -108,6 +98,19 @@ def delete_user_notes(message):
     event.info('message: /list')
     console('message: /list')
     respond.send_list(message.chat.id)
+
+
+@BOT.message_handler(commands=['show'])
+def show_user_note(message):
+    event.info('message: /show')
+    console('message: /show')
+    match = re.search(r'(/show)\s+(\d+)', message.text)
+    if not match:
+        help(message)
+        return
+    else:
+        note_num = match.group(2)
+        respond.send_note(message.chat.id, note_num)
 
 
 @BOT.message_handler(commands=['help'])

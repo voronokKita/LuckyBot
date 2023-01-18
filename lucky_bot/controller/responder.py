@@ -18,3 +18,6 @@ class Respond:
 
     def send_list(self, tg_uid):
         pass
+
+    def send_note(self, tg_uid, note_num):
+        pass

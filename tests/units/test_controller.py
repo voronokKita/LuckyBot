@@ -174,6 +174,12 @@ class TestBotHandlers(unittest.TestCase):
             cls.telegram_delete_wrong = f.read().strip()
         with open(fixtures / 'telegram_list.json') as f:
             cls.telegram_list = f.read().strip()
+        with open(fixtures / 'telegram_show.json') as f:
+            cls.telegram_show = f.read().strip()
+        with open(fixtures / 'telegram_show_overload.json') as f:
+            cls.telegram_show_overload = f.read().strip()
+        with open(fixtures / 'telegram_show_wrong.json') as f:
+            cls.telegram_show_wrong = f.read().strip()
 
     def test_start_cmd_exception(self, respond, *args):
         respond.delete_user.side_effect = TestException('boom')
@@ -250,3 +256,24 @@ class TestBotHandlers(unittest.TestCase):
         BOT.process_new_updates([update])
 
         respond.send_list.assert_called_with(self.uid)
+
+    def test_show_cmd(self, respond, *args):
+        note_num = '1'
+        update = telebot.types.Update.de_json(self.telegram_show)
+        BOT.process_new_updates([update])
+
+        respond.send_note.assert_called_once_with(self.uid, note_num)
+
+    def test_show_cmd_overload(self, respond, *args):
+        note_num = '1'
+        update = telebot.types.Update.de_json(self.telegram_show_overload)
+        BOT.process_new_updates([update])
+
+        respond.send_note.assert_called_once_with(self.uid, note_num)
+
+    def test_show_cmd_wrong(self, respond, *args):
+        update = telebot.types.Update.de_json(self.telegram_show_wrong)
+        BOT.process_new_updates([update])
+
+        respond.send_note.assert_not_called()
+        respond.send_message.assert_called_once_with(self.uid, TEXT_HELP)
