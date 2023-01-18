@@ -63,32 +63,50 @@ def hello(message):
 
 @BOT.message_handler(commands=['add'])
 def add_new_note(message):
-    uid = message.chat.id
+    event.info('message: /add')
+    console('message: /add')
     message_text = message.text.removeprefix('/add').strip()
     if not message_text:
         help(message)
         return
-
-    result = parser.parse_note_and_insert(uid, message_text)
-    respond.send_message(uid, result)
+    else:
+        uid = message.chat.id
+        result = parser.parse_note_and_insert(uid, message_text)
+        respond.send_message(uid, result)
 
 
 @BOT.message_handler(commands=['update'])
 def update_user_note(message):
-    uid = message.chat.id
+    event.info('message: /update')
+    console('message: /update')
     parts = re.findall(r'(\d+)\s+(.+)', message.text, flags=re.DOTALL)
     if not parts:
         help(message)
         return
     note_num = parts[0][0]
     message_text = parts[0][1].strip()
+    uid = message.chat.id
 
     result = parser.parse_note_and_update(uid, message_text, note_num)
     respond.send_message(uid, result)
 
 
+@BOT.message_handler(commands=['delete'])
+def delete_user_notes(message):
+    event.info('message: /delete')
+    console('message: /delete')
+    notes_list = re.findall(r'(\d+)+', message.text, flags=re.DOTALL)
+    if not notes_list:
+        help(message)
+        return
+    else:
+        respond.delete_notes(message.chat.id, notes_list)
+
+
 @BOT.message_handler(commands=['help'])
 @BOT.message_handler(content_types=['text'])
 def help(message):
+    event.info('message: help')
+    console('message: help')
     respond.send_message(message.chat.id, TEXT_HELP)
 

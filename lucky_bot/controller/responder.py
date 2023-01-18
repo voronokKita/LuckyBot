@@ -10,5 +10,8 @@ class Respond:
     def delete_user(self, tg_uid, start_cmd=False):
         pass
 
+    def delete_notes(self, tg_uid, notes:list):
+        pass
+
     def send_message(self, tg_uid, text):
         pass

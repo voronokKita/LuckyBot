@@ -166,6 +166,12 @@ class TestBotHandlers(unittest.TestCase):
             cls.telegram_add_blank = f.read().strip()
         with open(fixtures / 'telegram_update.json') as f:
             cls.telegram_update = f.read().strip()
+        with open(fixtures / 'telegram_update_wrong.json') as f:
+            cls.telegram_update_wrong = f.read().strip()
+        with open(fixtures / 'telegram_delete.json') as f:
+            cls.telegram_delete = f.read().strip()
+        with open(fixtures / 'telegram_delete_wrong.json') as f:
+            cls.telegram_delete_wrong = f.read().strip()
 
     def test_start_cmd_exception(self, respond, *args):
         respond.delete_user.side_effect = TestException('boom')
@@ -198,9 +204,11 @@ class TestBotHandlers(unittest.TestCase):
         parser.parse_note_and_insert.assert_called_once_with(self.uid, text)
         respond.send_message.assert_called_with(self.uid, 'Done add.')
 
-    def test_add_cmd_blank(self, respond, *args):
+    def test_add_cmd_blank(self, respond, parser):
         update = telebot.types.Update.de_json(self.telegram_add_blank)
         BOT.process_new_updates([update])
+
+        parser.parse_note_and_insert.assert_not_called()
         respond.send_message.assert_called_once_with(self.uid, TEXT_HELP)
 
     def test_update_cmd(self, respond, parser):
@@ -212,3 +220,25 @@ class TestBotHandlers(unittest.TestCase):
 
         parser.parse_note_and_update.assert_called_once_with(self.uid, text, note_num)
         respond.send_message.assert_called_with(self.uid, 'Done update.')
+
+    def test_update_cmd_wrong(self, respond, parser):
+        update = telebot.types.Update.de_json(self.telegram_update_wrong)
+        BOT.process_new_updates([update])
+
+        parser.parse_note_and_update.assert_not_called()
+        respond.send_message.assert_called_once_with(self.uid, TEXT_HELP)
+
+    def test_delete_cmd(self, respond, *args):
+        note_num1 = '1'
+        note_num2 = '2'
+        update = telebot.types.Update.de_json(self.telegram_delete)
+        BOT.process_new_updates([update])
+
+        respond.delete_notes.assert_called_with(self.uid, [note_num1, note_num2])
+
+    def test_delete_cmd_wrong(self, respond, *args):
+        update = telebot.types.Update.de_json(self.telegram_delete_wrong)
+        BOT.process_new_updates([update])
+
+        respond.delete_notes.assert_not_called()
+        respond.send_message.assert_called_once_with(self.uid, TEXT_HELP)
