@@ -1,6 +1,6 @@
 """ Controller thread.
 Integrated with Parser and Responder,
-and with the Receiver's Input Messages Queue.
+and with Receiver's Input Messages Queue.
 """
 import telebot
 
@@ -103,7 +103,7 @@ class ControllerThread(ThreadTemplate):
         if msg_obj.data.startswith('/'):
             if msg_obj.data.startswith('/sender delete'):
                 tg_uid = msg_obj.data.removeprefix('/sender delete ')
-                self.respond.delete_user(int(tg_uid))
+                self.respond.delete_user(tg_uid)
             elif msg_obj.data.startswith('/admin'):
                 # TODO
                 pass

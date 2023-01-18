@@ -119,4 +119,3 @@ def help(message):
     event.info('message: help')
     console('message: help')
     respond.send_message(message.chat.id, TEXT_HELP)
-
