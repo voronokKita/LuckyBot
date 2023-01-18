@@ -2,6 +2,8 @@
 
 Integrated with the main db, and with Sender's Output Messages Queue.
 """
+from time import time
+
 from lucky_bot.helpers.signals import INCOMING_MESSAGE
 from lucky_bot import MainDB
 from lucky_bot.sender import OutputQueue
@@ -14,7 +16,7 @@ logger = logging.getLogger(__name__)
 class Respond:
     @staticmethod
     def send_message(tg_uid, text):
-        OutputQueue.add_message(tg_uid, text, 1)
+        OutputQueue.add_message(tg_uid, text, int(time()))
         if not INCOMING_MESSAGE.is_set():
             INCOMING_MESSAGE.set()
 
@@ -39,6 +41,7 @@ class Respond:
         result = MainDB.get_user_notes(tg_uid)
         if not result:
             self.send_message(tg_uid, 'Nothing.')
+            return
 
         message = 'Your notes:\n'
         for note_obj in result:
