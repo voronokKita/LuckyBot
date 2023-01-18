@@ -139,6 +139,25 @@ class MainDB:
             return None
 
     @staticmethod
+    def get_user_note(uid, note_num) -> Query | None:
+        """ Will return False if not found. """
+        try:
+            with DB_SESSION() as session:
+                note = session.query(Note).join(User) \
+                    .filter(User.tg_id == uid, Note.number == note_num) \
+                    .first()
+                if not note:
+                    return None
+                else:
+                    return note
+        except Exception:
+            msg = 'main db: get a note exception'
+            logger.exception(msg)
+            event.error(msg)
+            console(msg)
+            return None
+
+    @staticmethod
     def delete_user_note(uid, note_num) -> bool:
         """ Will return False if not found. """
         try:
@@ -151,7 +170,7 @@ class MainDB:
                 else:
                     session.delete(note)
         except Exception:
-            msg = 'main db: delete note exception'
+            msg = 'main db: delete not list exception'
             logger.exception(msg)
             event.error(msg)
             console(msg)

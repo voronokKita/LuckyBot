@@ -50,6 +50,12 @@ class TestMainDatabase(unittest.TestCase):
         self.assertIsNotNone(notes[0].date)
         self.assertIsNotNone(notes[1].date)
 
+        # get single note
+        self.assertTrue(MainDB.add_note(uid2, 'smartest'))
+        note = MainDB.get_user_note(uid2, 3)
+        self.assertIsNotNone(note)
+        self.assertEqual(note.text, 'smartest')
+
     def test_db_delete_note(self):
         uid = 20
         self.assertIsNone(MainDB.get_user(uid))
