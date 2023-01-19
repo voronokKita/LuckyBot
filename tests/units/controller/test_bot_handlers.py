@@ -40,6 +40,7 @@ class TestBotHandlers(unittest.TestCase):
         update = telebot.types.Update.de_json(self.telegram_start)
         BOT.process_new_updates([update])
         respond.delete_user.assert_called_once_with(self.uid, start_cmd=True)
+        respond.add_user.assert_called_once_with(self.uid)
         msg = TEXT_HELLO.format(username=self.username, help=TEXT_HELP)
         respond.send_message.assert_called_once_with(self.uid, msg)
 

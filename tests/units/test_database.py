@@ -1,16 +1,10 @@
 """ python -m unittest tests.units.test_database """
-import unittest
-
 from lucky_bot import MainDB
 
+from tests.presets import MainDBTemplate
 
-class TestMainDatabase(unittest.TestCase):
-    def setUp(self):
-        MainDB.set_up()
 
-    def tearDown(self):
-        MainDB.tear_down()
-
+class TestMainDatabase(MainDBTemplate):
     def test_db_new_user(self):
         uid = 123
         self.assertIsNone(MainDB.get_user(uid))

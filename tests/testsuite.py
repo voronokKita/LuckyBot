@@ -27,6 +27,9 @@ from tests.units.controller import test_controller
 from tests.integration.sender import test_sender_int
 from tests.integration.receiver import test_receiver_int, test_flask_with_imq
 from tests.integration.controller import test_controller_int
+from tests.integration.controller import test_controller_with_imq
+from tests.integration.controller import test_parser_with_db
+from tests.integration.controller import test_responder_integration
 from tests.integration import test_main
 
 loader = unittest.TestLoader()
@@ -58,6 +61,9 @@ modules_to_test = {
     test_sender_int,
     test_flask_with_imq,
     test_receiver_int,
+    test_parser_with_db,
+    test_controller_with_imq,
+    test_responder_integration,
     test_controller_int,
     test_main,
 }

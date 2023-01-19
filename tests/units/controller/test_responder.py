@@ -3,7 +3,7 @@ import time
 import unittest
 from unittest.mock import patch, Mock
 
-from lucky_bot.helpers.signals import INCOMING_MESSAGE
+from lucky_bot.helpers.signals import NEW_MESSAGE_TO_SEND
 from lucky_bot.controller import Respond
 
 
@@ -14,8 +14,8 @@ class TestResponder(unittest.TestCase):
         self.respond = Respond()
 
     def tearDown(self):
-        if INCOMING_MESSAGE.is_set():
-            INCOMING_MESSAGE.clear()
+        if NEW_MESSAGE_TO_SEND.is_set():
+            NEW_MESSAGE_TO_SEND.clear()
 
     def test_responder_send_message(self, output, *args):
         t = int(time.time())
@@ -26,7 +26,7 @@ class TestResponder(unittest.TestCase):
         self.assertEqual(result[0], 1)
         self.assertEqual(result[1], 'hello')
         self.assertGreaterEqual(result[2], t)
-        self.assertTrue(INCOMING_MESSAGE.is_set())
+        self.assertTrue(NEW_MESSAGE_TO_SEND.is_set())
 
     def test_responder_delete_user(self, arg, db):
         self.respond.delete_user(2, True)

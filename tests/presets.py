@@ -2,6 +2,7 @@ import unittest
 
 from lucky_bot.helpers.signals import EXIT_SIGNAL, NEW_MESSAGE_TO_SEND, INCOMING_MESSAGE
 from lucky_bot.helpers.constants import TestException
+from lucky_bot import MainDB
 
 
 class ThreadTestTemplate(unittest.TestCase):
@@ -94,3 +95,11 @@ class ThreadSmallTestTemplate(unittest.TestCase):
         if self.other_signals:
             signals += self.other_signals
         [signal.clear() for signal in signals if signal.is_set()]
+
+
+class MainDBTemplate(unittest.TestCase):
+    def setUp(self):
+        MainDB.set_up()
+
+    def tearDown(self):
+        MainDB.tear_down()

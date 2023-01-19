@@ -3,3 +3,4 @@ A module that handles incoming Telegram messages, the internal and admin command
 """
 from .responder import Respond
 from .controller import ControllerThread
+from . import bot_handlers  # important

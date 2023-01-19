@@ -4,7 +4,7 @@ Integrated with the main db, and with Sender's Output Messages Queue.
 """
 from time import time
 
-from lucky_bot.helpers.signals import INCOMING_MESSAGE
+from lucky_bot.helpers.signals import NEW_MESSAGE_TO_SEND
 from lucky_bot import MainDB
 from lucky_bot.sender import OutputQueue
 
@@ -17,8 +17,12 @@ class Respond:
     @staticmethod
     def send_message(tg_uid, text):
         OutputQueue.add_message(tg_uid, text, int(time()))
-        if not INCOMING_MESSAGE.is_set():
-            INCOMING_MESSAGE.set()
+        if not NEW_MESSAGE_TO_SEND.is_set():
+            NEW_MESSAGE_TO_SEND.set()
+
+    @staticmethod
+    def add_user(tg_uid):
+        MainDB.add_user(tg_uid)
 
     @staticmethod
     def delete_user(tg_uid, start_cmd=False):

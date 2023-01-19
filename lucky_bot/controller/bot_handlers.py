@@ -46,6 +46,8 @@ def hello(message):
     uid = message.chat.id
 
     respond.delete_user(uid, start_cmd=True)
+    respond.add_user(uid)
+
     text = TEXT_HELLO.format(username=message.chat.username, help=TEXT_HELP)
     respond.send_message(uid, text)
 
