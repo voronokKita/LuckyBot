@@ -27,12 +27,18 @@ class User(MainBase):
     id = Column(Integer, primary_key=True)
     tg_id = Column('telegram_id', Integer, nullable=False, unique=True, index=True)
     last_note = Column('last_note_num', Integer, nullable=False, default=0)
+    notes_total = Column('notes_total', Integer, nullable=False, default=0)
 
     notes = relationship(
         'Note',
         back_populates='user',
         cascade='all, delete-orphan',
         order_by='Note.number',
+    )
+    last_notes = relationship(
+        'LastNoteSent',
+        back_populates='user',
+        cascade='all, delete-orphan',
     )
 
     def __str__(self):
@@ -53,6 +59,19 @@ class Note(MainBase):
 
     def __str__(self):
         return f'<note #{self.id!r}>'
+
+
+class LastNoteSent(MainBase):
+    __tablename__ = 'last_updates'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey(User.id), nullable=False)
+    csv_list = Column('csv_list', Text, nullable=False)
+
+    user = relationship(User, back_populates='last_notes')
+
+    def __str__(self):
+        return f'<csv list #{self.id!r}>'
 
 
 class MainDB:
@@ -112,6 +131,7 @@ class MainDB:
                 )
                 user.notes.append(note)
                 user.last_note += 1
+                user.notes_total += 1
         except Exception:
             msg = 'main db: add note exception'
             logger.exception(msg)
@@ -139,8 +159,49 @@ class MainDB:
             return None
 
     @staticmethod
+    def get_notifications_for_the_updater(uid) -> Query | None:
+        """
+        if total user notes <= 10, will return all user notes;
+        else, will return notes, except for the notes from the user last_notes list.
+        """
+        def filter_last_notes(note_number, last_notes_list):
+            for n in last_notes_list:
+                if n == note_number:
+                    return False
+            return True
+
+        try:
+            with DB_SESSION() as session:
+                user = session.query(User).filter(User.tg_id == uid).first()
+                if not user:
+                    return None
+
+                if user.notes_total > 10:
+                    last_notes = user.last_notes.csv_list.split(',')
+                else:
+                    last_notes = []
+
+                notes = session.query(Note).join(User) \
+                    .filter(User.tg_id == uid, filter_last_notes(Note.number, last_notes))
+
+                if not notes:
+                    return None
+                else:
+                    return notes
+        except Exception:
+            msg = 'main db: get notes for the updater exception'
+            logger.exception(msg)
+            event.error(msg)
+            console(msg)
+            return None
+
+    def update_user_last_notes_list(self):
+        ''' TODO '''
+        pass
+
+    @staticmethod
     def get_user_note(uid, note_num) -> Query | None:
-        """ Will return False if not found. """
+        """ Will return None if not found. """
         try:
             with DB_SESSION() as session:
                 note = session.query(Note).join(User) \
@@ -168,6 +229,7 @@ class MainDB:
                 if not note:
                     return False
                 else:
+                    note.user.notes_total -= 1
                     session.delete(note)
         except Exception:
             msg = 'main db: delete not list exception'

@@ -3,6 +3,7 @@ import os
 import re
 import sys
 import pathlib
+from datetime import datetime, timezone
 
 
 REPLIT = False
@@ -55,6 +56,10 @@ LOG_TELEBOT_FILE = PROJECT_DIR / 'logs' / 'pyTelegramBotAPI.log'
 
 # Main
 TREAD_RUNNING_TIMEOUT = 30
+
+# Updater
+FIRST_UPDATE = datetime.now(timezone.utc).replace(hour=12, minute=0, second=0, microsecond=0)
+SECOND_UPDATE = datetime.now(timezone.utc).replace(hour=18, minute=0, second=0, microsecond=0)
 
 # Telegram request errors
 '''

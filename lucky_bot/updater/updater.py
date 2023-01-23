@@ -1,13 +1,13 @@
 """ Updater thread. """
-from lucky_bot.helpers.constants import UpdaterException
+from datetime import datetime, timezone
+
+from lucky_bot.helpers.constants import UpdaterException, FIRST_UPDATE, SECOND_UPDATE
 from lucky_bot.helpers.signals import UPDATER_IS_RUNNING, UPDATER_IS_STOPPED, UPDATER_CYCLE, EXIT_SIGNAL
 from lucky_bot.helpers.misc import ThreadTemplate
 
 import logging
 from logs.config import console, event
 logger = logging.getLogger(__name__)
-
-# TODO reliable timing mechanism
 
 
 class UpdaterThread(ThreadTemplate):
@@ -56,7 +56,27 @@ class UpdaterThread(ThreadTemplate):
         super().merge()
 
     def _send_messages(self):
+        if not self._it_is_time():
+            return
+        else:
+            self._notifications_dispatcher()
+
+    def _notifications_dispatcher(self):
+        ''' TODO
+        for user in uses_in_db:
+            get_all_notes
+            select a note randomly
+            save a note to the omq
+        '''
         pass
+
+    @staticmethod
+    def _it_is_time() -> bool:
+        current_time = datetime.now(timezone.utc)
+        if FIRST_UPDATE <= current_time or SECOND_UPDATE <= current_time:
+            return True
+        else:
+            return False
 
     @staticmethod
     def _test_updater_cycle():

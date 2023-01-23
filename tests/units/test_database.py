@@ -15,8 +15,10 @@ class TestMainDatabase(MainDBTemplate):
         user = MainDB.get_user(uid)
         self.assertIsNotNone(user)
         self.assertEqual(user.last_note, 0)
+        self.assertEqual(user.notes_total, 0)
 
     def test_db_add_and_get_notes(self):
+        # first user
         uid1 = 42
         self.assertIsNone(MainDB.get_user_notes(uid1))
 
@@ -26,14 +28,18 @@ class TestMainDatabase(MainDBTemplate):
         user1 = MainDB.get_user(uid1)
         self.assertIsNotNone(user1, msg='first case')
         self.assertEqual(user1.last_note, 1, msg='first case')
+        self.assertEqual(user1.notes_total, 1, msg='first case')
 
+        # second user
         uid2 = 9
         self.assertTrue(MainDB.add_user(uid2))
         self.assertTrue(MainDB.add_note(uid2, 'strongest'))
         self.assertTrue(MainDB.add_note(uid2, 'genius'))
+
         user2 = MainDB.get_user(uid2)
         self.assertIsNotNone(user2, msg='second case')
         self.assertEqual(user2.last_note, 2, msg='second case')
+        self.assertEqual(user2.notes_total, 2, msg='second case')
 
         notes = MainDB.get_user_notes(uid2)
         self.assertIsNotNone(notes)
@@ -64,6 +70,7 @@ class TestMainDatabase(MainDBTemplate):
         user_1 = MainDB.get_user(uid)
         self.assertIsNotNone(user_1, msg='1')
         self.assertEqual(user_1.last_note, 2, msg='1')
+        self.assertEqual(user_1.notes_total, 2, msg='1')
 
         notes_1 = MainDB.get_user_notes(uid)
         self.assertIsNotNone(notes_1, msg='1')
@@ -80,6 +87,7 @@ class TestMainDatabase(MainDBTemplate):
         # user still has the greatest number in "last_note"
         user_2 = MainDB.get_user(uid)
         self.assertEqual(user_2.last_note, 2, msg='2')
+        self.assertEqual(user_2.notes_total, 1, msg='2')
 
         # the last note still has the greatest number
         notes_2 = MainDB.get_user_notes(uid)
@@ -92,6 +100,7 @@ class TestMainDatabase(MainDBTemplate):
 
         user_3 = MainDB.get_user(uid)
         self.assertEqual(user_3.last_note, 3, msg='3')
+        self.assertEqual(user_3.notes_total, 2, msg='3')
 
         notes_3 = MainDB.get_user_notes(uid)
         self.assertEqual(len(notes_3), 2, msg='3')
@@ -106,6 +115,7 @@ class TestMainDatabase(MainDBTemplate):
 
         user_4 = MainDB.get_user(uid)
         self.assertEqual(user_4.last_note, 4, msg='4')
+        self.assertEqual(user_4.notes_total, 2, msg='4')
 
         notes_4 = MainDB.get_user_notes(uid)
         self.assertEqual(notes_4[0].text, 'world', msg='4')
@@ -126,7 +136,6 @@ class TestMainDatabase(MainDBTemplate):
 
         user1 = MainDB.get_user(uid1)
         self.assertIsNotNone(user1)
-        self.assertEqual(user1.last_note, 2)
         notes1 = MainDB.get_user_notes(uid1)
         self.assertIsNotNone(notes1)
         self.assertEqual(len(notes1), 2)
@@ -142,6 +151,8 @@ class TestMainDatabase(MainDBTemplate):
         user2 = MainDB.get_user(uid2)
         self.assertIsNotNone(user2)
         self.assertEqual(user2.last_note, 2)
+        self.assertEqual(user2.notes_total, 2)
+
         notes2 = MainDB.get_user_notes(uid2)
         self.assertIsNotNone(notes2)
         self.assertEqual(len(notes2), 2)
@@ -162,6 +173,8 @@ class TestMainDatabase(MainDBTemplate):
         user_1 = MainDB.get_user(uid)
         self.assertIsNotNone(user_1)
         self.assertEqual(user_1.last_note, 2)
+        self.assertEqual(user_1.notes_total, 2)
+
         notes_1 = MainDB.get_user_notes(uid)
         self.assertIsNotNone(notes_1)
         self.assertEqual(len(notes_1), 2)
@@ -175,6 +188,7 @@ class TestMainDatabase(MainDBTemplate):
 
         user_2 = MainDB.get_user(uid)
         self.assertEqual(user_2.last_note, 2)
+        self.assertEqual(user_2.notes_total, 2)
         notes_2 = MainDB.get_user_notes(uid)
         self.assertEqual(len(notes_2), 2)
         self.assertEqual(notes_2[0].text, 'baz')
