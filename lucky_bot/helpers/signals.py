@@ -23,6 +23,9 @@ class SignalTgMessage(Event):
 class SignalMessageToSend(Event):
     """ A new message to telegram in the sender message queue (smq). """
 
+class SignalUpdater(Event):
+    """ A new updater cycle. """
+
 
 # Threading signals
 SENDER_IS_RUNNING = SignalThreadStarted()
@@ -41,6 +44,7 @@ ALL_THREADS_ARE_GO = SignalThreadsAreStarted()
 # Other
 INCOMING_MESSAGE = SignalTgMessage()
 NEW_MESSAGE_TO_SEND = SignalMessageToSend()
+UPDATER_CYCLE = SignalUpdater()
 
 EXIT_SIGNAL = SignalExit()
 

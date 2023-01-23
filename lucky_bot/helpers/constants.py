@@ -126,3 +126,7 @@ class ControllerException(Exception):
 
 class TelebotHandlerException(ControllerException):
     """ Something wrong in the telebot handlers. """
+
+
+class UpdaterException(Exception):
+    """ Something wrong in the updater. """
