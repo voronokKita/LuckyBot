@@ -16,9 +16,7 @@ from lucky_bot.receiver import InputQueue
 from lucky_bot.receiver import FLASK_APP
 from lucky_bot.receiver import ReceiverThread
 
-from tests.units.receiver.test_receiver import mock_ngrok, mock_telebot
-
-from tests.presets import ThreadSmallTestTemplate
+from tests.presets import ThreadSmallTestTemplate, mock_ngrok, mock_telebot
 
 
 @patch('lucky_bot.receiver.receiver.BOT', new_callable=mock_telebot)

@@ -1,8 +1,29 @@
 import unittest
+from unittest.mock import Mock
 
 from lucky_bot.helpers.signals import EXIT_SIGNAL, NEW_MESSAGE_TO_SEND, INCOMING_MESSAGE
 from lucky_bot.helpers.constants import TestException
 from lucky_bot import MainDB
+
+
+def mock_ngrok():
+    tunnel = Mock()
+    tunnel.public_url = 'http://0.0.0.0'
+    ngrok = Mock()
+    ngrok.connect.return_value = tunnel
+    return ngrok
+
+
+def mock_telebot():
+    bot = Mock()
+    bot.set_webhook.return_value = True
+    return bot
+
+
+def mock_serving():
+    def start_server(self=None):
+        EXIT_SIGNAL.wait()
+    return start_server
 
 
 class ThreadTestTemplate(unittest.TestCase):

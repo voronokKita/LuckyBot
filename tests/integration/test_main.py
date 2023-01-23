@@ -13,7 +13,7 @@ from lucky_bot.helpers.signals import (
 )
 from main import MainAsThread
 
-from tests.units.receiver.test_receiver import mock_ngrok, mock_telebot, mock_serving
+from tests.presets import mock_ngrok, mock_telebot, mock_serving
 
 
 @patch('lucky_bot.controller.controller.ControllerThread._check_new_messages')

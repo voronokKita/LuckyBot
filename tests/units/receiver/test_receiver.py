@@ -1,38 +1,21 @@
 """ python -m unittest tests.units.receiver.test_receiver """
 from unittest.mock import patch, Mock
 
-from lucky_bot.helpers.signals import (
-    RECEIVER_IS_RUNNING, RECEIVER_IS_STOPPED,
-    EXIT_SIGNAL, INCOMING_MESSAGE,
-)
 from lucky_bot.helpers.constants import (
     TestException, ReceiverException,
     REPLIT, ADDRESS, PORT, WEBHOOK_SECRET, WEBHOOK_ENDPOINT,
 )
+from lucky_bot.helpers.signals import (
+    RECEIVER_IS_RUNNING, RECEIVER_IS_STOPPED,
+    EXIT_SIGNAL, INCOMING_MESSAGE,
+)
 from lucky_bot.receiver import FLASK_APP
 from lucky_bot.receiver import ReceiverThread
 
-from tests.presets import ThreadTestTemplate, ThreadSmallTestTemplate
-
-
-def mock_ngrok():
-    tunnel = Mock()
-    tunnel.public_url = 'http://0.0.0.0'
-    ngrok = Mock()
-    ngrok.connect.return_value = tunnel
-    return ngrok
-
-
-def mock_telebot():
-    bot = Mock()
-    bot.set_webhook.return_value = True
-    return bot
-
-
-def mock_serving():
-    def start_server(self=None):
-        EXIT_SIGNAL.wait()
-    return start_server
+from tests.presets import (
+    ThreadTestTemplate, ThreadSmallTestTemplate,
+    mock_ngrok, mock_telebot, mock_serving,
+)
 
 
 @patch('lucky_bot.receiver.receiver.ReceiverThread._start_server', new_callable=mock_serving)

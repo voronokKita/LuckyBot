@@ -49,8 +49,8 @@ class TestProjectBase(unittest.TestCase):
         import pyngrok
         import sqlalchemy
 
-        from lucky_bot.helpers import signals
         from lucky_bot.helpers import constants
+        from lucky_bot.helpers import signals
         from lucky_bot.helpers import misc
 
         from lucky_bot import MainDB

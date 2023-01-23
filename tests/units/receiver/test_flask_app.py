@@ -2,11 +2,11 @@
 import unittest
 from unittest.mock import patch
 
-from lucky_bot.helpers.signals import EXIT_SIGNAL, INCOMING_MESSAGE
 from lucky_bot.helpers.constants import (
     TestException, FlaskException, PROJECT_DIR,
     WEBHOOK_SECRET, WEBHOOK_ENDPOINT,
 )
+from lucky_bot.helpers.signals import EXIT_SIGNAL, INCOMING_MESSAGE
 from lucky_bot.receiver import FLASK_APP
 
 
