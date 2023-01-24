@@ -1,4 +1,5 @@
 """ Main database and its model. """
+from time import time
 from datetime import datetime, timezone
 
 from sqlalchemy import (
@@ -8,7 +9,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship, Query
 from sqlalchemy.exc import IntegrityError
 
-from lucky_bot.helpers.constants import DB_FILE, TESTING
+from lucky_bot.helpers.constants import DB_FILE, TESTING, LAST_NOTES_LIST
 
 import logging
 from logs import console, event
@@ -39,10 +40,8 @@ class User(MainBase):
         'LastNoteSent',
         back_populates='user',
         cascade='all, delete-orphan',
+        order_by='LastNoteSent.time',
     )
-
-    def __str__(self):
-        return f'<user #{self.tg_id!r}>'
 
 
 class Note(MainBase):
@@ -57,21 +56,16 @@ class Note(MainBase):
 
     user = relationship(User, back_populates='notes')
 
-    def __str__(self):
-        return f'<note #{self.id!r}>'
-
 
 class LastNoteSent(MainBase):
     __tablename__ = 'last_updates'
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
-    csv_list = Column('csv_list', Text, nullable=False)
+    note_number = Column('user_note_num', Integer, nullable=False)
+    time = Column('time_added', Integer, nullable=False)
 
     user = relationship(User, back_populates='last_notes')
-
-    def __str__(self):
-        return f'<csv list #{self.id!r}>'
 
 
 class MainDB:
@@ -132,14 +126,14 @@ class MainDB:
                 user.notes.append(note)
                 user.last_note += 1
                 user.notes_total += 1
+            return True
+
         except Exception:
             msg = 'main db: add note exception'
             logger.exception(msg)
             event.error(msg)
             console(msg)
             return False
-        else:
-            return True
 
     @staticmethod
     def get_user_notes(uid) -> list | None:
@@ -151,53 +145,13 @@ class MainDB:
                     return None
                 else:
                     return user.notes
+
         except Exception:
             msg = 'main db: get notes exception'
             logger.exception(msg)
             event.error(msg)
             console(msg)
             return None
-
-    @staticmethod
-    def get_notifications_for_the_updater(uid) -> Query | None:
-        """
-        if total user notes <= 10, will return all user notes;
-        else, will return notes, except for the notes from the user last_notes list.
-        """
-        def filter_last_notes(note_number, last_notes_list):
-            for n in last_notes_list:
-                if n == note_number:
-                    return False
-            return True
-
-        try:
-            with DB_SESSION() as session:
-                user = session.query(User).filter(User.tg_id == uid).first()
-                if not user:
-                    return None
-
-                if user.notes_total > 10:
-                    last_notes = user.last_notes.csv_list.split(',')
-                else:
-                    last_notes = []
-
-                notes = session.query(Note).join(User) \
-                    .filter(User.tg_id == uid, filter_last_notes(Note.number, last_notes))
-
-                if not notes:
-                    return None
-                else:
-                    return notes
-        except Exception:
-            msg = 'main db: get notes for the updater exception'
-            logger.exception(msg)
-            event.error(msg)
-            console(msg)
-            return None
-
-    def update_user_last_notes_list(self):
-        ''' TODO '''
-        pass
 
     @staticmethod
     def get_user_note(uid, note_num) -> Query | None:
@@ -211,6 +165,7 @@ class MainDB:
                     return None
                 else:
                     return note
+
         except Exception:
             msg = 'main db: get a note exception'
             logger.exception(msg)
@@ -231,14 +186,14 @@ class MainDB:
                 else:
                     note.user.notes_total -= 1
                     session.delete(note)
+            return True
+
         except Exception:
             msg = 'main db: delete not list exception'
             logger.exception(msg)
             event.error(msg)
             console(msg)
             return False
-        else:
-            return True
 
     @staticmethod
     def delete_user(uid) -> bool:
@@ -250,14 +205,14 @@ class MainDB:
                     return False
                 else:
                     session.delete(user)
+            return True
+
         except Exception:
             msg = 'main db: delete user exception'
             logger.exception(msg)
             event.error(msg)
             console(msg)
             return False
-        else:
-            return True
 
     @staticmethod
     def update_user_note(uid, note_num, new_text) -> bool:
@@ -272,14 +227,73 @@ class MainDB:
                 else:
                     note.text = new_text
                     note.date = datetime.now(timezone.utc).replace(microsecond=0)
+            return True
+
         except Exception:
             msg = 'main db: update note exception'
             logger.exception(msg)
             event.error(msg)
             console(msg)
             return False
-        else:
+
+    @staticmethod
+    def get_notifications_for_the_updater(uid) -> list | None:
+        """
+        if total user notes <= 10, will return all user notes;
+        else, will return notes, except for the notes from the user last_notes list.
+        """
+        try:
+            with DB_SESSION() as session:
+                user = session.query(User).filter(User.tg_id == uid).first()
+                if not user:
+                    return None
+
+                if user.notes_total > LAST_NOTES_LIST and user.last_notes:
+                    l = [n.note_number for n in user.last_notes]
+                    notes = session.query(Note).join(User) \
+                        .filter(User.tg_id == uid, Note.number.not_in(l)).all()
+                else:
+                    notes = user.notes
+
+                if not notes:
+                    return None
+                else:
+                    return notes
+
+        except Exception:
+            msg = 'main db: get notes for the updater exception'
+            logger.exception(msg)
+            event.error(msg)
+            console(msg)
+            return None
+
+    @staticmethod
+    def update_user_last_notes_list(uid, note_num) -> bool:
+        """ Pop the 1st element from the user last_notes list, append the new one. """
+        try:
+            with DB_SESSION.begin() as session:
+                user = session.query(User).filter(User.tg_id == uid).first()
+                if not user:
+                    return False
+                elif user.notes_total <= LAST_NOTES_LIST:
+                    return True
+
+                if user.last_notes and len(user.last_notes) == LAST_NOTES_LIST:
+                    session.delete(user.last_notes[0])
+
+                last_note = LastNoteSent(
+                    note_number=note_num,
+                    time=int(time()),
+                )
+                user.last_notes.append(last_note)
             return True
+
+        except Exception:
+            msg = "main db: update user's last_notes list exception"
+            logger.exception(msg)
+            event.error(msg)
+            console(msg)
+            return None
 
 
 if not TESTING and not DB_FILE.exists():

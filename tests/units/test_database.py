@@ -1,4 +1,6 @@
 """ python -m unittest tests.units.test_database """
+from unittest.mock import patch
+
 from lucky_bot import MainDB
 
 from tests.presets import MainDBTemplate
@@ -195,3 +197,90 @@ class TestMainDatabase(MainDBTemplate):
         self.assertEqual(notes_2[1].text, 'bar')
         self.assertEqual(notes_2[0].number, 1)
         self.assertEqual(notes_2[1].number, 2)
+
+
+@patch('lucky_bot.database.LAST_NOTES_LIST', 3)
+class TestUpdaterMethodsInDB(MainDBTemplate):
+    def test_updater_methods_first(self):
+        ''' user.notes_total <= LAST_NOTES_LIST '''
+        uid = 109
+        self.assertTrue(MainDB.add_user(uid))
+        self.assertTrue(MainDB.add_note(uid, 'one'))
+        MainDB.add_note(uid, 'two')
+        MainDB.add_note(uid, 'three')
+
+        notes_1 = MainDB.get_notifications_for_the_updater(uid)
+        self.assertIsNotNone(notes_1)
+        self.assertEqual(len(notes_1), 3)
+
+        last_note = notes_1[0].number
+        self.assertTrue(MainDB.update_user_last_notes_list(uid, last_note))
+
+        notes_2 = MainDB.get_notifications_for_the_updater(uid)
+        self.assertEqual(len(notes_2), 3)
+        notes_2 = [n.number for n in notes_2]
+        self.assertIn(last_note, notes_2)
+
+    def test_updater_methods_second(self):
+        ''' user.notes_total > LAST_NOTES_LIST '''
+        uid = 110
+        MainDB.add_user(uid)
+        MainDB.add_note(uid, 'one')
+        MainDB.add_note(uid, 'two')
+        MainDB.add_note(uid, 'three')
+        MainDB.add_note(uid, 'four')
+
+        notes_1 = MainDB.get_notifications_for_the_updater(uid)
+        self.assertIsNotNone(notes_1)
+        self.assertEqual(len(notes_1), 4)
+
+        last_note = notes_1[0].number
+        self.assertTrue(MainDB.update_user_last_notes_list(uid, last_note))
+
+        notes_2 = MainDB.get_notifications_for_the_updater(uid)
+        self.assertEqual(len(notes_2), 3)
+        notes_2 = [n.number for n in notes_2]
+        self.assertNotIn(last_note, notes_2)
+
+    def test_updater_methods_third(self):
+        ''' user.notes_total > LAST_NOTES_LIST fill queue '''
+        uid = 110
+        MainDB.add_user(uid)
+        MainDB.add_note(uid, 'one')
+        MainDB.add_note(uid, 'two')
+        MainDB.add_note(uid, 'three')
+        MainDB.add_note(uid, 'four')
+        self.assertTrue(MainDB.update_user_last_notes_list(uid, 1))
+        self.assertTrue(MainDB.update_user_last_notes_list(uid, 2))
+        self.assertTrue(MainDB.update_user_last_notes_list(uid, 3))
+
+        notes_1 = MainDB.get_notifications_for_the_updater(uid)
+        self.assertIsNotNone(notes_1)
+        self.assertEqual(len(notes_1), 1)
+        self.assertEqual(notes_1[0].text, 'four')
+        self.assertEqual(notes_1[0].number, 4)
+        self.assertTrue(MainDB.update_user_last_notes_list(uid, notes_1[0].number))
+
+        notes_2 = MainDB.get_notifications_for_the_updater(uid)
+        self.assertEqual(len(notes_2), 1)
+        self.assertEqual(notes_2[0].text, 'one')
+        self.assertEqual(notes_2[0].number, 1)
+        self.assertTrue(MainDB.update_user_last_notes_list(uid, notes_2[0].number))
+
+        notes_3 = MainDB.get_notifications_for_the_updater(uid)
+        self.assertEqual(len(notes_3), 1)
+        self.assertEqual(notes_3[0].text, 'two')
+        self.assertEqual(notes_3[0].number, 2)
+        self.assertTrue(MainDB.update_user_last_notes_list(uid, notes_3[0].number))
+
+        notes_4 = MainDB.get_notifications_for_the_updater(uid)
+        self.assertEqual(len(notes_4), 1)
+        self.assertEqual(notes_4[0].text, 'three')
+        self.assertEqual(notes_4[0].number, 3)
+        self.assertTrue(MainDB.update_user_last_notes_list(uid, notes_4[0].number))
+
+        notes_5 = MainDB.get_notifications_for_the_updater(uid)
+        self.assertEqual(len(notes_5), 1)
+        self.assertEqual(notes_5[0].text, 'four')
+        self.assertEqual(notes_5[0].number, 4)
+        self.assertTrue(MainDB.update_user_last_notes_list(uid, notes_5[0].number))

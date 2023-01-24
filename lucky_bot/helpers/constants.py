@@ -29,6 +29,8 @@ else:
     INPUT_MQ_FILE = PROJECT_DIR / 'data' / 'input_message_queue.sqlite3'
     OUTPUT_MQ_FILE = PROJECT_DIR / 'data' / 'output_message_queue.sqlite3'
 
+LAST_NOTES_LIST = 10
+
 # Web settings
 REPLIT_URL = 'https://LuckyBot.kitavoronok.repl.co'
 PORT = 5000
