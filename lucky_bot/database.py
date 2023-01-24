@@ -295,6 +295,20 @@ class MainDB:
             console(msg)
             return None
 
+    @staticmethod
+    def get_users() -> list | None:
+        try:
+            with DB_SESSION() as session:
+                users = session.query(User).filter(User.notes_total != 0).all()
+                return users
+
+        except Exception:
+            msg = 'main db: get users exception'
+            logger.exception(msg)
+            event.error(msg)
+            console(msg)
+            return None
+
 
 if not TESTING and not DB_FILE.exists():
     MainBase.set_up()
