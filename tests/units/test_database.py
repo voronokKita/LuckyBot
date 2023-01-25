@@ -216,6 +216,27 @@ class TestUpdaterMethodsInDB(MainDBTemplate):
         self.assertEqual(len(users), 1)
         self.assertEqual(users[0].tg_id, 1)
 
+    def test_user_flags(self):
+        MainDB.clear_all_users_flags()
+
+        uid1 = 31
+        uid2 = 32
+        MainDB.add_user(uid1)
+        MainDB.add_user(uid2)
+        MainDB.set_user_flag(uid1, 'first update')
+        MainDB.set_user_flag(uid2, 'first update')
+
+        user1 = MainDB.get_user(uid1)
+        user2 = MainDB.get_user(uid2)
+        self.assertEqual(user1.got_first_update, True)
+        self.assertEqual(user2.got_first_update, True)
+
+        MainDB.clear_all_users_flags()
+        user1 = MainDB.get_user(uid1)
+        user2 = MainDB.get_user(uid2)
+        self.assertEqual(user1.got_first_update, False)
+        self.assertEqual(user2.got_first_update, False)
+
     def test_updater_methods_first(self):
         ''' user.notes_total <= LAST_NOTES_LIST '''
         uid = 109

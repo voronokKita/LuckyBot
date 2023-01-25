@@ -3,7 +3,7 @@ import random
 from time import time
 from datetime import datetime, timezone
 
-from lucky_bot.helpers.constants import UpdaterException, FIRST_UPDATE, SECOND_UPDATE
+from lucky_bot.helpers.constants import UpdaterException, first_update_time
 from lucky_bot.helpers.signals import UPDATER_IS_RUNNING, UPDATER_IS_STOPPED, UPDATER_CYCLE, EXIT_SIGNAL
 from lucky_bot.helpers.misc import ThreadTemplate
 from lucky_bot.sender import OutputQueue
@@ -35,6 +35,7 @@ class UpdaterThread(ThreadTemplate):
             UpdaterException
         """
         try:
+            self._clear_all_users_flags()
             self._send_messages()
             self._set_the_signal()
             self._test_exception_after_signal()
@@ -46,6 +47,7 @@ class UpdaterThread(ThreadTemplate):
                 if EXIT_SIGNAL.is_set():
                     break
                 else:
+                    self._clear_all_users_flags()
                     self._send_messages()
                     self._test_updater_cycle()
         except Exception as exc:
@@ -60,20 +62,42 @@ class UpdaterThread(ThreadTemplate):
             UPDATER_CYCLE.set()
         super().merge()
 
+    @staticmethod
+    def _clear_all_users_flags():  # TODO patch
+        """ Between 12 a.m. and the 1st update time. """
+        current_time = datetime.now(timezone.utc)
+        update_one = first_update_time()
+        if update_one <= current_time:
+            return
+        else:
+            MainDB.clear_all_users_flags()
+
     def _send_messages(self):
         ''' TODO '''
-        if not self._it_is_time():
+        if not self._time_to_send_messages():
             return
         else:
             self._notifications_dispatcher()
 
     @staticmethod
-    def _notifications_dispatcher():
+    def _time_to_send_messages() -> bool:
+        ''' TODO '''
+        current_time = datetime.now(timezone.utc)
+        if FIRST_UPDATE <= current_time:
+            return True
+        else:
+            return False
+
+    def _notifications_dispatcher(self):
         ''' TODO '''
         users = MainDB.get_users_with_notes()
         if not users:
             return
+
         for user in users:
+            if not self._waiting_for_update(user):
+                continue
+
             notes = MainDB.get_notifications_for_the_updater(user.tg_id)
             if not notes:
                 msg = f"updater: get a user that don't have any notes to send, id #{user.id}"
@@ -85,10 +109,10 @@ class UpdaterThread(ThreadTemplate):
             OutputQueue.add_message(user.tg_id, note.text, int(time()))
 
     @staticmethod
-    def _it_is_time() -> bool:
+    def _waiting_for_update(user):
         ''' TODO '''
         current_time = datetime.now(timezone.utc)
-        if FIRST_UPDATE <= current_time or SECOND_UPDATE <= current_time:
+        if FIRST_UPDATE <= current_time and user.update_one is False:
             return True
         else:
             return False

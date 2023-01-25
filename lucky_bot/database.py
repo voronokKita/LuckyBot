@@ -29,7 +29,8 @@ class User(MainBase):
     tg_id = Column('telegram_id', Integer, nullable=False, unique=True, index=True)
     last_note = Column('last_note_num', Integer, nullable=False, default=0)
     notes_total = Column('notes_total', Integer, nullable=False, default=0)
-    update_one = Column('first_note_sent?', Boolean, nullable=False, default=False)
+
+    got_first_update = Column('first_note_sent?', Boolean, nullable=False, default=False)
 
     notes = relationship(
         'Note',
@@ -88,6 +89,8 @@ class MainDB:
             with DB_SESSION.begin() as session:
                 user = User(tg_id=uid)
                 session.add(user)
+            return True
+
         except IntegrityError:
             return False
         except Exception:
@@ -95,8 +98,6 @@ class MainDB:
             logger.exception(msg)
             event.error(msg)
             console(msg)
-        else:
-            return True
 
     @staticmethod
     def get_user(uid) -> Query | None:
@@ -308,6 +309,39 @@ class MainDB:
             event.error(msg)
             console(msg)
             return None
+
+    @staticmethod
+    def clear_all_users_flags():
+        try:
+            with DB_SESSION.begin() as session:
+                users = session.query(User).filter().all()
+                if not users:
+                    return
+                for user in users:
+                    if user.got_first_update:
+                        user.got_first_update = False
+
+        except Exception:
+            msg = 'main db: clear all flags exception'
+            logger.exception(msg)
+            event.error(msg)
+            console(msg)
+
+    @staticmethod
+    def set_user_flag(uid, flag:str):
+        try:
+            with DB_SESSION.begin() as session:
+                user = session.query(User).filter(User.tg_id == uid).first()
+                if not user:
+                    return
+                if flag == 'first update':
+                    user.got_first_update = True
+
+        except Exception:
+            msg = 'main db: set a flag exception'
+            logger.exception(msg)
+            event.error(msg)
+            console(msg)
 
 
 if not TESTING and not DB_FILE.exists():
