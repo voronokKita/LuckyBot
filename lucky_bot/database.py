@@ -31,6 +31,7 @@ class User(MainBase):
     notes_total = Column('notes_total', Integer, nullable=False, default=0)
 
     got_first_update = Column('first_note_sent?', Boolean, nullable=False, default=False)
+    got_second_update = Column('second_note_sent?', Boolean, nullable=False, default=False)
 
     notes = relationship(
         'Note',
@@ -320,6 +321,8 @@ class MainDB:
                 for user in users:
                     if user.got_first_update:
                         user.got_first_update = False
+                    if user.got_second_update:
+                        user.got_second_update = False
 
         except Exception:
             msg = 'main db: clear all flags exception'
@@ -336,6 +339,8 @@ class MainDB:
                     return
                 if flag == 'first update':
                     user.got_first_update = True
+                elif flag == 'second update':
+                    user.got_second_update = True
 
         except Exception:
             msg = 'main db: set a flag exception'

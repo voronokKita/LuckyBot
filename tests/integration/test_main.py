@@ -16,7 +16,7 @@ from main import MainAsThread
 from tests.presets import mock_ngrok, mock_telebot, mock_serving
 
 
-@patch('lucky_bot.updater.updater.UpdaterThread._send_messages')
+@patch('lucky_bot.updater.updater.UpdaterThread._work_steps')
 @patch('lucky_bot.updater.updater.UpdaterThread._time_to_wait', Mock(return_value=100))
 @patch('lucky_bot.controller.controller.ControllerThread._check_new_messages')
 @patch('lucky_bot.sender.sender.SenderThread._process_all_messages')

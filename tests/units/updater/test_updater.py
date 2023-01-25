@@ -7,7 +7,7 @@ from lucky_bot.helpers.signals import UPDATER_IS_RUNNING, UPDATER_IS_STOPPED
 from tests.presets import ThreadTestTemplate
 
 
-@patch('lucky_bot.updater.updater.UpdaterThread._send_messages')
+@patch('lucky_bot.updater.updater.UpdaterThread._work_steps')
 @patch('lucky_bot.updater.updater.UpdaterThread._time_to_wait', Mock(return_value=100))
 class TestUpdaterThreadBase(ThreadTestTemplate):
     thread_class = UpdaterThread

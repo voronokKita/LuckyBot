@@ -3,7 +3,8 @@ import random
 from time import time
 from datetime import datetime, timezone
 
-from lucky_bot.helpers.constants import UpdaterException, first_update_time
+from lucky_bot.helpers.constants import UpdaterException
+from lucky_bot.helpers.misc import first_update_time, second_update_time
 from lucky_bot.helpers.signals import UPDATER_IS_RUNNING, UPDATER_IS_STOPPED, UPDATER_CYCLE, EXIT_SIGNAL
 from lucky_bot.helpers.misc import ThreadTemplate
 from lucky_bot.sender import OutputQueue
@@ -35,8 +36,7 @@ class UpdaterThread(ThreadTemplate):
             UpdaterException
         """
         try:
-            self._clear_all_users_flags()
-            self._send_messages()
+            self._work_steps()
             self._set_the_signal()
             self._test_exception_after_signal()
 
@@ -47,9 +47,9 @@ class UpdaterThread(ThreadTemplate):
                 if EXIT_SIGNAL.is_set():
                     break
                 else:
-                    self._clear_all_users_flags()
-                    self._send_messages()
+                    self._work_steps()
                     self._test_updater_cycle()
+
         except Exception as exc:
             event.error('updater: exception')
             console('updater: exception')
@@ -62,40 +62,36 @@ class UpdaterThread(ThreadTemplate):
             UPDATER_CYCLE.set()
         super().merge()
 
-    @staticmethod
-    def _clear_all_users_flags():  # TODO patch
-        """ Between 12 a.m. and the 1st update time. """
+    def _work_steps(self):
         current_time = datetime.now(timezone.utc)
         update_one = first_update_time()
+        update_two = second_update_time()
+
+        self._clear_all_users_flags(current_time, update_one)
+        self._send_messages(current_time, update_one)
+
+    def _clear_all_users_flags(self, current_time, update_one):
+        """ Between 12 a.m. and the 1st update time. """
         if update_one <= current_time:
             return
         else:
             MainDB.clear_all_users_flags()
 
-    def _send_messages(self):
+    def _send_messages(self, current_time, update_one):
         ''' TODO '''
-        if not self._time_to_send_messages():
+        if update_one <= current_time:
+            self._notifications_dispatcher(current_time, update_one)
+        else:
             return
-        else:
-            self._notifications_dispatcher()
 
-    @staticmethod
-    def _time_to_send_messages() -> bool:
-        ''' TODO '''
-        current_time = datetime.now(timezone.utc)
-        if FIRST_UPDATE <= current_time:
-            return True
-        else:
-            return False
-
-    def _notifications_dispatcher(self):
+    def _notifications_dispatcher(self, current_time, update_one):
         ''' TODO '''
         users = MainDB.get_users_with_notes()
         if not users:
             return
 
         for user in users:
-            if not self._waiting_for_update(user):
+            if not self._waiting_for_update(user, current_time, update_one):
                 continue
 
             notes = MainDB.get_notifications_for_the_updater(user.tg_id)
@@ -107,27 +103,34 @@ class UpdaterThread(ThreadTemplate):
 
             note = random.choice(notes)
             OutputQueue.add_message(user.tg_id, note.text, int(time()))
+            self._set_update_flag(user.tg_id, current_time, update_one)
 
-    @staticmethod
-    def _waiting_for_update(user):
+    def _waiting_for_update(self, user, current_time, update_one):
         ''' TODO '''
-        current_time = datetime.now(timezone.utc)
-        if FIRST_UPDATE <= current_time and user.update_one is False:
+        if update_one <= current_time and user.got_first_update is False:
             return True
+        else:
+            return False
+
+    def _set_update_flag(self, uid, current_time, update_one):
+        ''' TODO '''
+        if update_one <= current_time:
+            MainDB.set_user_flag(uid, 'first update')
         else:
             return False
 
     @staticmethod
     def _time_to_wait() -> int:
         ''' TODO '''
-        current_time = datetime.now(timezone.utc)
-        if FIRST_UPDATE <= current_time:
-            h = SECOND_UPDATE.hour - current_time.hour
-            m = current_time.minute
-            s = h * 3600 + m * 60 + current_time.second + 10
-            return s
-        elif SECOND_UPDATE <= current_time:
-            pass
+        pass
+        # current_time = datetime.now(timezone.utc)
+        # if FIRST_UPDATE <= current_time:
+        #     h = SECOND_UPDATE.hour - current_time.hour
+        #     m = current_time.minute
+        #     s = h * 3600 + m * 60 + current_time.second + 10
+        #     return s
+        # elif SECOND_UPDATE <= current_time:
+        #     pass
 
     @staticmethod
     def _test_updater_cycle():
