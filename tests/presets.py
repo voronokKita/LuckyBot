@@ -1,7 +1,10 @@
 import unittest
 from unittest.mock import Mock
 
-from lucky_bot.helpers.signals import EXIT_SIGNAL, NEW_MESSAGE_TO_SEND, INCOMING_MESSAGE
+from lucky_bot.helpers.signals import (
+    EXIT_SIGNAL, NEW_MESSAGE_TO_SEND,
+    INCOMING_MESSAGE, UPDATER_CYCLE,
+)
 from lucky_bot.helpers.constants import TestException
 from lucky_bot import MainDB
 
@@ -43,7 +46,8 @@ class ThreadTestTemplate(unittest.TestCase):
         self.assertFalse(self.thread_obj.is_alive())
 
     def _clear_signals(self):
-        signals = [EXIT_SIGNAL, self.is_running_signal, self.is_stopped_signal]
+        signals = [EXIT_SIGNAL, self.is_running_signal, self.is_stopped_signal,
+                   NEW_MESSAGE_TO_SEND, INCOMING_MESSAGE, UPDATER_CYCLE]
         if self.other_signals:
             signals += self.other_signals
         [signal.clear() for signal in signals if signal.is_set()]
@@ -60,6 +64,8 @@ class ThreadTestTemplate(unittest.TestCase):
             NEW_MESSAGE_TO_SEND.set()
         elif str(self.thread_obj) == 'controller thread':
             INCOMING_MESSAGE.set()
+        elif str(self.thread_obj) == 'updater thread':
+            UPDATER_CYCLE.set()
 
         if not self.is_stopped_signal.wait(10):
             self.thread_obj.merge()

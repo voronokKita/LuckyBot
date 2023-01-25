@@ -111,6 +111,19 @@ class MainDB:
             return None
 
     @staticmethod
+    def get_users_with_notes() -> list | None:
+        try:
+            with DB_SESSION() as session:
+                users = session.query(User).filter(User.notes_total != 0).all()
+                return users
+        except Exception:
+            msg = 'main db: get users exception'
+            logger.exception(msg)
+            event.error(msg)
+            console(msg)
+            return None
+
+    @staticmethod
     def add_note(uid, text, file=None) -> bool:
         try:
             with DB_SESSION.begin() as session:
@@ -290,20 +303,6 @@ class MainDB:
 
         except Exception:
             msg = "main db: update user's last_notes list exception"
-            logger.exception(msg)
-            event.error(msg)
-            console(msg)
-            return None
-
-    @staticmethod
-    def get_users() -> list | None:
-        try:
-            with DB_SESSION() as session:
-                users = session.query(User).filter(User.notes_total != 0).all()
-                return users
-
-        except Exception:
-            msg = 'main db: get users exception'
             logger.exception(msg)
             event.error(msg)
             console(msg)

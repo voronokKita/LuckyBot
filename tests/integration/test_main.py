@@ -1,6 +1,6 @@
 """ python -m unittest tests.integration.test_main """
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from lucky_bot.helpers.constants import MainException, TestException, ThreadException
 from lucky_bot.helpers.signals import (
@@ -16,6 +16,8 @@ from main import MainAsThread
 from tests.presets import mock_ngrok, mock_telebot, mock_serving
 
 
+@patch('lucky_bot.updater.updater.UpdaterThread._send_messages')
+@patch('lucky_bot.updater.updater.UpdaterThread._time_to_wait', Mock(return_value=100))
 @patch('lucky_bot.controller.controller.ControllerThread._check_new_messages')
 @patch('lucky_bot.sender.sender.SenderThread._process_all_messages')
 @patch('lucky_bot.receiver.receiver.ReceiverThread._remove_webhook')

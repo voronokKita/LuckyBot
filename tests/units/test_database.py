@@ -202,7 +202,7 @@ class TestMainDatabase(MainDBTemplate):
 @patch('lucky_bot.database.LAST_NOTES_LIST', 3)
 class TestUpdaterMethodsInDB(MainDBTemplate):
     def test_get_users(self):
-        self.assertEqual(MainDB.get_users(), [])
+        self.assertEqual(MainDB.get_users_with_notes(), [])
 
         uid1 = 1
         uid2 = 2
@@ -210,7 +210,7 @@ class TestUpdaterMethodsInDB(MainDBTemplate):
         MainDB.add_user(uid2)
         self.assertTrue(MainDB.add_note(uid1, 'foo'))
 
-        users = MainDB.get_users()
+        users = MainDB.get_users_with_notes()
         self.assertIsNotNone(users)
         self.assertEqual(len(users), 1)
         self.assertEqual(users[0].tg_id, 1)
