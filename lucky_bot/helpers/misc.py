@@ -16,6 +16,12 @@ def second_update_time():
     return datetime.now(timezone.utc).replace(hour=18, minute=0, second=0, microsecond=0)
 
 
+class CurrentTime:
+    before_the_first_update = False
+    first_update = False
+    second_update = False
+
+
 class ThreadTemplate(threading.Thread):
     """
     Base class for all the threads.
