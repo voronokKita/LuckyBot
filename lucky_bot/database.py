@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import (
     create_engine, Column, ForeignKey,
-    Integer, Text, DateTime, BLOB,
+    Integer, Text, DateTime, BLOB, Boolean,
 )
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship, Query
 from sqlalchemy.exc import IntegrityError
@@ -29,6 +29,7 @@ class User(MainBase):
     tg_id = Column('telegram_id', Integer, nullable=False, unique=True, index=True)
     last_note = Column('last_note_num', Integer, nullable=False, default=0)
     notes_total = Column('notes_total', Integer, nullable=False, default=0)
+    update_one = Column('first_note_sent?', Boolean, nullable=False, default=False)
 
     notes = relationship(
         'Note',

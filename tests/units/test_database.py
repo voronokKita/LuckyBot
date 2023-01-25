@@ -18,6 +18,7 @@ class TestMainDatabase(MainDBTemplate):
         self.assertIsNotNone(user)
         self.assertEqual(user.last_note, 0)
         self.assertEqual(user.notes_total, 0)
+        self.assertEqual(user.update_one, False)
 
     def test_db_add_and_get_notes(self):
         # first user
