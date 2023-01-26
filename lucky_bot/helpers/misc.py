@@ -1,19 +1,26 @@
 """ If it's not a constant, a setting variable, an exception, or a signal, then it goes here. """
 import threading
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from lucky_bot.helpers.constants import ThreadException
 from lucky_bot.helpers.signals import EXIT_SIGNAL
 
 
-def first_update_time():
+def first_update_time() -> datetime:
     """ 12 p.m. UTC """
     return datetime.now(timezone.utc).replace(hour=12, minute=0, second=0, microsecond=0)
 
 
-def second_update_time():
+def second_update_time() -> datetime:
     """ 18 p.m. UTC """
     return datetime.now(timezone.utc).replace(hour=18, minute=0, second=0, microsecond=0)
+
+
+def next_day_time() -> datetime:
+    """ 12 a.m. UTC """
+    t = datetime.now(timezone.utc)
+    t += timedelta(days=1)
+    return t.replace(hour=0, minute=0, second=0, microsecond=0)
 
 
 class CurrentTime:

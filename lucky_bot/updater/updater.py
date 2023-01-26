@@ -4,7 +4,7 @@ Integrated with Dispatcher, the main database and the Output Message Queue.
 from datetime import datetime, timezone
 
 from lucky_bot.helpers.constants import UpdaterException
-from lucky_bot.helpers.misc import CurrentTime, first_update_time, second_update_time
+from lucky_bot.helpers.misc import CurrentTime, first_update_time, second_update_time, next_day_time
 from lucky_bot.helpers.signals import UPDATER_IS_RUNNING, UPDATER_IS_STOPPED, UPDATER_CYCLE, EXIT_SIGNAL
 from lucky_bot.helpers.misc import ThreadTemplate
 from lucky_bot.updater import update_dispatcher
@@ -87,16 +87,26 @@ class UpdaterThread(ThreadTemplate):
 
     @staticmethod
     def _time_to_wait() -> int:
-        ''' TODO '''
-        pass
-        # current_time = datetime.now(timezone.utc)
-        # if FIRST_UPDATE <= current_time:
-        #     h = SECOND_UPDATE.hour - current_time.hour
-        #     m = current_time.minute
-        #     s = h * 3600 + m * 60 + current_time.second + 10
-        #     return s
-        # elif SECOND_UPDATE <= current_time:
-        #     pass
+        """ Sleep after the dispatcher has worked out. """
+        now = datetime.now(timezone.utc)
+        update_one = first_update_time()
+        update_two = second_update_time()
+
+        if now < update_one:
+            delta = update_one - now
+            s = delta.total_seconds() + 10
+            return s
+
+        elif update_one <= now < update_two:
+            delta = update_two - now
+            s = delta.total_seconds() + 10
+            return s
+
+        elif update_two <= now:
+            tomorrow = next_day_time()
+            delta = tomorrow - now
+            s = delta.total_seconds() + 10
+            return s
 
     @staticmethod
     def _test_updater_cycle():
