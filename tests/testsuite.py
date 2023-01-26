@@ -13,6 +13,7 @@ sys.path.append(str(BASE_DIR))
 
 from tests import test_base
 from tests.units import test_database
+from tests.units.updater import test_update_dispatcher
 from tests.units.updater import test_updater
 from tests.units.sender import test_omq
 from tests.units.sender import test_dispatcher
@@ -44,6 +45,7 @@ if result.wasSuccessful() is False:
 modules_to_test = {
     test_database,
 
+    test_update_dispatcher,
     test_updater,
 
     test_omq,

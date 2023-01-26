@@ -1,4 +1,5 @@
 """ python -m unittest tests.units.updater.test_updater """
+import unittest
 from unittest.mock import patch, Mock
 
 from lucky_bot.updater import UpdaterThread
@@ -7,7 +8,7 @@ from lucky_bot.helpers.signals import UPDATER_IS_RUNNING, UPDATER_IS_STOPPED
 from tests.presets import ThreadTestTemplate
 
 
-@patch('lucky_bot.updater.updater.UpdaterThread._work_steps')
+@patch('lucky_bot.updater.updater.UpdaterThread.work_steps')
 @patch('lucky_bot.updater.updater.UpdaterThread._time_to_wait', Mock(return_value=100))
 class TestUpdaterThreadBase(ThreadTestTemplate):
     thread_class = UpdaterThread
@@ -23,3 +24,7 @@ class TestUpdaterThreadBase(ThreadTestTemplate):
 
     def test_updater_forced_merge(self, *args):
         super().forced_merge()
+
+
+class TestUpdaterCurrentTime(unittest.TestCase):
+    pass

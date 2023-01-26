@@ -1,14 +1,13 @@
-""" Updater thread. """
-import random
-from time import time
+""" Updater thread.
+Integrated with Dispatcher, the main database and the Output Message Queue.
+"""
 from datetime import datetime, timezone
 
 from lucky_bot.helpers.constants import UpdaterException
 from lucky_bot.helpers.misc import CurrentTime, first_update_time, second_update_time
 from lucky_bot.helpers.signals import UPDATER_IS_RUNNING, UPDATER_IS_STOPPED, UPDATER_CYCLE, EXIT_SIGNAL
 from lucky_bot.helpers.misc import ThreadTemplate
-from lucky_bot.sender import OutputQueue
-from lucky_bot import MainDB
+from lucky_bot.updater import update_dispatcher
 
 import logging
 from logs.config import console, event
@@ -36,7 +35,7 @@ class UpdaterThread(ThreadTemplate):
             UpdaterException
         """
         try:
-            self._work_steps()
+            self.work_steps()
             self._set_the_signal()
             self._test_exception_after_signal()
 
@@ -47,7 +46,7 @@ class UpdaterThread(ThreadTemplate):
                 if EXIT_SIGNAL.is_set():
                     break
                 else:
-                    self._work_steps()
+                    self.work_steps()
                     self._test_updater_cycle()
 
         except Exception as exc:
@@ -55,18 +54,18 @@ class UpdaterThread(ThreadTemplate):
             console('updater: exception')
             raise UpdaterException(exc)
 
+    def work_steps(self):
+        current_time = self._get_current_time()
+
+        update_dispatcher.clear_all_users_flags(current_time)
+        update_dispatcher.send_messages(current_time)
+
     def merge(self):
         if not EXIT_SIGNAL.is_set():
             EXIT_SIGNAL.set()
         if not UPDATER_CYCLE.is_set():
             UPDATER_CYCLE.set()
         super().merge()
-
-    def _work_steps(self):
-        current_time = self._get_current_time()
-
-        self._clear_all_users_flags(current_time)
-        self._send_messages(current_time)
 
     def _get_current_time(self) -> CurrentTime:
         current_time = CurrentTime()
@@ -85,48 +84,6 @@ class UpdaterThread(ThreadTemplate):
             current_time.second_update = True
 
         return current_time
-
-    def _clear_all_users_flags(self, current_time):
-        if current_time.before_the_first_update:
-            MainDB.clear_all_users_flags()
-
-    def _send_messages(self, current_time):
-        if not current_time.before_the_first_update:
-            self._notifications_dispatcher(current_time)
-
-    def _notifications_dispatcher(self, current_time):
-        users = MainDB.get_users_with_notes()
-        if not users:
-            return
-
-        for user in users:
-            if not self._is_waiting_for_update(user, current_time):
-                continue
-
-            notes = MainDB.get_notifications_for_the_updater(user.tg_id)
-            if not notes:
-                msg = f"updater: got a user that don't have any notes to send, id #{user.id}"
-                console(msg)
-                event.warning(msg)
-                continue
-
-            note = random.choice(notes)
-            OutputQueue.add_message(user.tg_id, note.text, int(time()))
-            self._set_update_flag(user.tg_id, current_time)
-
-    def _is_waiting_for_update(self, user, current_time):
-        if current_time.first_update and user.got_first_update is False:
-            return True
-        elif current_time.second_update and user.got_second_update is False:
-            return True
-        else:
-            return False
-
-    def _set_update_flag(self, uid, current_time):
-        if current_time.first_update:
-            MainDB.set_user_flag(uid, 'first update')
-        elif current_time.second_update:
-            MainDB.set_user_flag(uid, 'second update')
 
     @staticmethod
     def _time_to_wait() -> int:
