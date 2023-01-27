@@ -123,12 +123,15 @@ class DispatcherUndefinedExc(DispatcherException):
     """ Undefined ApiTelegramException. """
 
 
-class ControllerException(Exception):
+class ControllerException(ThreadException):
     """ Something wrong in the controller. """
 
 class TelebotHandlerException(ControllerException):
     """ Something wrong in the telebot handlers. """
 
 
-class UpdaterException(Exception):
+class UpdaterException(ThreadException):
     """ Something wrong in the updater. """
+
+class UpdateDispatcherException(Exception):
+    """ Something wrong in Updater's dispatcher. """

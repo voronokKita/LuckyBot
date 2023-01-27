@@ -3,7 +3,7 @@ Integrated with Dispatcher, the main database and the Output Message Queue.
 """
 from datetime import datetime, timezone
 
-from lucky_bot.helpers.constants import UpdaterException
+from lucky_bot.helpers.constants import UpdaterException, UpdateDispatcherException
 from lucky_bot.helpers.misc import CurrentTime, first_update_time, second_update_time, next_day_time
 from lucky_bot.helpers.signals import UPDATER_IS_RUNNING, UPDATER_IS_STOPPED, UPDATER_CYCLE, EXIT_SIGNAL
 from lucky_bot.helpers.misc import ThreadTemplate
@@ -32,6 +32,7 @@ class UpdaterThread(ThreadTemplate):
             the UPDATER_CYCLE signal must be set after the EXIT_SIGNAL.
 
         Raises:
+            UpdateDispatcherException propagation
             UpdaterException
         """
         try:
@@ -40,15 +41,21 @@ class UpdaterThread(ThreadTemplate):
             self._test_exception_after_signal()
 
             while True:
+                if UPDATER_CYCLE.is_set():
+                    UPDATER_CYCLE.clear()
+
                 wait = self._time_to_wait()
                 if UPDATER_CYCLE.wait(wait):
                     pass
+
                 if EXIT_SIGNAL.is_set():
                     break
                 else:
                     self.work_steps()
                     self._test_updater_cycle()
 
+        except UpdateDispatcherException as exc:
+            raise exc
         except Exception as exc:
             event.error('updater: exception')
             console('updater: exception')
@@ -56,9 +63,14 @@ class UpdaterThread(ThreadTemplate):
 
     def work_steps(self):
         current_time = self._get_current_time()
-
-        update_dispatcher.clear_all_users_flags(current_time)
-        update_dispatcher.send_messages(current_time)
+        try:
+            update_dispatcher.clear_all_users_flags(current_time)
+            update_dispatcher.send_messages(current_time)
+        except Exception as exc:
+            msg = 'updater: exception in the update dispatcher'
+            event.error(msg)
+            console(msg)
+            raise UpdateDispatcherException(exc)
 
     def merge(self):
         if not EXIT_SIGNAL.is_set():
@@ -93,19 +105,19 @@ class UpdaterThread(ThreadTemplate):
         update_two = second_update_time()
 
         if now < update_one:
-            delta = update_one - now
-            s = delta.total_seconds() + 10
+            timedelta = update_one - now
+            s = timedelta.total_seconds() + 10
             return s
 
         elif update_one <= now < update_two:
-            delta = update_two - now
-            s = delta.total_seconds() + 10
+            timedelta = update_two - now
+            s = timedelta.total_seconds() + 10
             return s
 
         elif update_two <= now:
             tomorrow = next_day_time()
-            delta = tomorrow - now
-            s = delta.total_seconds() + 10
+            timedelta = tomorrow - now
+            s = timedelta.total_seconds() + 10
             return s
 
     @staticmethod
