@@ -34,6 +34,7 @@ class TestProjectBase(unittest.TestCase):
             package_dir / 'sender' / 'dispatcher.py',
             package_dir / 'sender' / 'sender.py',
 
+            package_dir / 'updater' / 'update_dispatcher.py',
             package_dir / 'updater' / 'updater.py',
 
             package_dir / 'controller' / 'bot_handlers.py',
@@ -64,6 +65,7 @@ class TestProjectBase(unittest.TestCase):
         from lucky_bot.sender import dispatcher
         from lucky_bot import sender
 
+        from lucky_bot.updater import update_dispatcher
         from lucky_bot import updater
 
         from lucky_bot.controller import bot_handlers

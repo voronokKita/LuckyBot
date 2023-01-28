@@ -63,7 +63,8 @@ def add_new_note(message):
     else:
         uid = message.chat.id
         result = parser.parse_note_and_insert(uid, message_text)
-        respond.send_message(uid, result)
+        if result:
+            respond.send_message(uid, result)
 
 
 @BOT.message_handler(commands=['update'])

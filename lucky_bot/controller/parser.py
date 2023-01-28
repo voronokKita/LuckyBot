@@ -12,11 +12,11 @@ def parse_note_and_insert(uid, text) -> str:
     if MainDB.add_note(uid, text) is True:
         return 'Saved.'
     else:
-        return 'Error: check text format and try again.'
+        return ''
 
 
 def parse_note_and_update(uid, text, note_num) -> str:
     if MainDB.update_user_note(uid, note_num, text) is True:
         return 'Updated.'
     else:
-        return 'Error: wrong note number or text format; check for errors and try again.'
+        return 'Error: wrong note number.'

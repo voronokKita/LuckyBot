@@ -1,9 +1,9 @@
 """ Responder. Process commands.
-
 Integrated with the main db, and with Sender's Output Messages Queue.
 """
 from time import time
 
+from lucky_bot.helpers.constants import DatabaseException
 from lucky_bot.helpers.signals import NEW_MESSAGE_TO_SEND
 from lucky_bot import MainDB
 from lucky_bot.sender import OutputQueue
@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 class Respond:
     @staticmethod
     def send_message(tg_uid, text):
+        """ Sender's Output Messages Queue. """
         OutputQueue.add_message(tg_uid, text, int(time()))
         if not NEW_MESSAGE_TO_SEND.is_set():
             NEW_MESSAGE_TO_SEND.set()
@@ -27,19 +28,32 @@ class Respond:
     @staticmethod
     def delete_user(tg_uid, start_cmd=False):
         if start_cmd is False:
-            event.info('internal command: delete user')
-            console('internal command: delete user')
+            event.info('responder: delete user')
+            console('responder: delete user')
         MainDB.delete_user(tg_uid)
 
     def delete_notes(self, tg_uid, notes:list):
-        errors = ''
+        message = ''
         for note in notes:
+            message = self._delete_note(tg_uid, note, message)
+
+        if message:
+            self.send_message(tg_uid, message)
+
+    def _delete_note(self, tg_uid, note, message):
+        try:
             if MainDB.delete_user_note(tg_uid, note) is False:
-                errors += f'Note #{note} - fail to delete.\n'
-        if errors:
-            self.send_message(tg_uid, errors)
-        else:
-            self.send_message(tg_uid, 'Deleted.')
+                message += f'Note #{note} - not found\n'
+            else:
+                message += f'Note #{note} - deleted\n'
+            return message
+
+        except DatabaseException as exc:
+            # Send message, if any, before an exception propagation.
+            if message:
+                message += 'Some internal Error...\n'
+                self.send_message(tg_uid, message)
+            raise exc
 
     def send_list(self, tg_uid):
         result = MainDB.get_user_notes(tg_uid)

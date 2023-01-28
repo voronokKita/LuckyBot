@@ -3,7 +3,7 @@ from unittest.mock import patch
 from datetime import timedelta
 from time import sleep
 
-from lucky_bot.helpers.constants import TestException, UpdateDispatcherException
+from lucky_bot.helpers.constants import TestException, DatabaseException, UpdateDispatcherException
 from lucky_bot.helpers.signals import UPDATER_IS_RUNNING, UPDATER_IS_STOPPED, UPDATER_CYCLE, EXIT_SIGNAL
 from lucky_bot import MainDB
 from lucky_bot.sender import OutputQueue
@@ -102,3 +102,25 @@ class TestUpdaterWorks(ThreadSmallTestTemplate):
         self.assertRaises(UpdateDispatcherException, self.thread_obj.merge)
         self.assertTrue(UPDATER_CYCLE.is_set())
         self.assertIsNotNone(OutputQueue.get_first_message())
+
+    @patch('lucky_bot.database.test_func2')
+    def test_updater_exception_in_main_db(self, func, fut, sut, dt, updater_cycle):
+        fut.return_value = timedelta(hours=12)
+        sut.return_value = timedelta(hours=18)
+        dt.now.return_value = timedelta(hours=15)
+
+        self.thread_obj.start()
+        if not UPDATER_IS_RUNNING.wait(10):
+            self.thread_obj.merge()
+            raise TestException('The time to start the updater has passed.')
+
+        MainDB.add_user(3)
+        MainDB.add_note(3, 'foobar')
+        func.side_effect = TestException('boom')
+
+        UPDATER_CYCLE.set()
+        if not UPDATER_IS_STOPPED.wait(10):
+            self.thread_obj.merge()
+            raise TestException('The time to stop the updater has passed.')
+
+        self.assertRaises(DatabaseException, self.thread_obj.merge)

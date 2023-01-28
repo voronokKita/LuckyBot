@@ -4,7 +4,7 @@ and with Receiver's Input Messages Queue.
 """
 import telebot
 
-from lucky_bot.helpers.constants import ControllerException, TelebotHandlerException
+from lucky_bot.helpers.constants import ControllerException, TelebotHandlerException, DatabaseException
 from lucky_bot.helpers.signals import (
     CONTROLLER_IS_RUNNING, CONTROLLER_IS_STOPPED,
     INCOMING_MESSAGE, EXIT_SIGNAL,
@@ -51,6 +51,7 @@ class ControllerThread(ThreadTemplate):
 
         Raises:
             TelebotHandlerException: propagation
+            DatabaseException: propagation
             ControllerException
         """
         try:
@@ -70,7 +71,7 @@ class ControllerThread(ThreadTemplate):
                 INCOMING_MESSAGE.clear()
                 self._test_controller_cycle()
 
-        except TelebotHandlerException as exc:
+        except (TelebotHandlerException, DatabaseException) as exc:
             raise exc
         except Exception as exc:
             event.error('controller: exception')
@@ -98,6 +99,7 @@ class ControllerThread(ThreadTemplate):
         Calls the responder or the bot processor, depending on message data.
 
         Raises:
+            DatabaseException: propagation
             TelebotHandlerException
         """
         if msg_obj.data.startswith('/'):
@@ -111,6 +113,8 @@ class ControllerThread(ThreadTemplate):
             try:
                 update = telebot.types.Update.de_json(msg_obj.data)
                 BOT.process_new_updates([update])
+            except DatabaseException as exc:
+                raise exc
             except Exception as exc:
                 msg = 'controller: exception in a telebot handler'
                 event.error(msg)

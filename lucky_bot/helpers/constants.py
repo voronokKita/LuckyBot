@@ -15,10 +15,10 @@ else:
 
 # Databases
 if TESTING:
-    ''' Note:
-    :memory: db is not working, because
-    a werkzeug server - make_server(), - is running in another process,
-    i.e. in another memory area.
+    ''' 
+    Note:
+        :memory: db is not working, because some parts are 
+        running in subprocesses, i.e. in another memory areas.
     '''
     DB_FILE = PROJECT_DIR / 'tests' / 'fixtures' / 'test_data.sqlite3'
     INPUT_MQ_FILE = PROJECT_DIR / 'tests' / 'fixtures' / 'test_imq.sqlite3'
@@ -88,6 +88,9 @@ class MainException(Exception):
 
 class ThreadException(Exception):
     """ Normal exception for the threads, except main. """
+
+class DatabaseException(Exception):
+    """ Something wrong in the main database. """
 
 
 class ReceiverException(ThreadException):

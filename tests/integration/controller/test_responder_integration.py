@@ -42,6 +42,9 @@ class TestResponderIntegration(unittest.TestCase):
         self.assertIsNone(MainDB.get_user(uid))
 
     def test_responder_delete_notes(self):
+        expected = "Note #1 - deleted\n" \
+                   "Note #2 - deleted\n" \
+                   "Note #3 - deleted\n"
         uid = 3
         MainDB.add_user(uid)
         MainDB.add_note(uid, 'foo')
@@ -53,7 +56,7 @@ class TestResponderIntegration(unittest.TestCase):
         self.assertEqual(MainDB.get_user_notes(uid), [])
         msg = OutputQueue.get_first_message()
         self.assertIsNotNone(msg)
-        self.assertEqual(msg.text, 'Deleted.')
+        self.assertEqual(msg.text, expected)
 
     def test_responder_delete_notes_wrong(self):
         uid = 3
@@ -62,7 +65,7 @@ class TestResponderIntegration(unittest.TestCase):
 
         msg = OutputQueue.get_first_message()
         self.assertIsNotNone(msg)
-        self.assertEqual(msg.text, f'Note #1 - fail to delete.\n')
+        self.assertEqual(msg.text, f'Note #1 - not found\n')
 
     def test_responder_send_list(self):
         note_text = 'foo, bar, baz, qux, quux, corge, grault, garply, waldo, fred, plugh, xyzzy, thud'

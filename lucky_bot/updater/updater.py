@@ -3,9 +3,18 @@ Integrated with Dispatcher, the main database and the Output Message Queue.
 """
 from datetime import datetime, timezone
 
-from lucky_bot.helpers.constants import UpdaterException, UpdateDispatcherException
-from lucky_bot.helpers.misc import CurrentTime, first_update_time, second_update_time, next_day_time
-from lucky_bot.helpers.signals import UPDATER_IS_RUNNING, UPDATER_IS_STOPPED, UPDATER_CYCLE, EXIT_SIGNAL
+from lucky_bot.helpers.constants import (
+    UpdaterException, DatabaseException,
+    UpdateDispatcherException,
+)
+from lucky_bot.helpers.misc import (
+    CurrentTime, first_update_time,
+    second_update_time, next_day_time,
+)
+from lucky_bot.helpers.signals import (
+    UPDATER_IS_RUNNING, UPDATER_IS_STOPPED,
+    UPDATER_CYCLE, EXIT_SIGNAL,
+)
 from lucky_bot.helpers.misc import ThreadTemplate
 from lucky_bot.updater import update_dispatcher
 
@@ -54,7 +63,7 @@ class UpdaterThread(ThreadTemplate):
                     self.work_steps()
                     self._test_updater_cycle()
 
-        except UpdateDispatcherException as exc:
+        except (UpdateDispatcherException, DatabaseException) as exc:
             raise exc
         except Exception as exc:
             event.error('updater: exception')
@@ -66,6 +75,8 @@ class UpdaterThread(ThreadTemplate):
         try:
             update_dispatcher.clear_all_users_flags(current_time)
             update_dispatcher.send_messages(current_time)
+        except DatabaseException as exc:
+            raise exc
         except Exception as exc:
             msg = 'updater: exception in the update dispatcher'
             event.error(msg)

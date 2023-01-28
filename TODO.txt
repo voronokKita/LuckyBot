@@ -1,3 +1,4 @@
+- In memory database.
 - Rewrite the database logick and exceptions.
 - Test networking.
 - Sender: the delete-a-uid request.
