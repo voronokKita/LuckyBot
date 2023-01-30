@@ -10,7 +10,7 @@ from lucky_bot.helpers.constants import (
 )
 from lucky_bot.helpers.signals import (
     SENDER_IS_RUNNING, SENDER_IS_STOPPED,
-    EXIT_SIGNAL, NEW_MESSAGE_TO_SEND,
+    EXIT_SIGNAL, NEW_MESSAGE_TO_SEND, INCOMING_MESSAGE,
 )
 from lucky_bot.sender import SenderThread
 
@@ -109,36 +109,39 @@ class TestSender(ThreadSmallTestTemplate):
         self.assertRaises(DispatcherException, self.thread_obj.merge)
 
 
+@patch('lucky_bot.sender.sender.InputQueue')
 @patch('lucky_bot.sender.sender.dispatcher')
 class TestSenderCallToDispatcher(unittest.TestCase):
     ''' The dispatcher exceptions that are caught in sender after a call. '''
 
-    def test_sender_call_exception_wrong_token(self, disp):
+    def test_sender_call_exception_wrong_token(self, disp, imq):
         disp.send_message.side_effect = DispatcherWrongToken('boom')
         self.assertRaises(StopTheSenderGently, SenderThread._process_a_delivery, Mock())
 
-    def test_sender_call_exception_timeout(self, disp):
+    def test_sender_call_exception_timeout(self, disp, imq):
         disp.send_message.side_effect = DispatcherTimeout('boom')
         self.assertRaises(StopTheSenderGently, SenderThread._process_a_delivery, Mock())
 
-    def test_sender_call_exception_undefined(self, disp):
+    def test_sender_call_exception_undefined(self, disp, imq):
         disp.send_message.side_effect = DispatcherUndefinedExc('boom')
         SenderThread._process_a_delivery(Mock())
 
-    def test_sender_call_exception_access(self, disp):
+    def test_sender_call_exception_access(self, disp, imq):
         disp.send_message.side_effect = DispatcherNoAccess('boom')
         SenderThread._process_a_delivery(Mock())
-        # TODO delete a uid request
+        imq.add_message.assert_called_once()
+        self.assertTrue(INCOMING_MESSAGE.is_set())
+        INCOMING_MESSAGE.clear()
 
-    def test_sender_call_exception_in_dispatcher(self, disp):
+    def test_sender_call_exception_in_dispatcher(self, disp, imq):
         disp.send_message.side_effect = DispatcherException('boom')
         self.assertRaises(DispatcherException, SenderThread._process_a_delivery, Mock())
 
-    def test_sender_call_exception_normal(self, disp):
+    def test_sender_call_exception_normal(self, disp, imq):
         disp.send_message.side_effect = Exception('boom')
         self.assertRaises(DispatcherException, SenderThread._process_a_delivery, Mock())
 
-    def test_sender_call_dispatcher_normal(self, disp):
+    def test_sender_call_dispatcher_normal(self, disp, imq):
         msg_obj = Mock()
         msg_obj.destination = 42
         msg_obj.text = 'hello'

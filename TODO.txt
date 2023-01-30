@@ -1,7 +1,5 @@
 - In memory database.
-- Rewrite the database logick and exceptions.
 - Test networking.
-- Sender: the delete-a-uid request.
 - Admin command interface.
 - Test logs.
 - Save user data in hash.
@@ -21,3 +19,5 @@ DONE - Webhook: change abstract telebot to the bot.
 DONE - Delete ThreadException.
 BYPASS - Catch an exception from a werkzeug app.
 DONE - Need more logging.
+DONE - Rewrite the main database logic and exceptions.
+DONE - Sender: the delete-a-uid request.

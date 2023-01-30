@@ -2,6 +2,8 @@
 
 Integrated with the Output Message Queue and Dispatcher.
 """
+from time import time
+
 from lucky_bot.helpers.constants import (
     SenderException, StopTheSenderGently,
     DispatcherWrongToken, DispatcherNoAccess, DispatcherTimeout,
@@ -9,10 +11,11 @@ from lucky_bot.helpers.constants import (
 )
 from lucky_bot.helpers.signals import (
     SENDER_IS_RUNNING, SENDER_IS_STOPPED,
-    NEW_MESSAGE_TO_SEND, EXIT_SIGNAL,
+    NEW_MESSAGE_TO_SEND, INCOMING_MESSAGE, EXIT_SIGNAL,
 )
 from lucky_bot.helpers.misc import ThreadTemplate
 
+from lucky_bot.receiver import InputQueue
 from lucky_bot.sender import OutputQueue
 from lucky_bot.sender import dispatcher
 
@@ -114,7 +117,8 @@ class SenderThread(ThreadTemplate):
         except DispatcherNoAccess:
             event.info('sender: deleting the inaccessible uid')
             console('sender: deleting the inaccessible uid')
-            # TODO delete a uid request
+            InputQueue.add_message(f'/sender delete {msg_obj.destination}', int(time()))
+            INCOMING_MESSAGE.set()
 
         except (DispatcherException, Exception) as exc:
             event.error('sender: stopping because of dispatcher exception')

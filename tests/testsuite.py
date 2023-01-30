@@ -27,6 +27,7 @@ from tests.units.controller import test_controller
 
 from tests.integration.updater import test_updater_int
 from tests.integration.sender import test_sender_int
+from tests.integration.sender import test_sender_with_controller
 from tests.integration.receiver import test_receiver_int, test_flask_with_imq
 from tests.integration.controller import test_controller_int
 from tests.integration.controller import test_controller_with_imq
@@ -62,6 +63,7 @@ modules_to_test = {
     test_controller,
 
     test_updater_int,
+    test_sender_with_controller,
     test_sender_int,
     test_flask_with_imq,
     test_receiver_int,
