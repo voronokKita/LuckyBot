@@ -1,4 +1,4 @@
-""" pyTelegramBotAPI initialisation. """
+""" pyTelegramBotAPI initialisation for another modules. """
 import telebot
 
 from lucky_bot.helpers.constants import API
@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 class ExceptionHandler(telebot.ExceptionHandler):
+    """ Currently not in use. """
     def handle(self, exception):
         pass
 

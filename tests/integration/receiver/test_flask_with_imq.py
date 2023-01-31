@@ -1,4 +1,4 @@
-""" python -m unittest tests.integration.receiver.test_receiver_int """
+""" python -m unittest tests.integration.receiver.test_flask_with_imq """
 import unittest
 
 from lucky_bot.helpers.constants import PROJECT_DIR, WEBHOOK_SECRET, WEBHOOK_ENDPOINT

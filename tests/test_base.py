@@ -31,7 +31,7 @@ class TestProjectBase(unittest.TestCase):
             package_dir / 'receiver' / 'receiver.py',
 
             package_dir / 'sender' / 'output_mq.py',
-            package_dir / 'sender' / 'dispatcher.py',
+            package_dir / 'sender' / 'output_dispatcher.py',
             package_dir / 'sender' / 'sender.py',
 
             package_dir / 'updater' / 'update_dispatcher.py',
@@ -62,7 +62,7 @@ class TestProjectBase(unittest.TestCase):
         from lucky_bot import receiver
 
         from lucky_bot.sender import OutputQueue
-        from lucky_bot.sender import dispatcher
+        from lucky_bot.sender import output_dispatcher
         from lucky_bot import sender
 
         from lucky_bot.updater import update_dispatcher

@@ -1,5 +1,5 @@
 """ Flask based webhook.
-Calls the Input Message Queue to save a telegram message data.
+Calls the input message queue to save a telegram message data.
 """
 import json
 import secrets
@@ -11,15 +11,15 @@ from flask import Flask, request
 
 from lucky_bot.helpers.constants import (
     WEBHOOK_ENDPOINT, WEBHOOK_SECRET,
-    WebhookWrongRequest, FlaskException
+    WebhookWrongRequest, FlaskException, IMQException,
 )
 from lucky_bot.helpers.signals import INCOMING_MESSAGE, EXIT_SIGNAL
 
 from lucky_bot.receiver import InputQueue
 
 import logging
-from logs import console, event
 logger = logging.getLogger(__name__)
+from logs import Log
 
 def test_exception(): pass
 
@@ -57,7 +57,9 @@ def get_message_data() -> str:
 def save_message_to_queue(data):
     """
     Tries to save a message data to the Input Message Queue.
-    Raises: FlaskException
+    Raises:
+        FlaskException
+        IMQException: propagation
     """
     try:
         test_exception()
@@ -65,35 +67,42 @@ def save_message_to_queue(data):
         date = d['message']['date']
         InputQueue.add_message(data, date)
 
+    except IMQException as exc:
+        EXIT_SIGNAL.set()
+        raise exc
     except Exception as exc:
-        logger.exception('error saving message to db')
-        event.error('error saving message to db')
+        logger.exception('flask: error saving message to imq')
+        Log.error('flask: error saving message to imq')
         EXIT_SIGNAL.set()
         raise FlaskException(exc)
 
 
 @FLASK_APP.route(WEBHOOK_ENDPOINT, methods=['POST'])
 def inbox():
+    """
+    Exceptions go through:
+        IMQException
+
+    Raises:
+        FlaskException
+    """
     try:
         data = get_message_data()
 
     except WebhookWrongRequest:
         msg = 'flask: wrong request: %s' % request.get_data().decode('utf-8')
-        console(msg)
-        event.warning(msg)
+        Log.warning(msg)
         flask.abort(400)
     except Exception as exc:
-        msg = 'flask: error parsing request'
-        logger.exception(msg)
-        event.error(msg)
-        console(msg)
+        logger.exception('flask: error parsing request')
+        Log.error('flask: error parsing request')
         EXIT_SIGNAL.set()
         raise FlaskException(exc)
 
     else:
         save_message_to_queue(data)
         INCOMING_MESSAGE.set()
-        console('new tg message')
+        Log.console('new tg message')
         return '', 200
 
 

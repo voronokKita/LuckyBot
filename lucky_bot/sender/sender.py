@@ -1,13 +1,7 @@
-""" Sender thread.
-
-Integrated with the Output Message Queue and Dispatcher.
-"""
-from time import time
-
 from lucky_bot.helpers.constants import (
-    SenderException, StopTheSenderGently,
+    SenderException, StopTheSenderGently, OMQException, IMQException,
     DispatcherWrongToken, DispatcherNoAccess, DispatcherTimeout,
-    DispatcherUndefinedExc, DispatcherException,
+    DispatcherUndefinedExc, OutputDispatcherException,
 )
 from lucky_bot.helpers.signals import (
     SENDER_IS_RUNNING, SENDER_IS_STOPPED,
@@ -17,11 +11,71 @@ from lucky_bot.helpers.misc import ThreadTemplate
 
 from lucky_bot.receiver import InputQueue
 from lucky_bot.sender import OutputQueue
-from lucky_bot.sender import dispatcher
+from lucky_bot.sender import output_dispatcher
 
 import logging
-from logs import console, event
 logger = logging.getLogger(__name__)
+from logs import Log
+
+
+class Sender:
+    """ Gets messages from the output message queue and passes them to the output dispatcher. """
+
+    @classmethod
+    def process_outgoing_messages(cls):
+        """
+        Exceptions go through:
+            OutputDispatcherException
+            StopTheSenderGently
+            OMQException
+            IMQException
+        """
+        while True:
+            msg_obj = OutputQueue.get_first_message()
+            if msg_obj:
+                cls._handle_a_delivery(msg_obj)
+                OutputQueue.delete_message(msg_obj)
+            else:
+                break
+
+    @staticmethod
+    def _handle_a_delivery(msg_obj):
+        """
+        Calls the dispatcher and handles its exceptions.
+        Sends /delete commands to the input message queue.
+
+        Exceptions go through:
+            IMQException
+
+        Raises:
+            StopTheSenderGently
+            OutputDispatcherException: propagation
+        """
+        try:
+            output_dispatcher.send_message(msg_obj.destination, msg_obj.text)
+
+        except DispatcherWrongToken:
+            Log.error('sender: stopping because of api error')
+            raise StopTheSenderGently
+
+        except DispatcherTimeout:
+            Log.warning('sender: stopping because of tg timeout')
+            raise StopTheSenderGently
+
+        except DispatcherUndefinedExc:
+            Log.warning('sender: deleting the broken message; delete the uid manually if the exception persists')
+
+        except DispatcherNoAccess:
+            Log.info('sender: deleting the inaccessible uid')
+            InputQueue.add_message(f'/sender delete {msg_obj.destination}')
+            INCOMING_MESSAGE.set()
+
+        except (OutputDispatcherException, Exception) as exc:
+            Log.error('sender: stopping because of dispatcher exception')
+            if isinstance(exc, OutputDispatcherException):
+                raise exc
+            else:
+                raise OutputDispatcherException(exc)
 
 
 class SenderThread(ThreadTemplate):
@@ -34,8 +88,8 @@ class SenderThread(ThreadTemplate):
     def body(self):
         """
         Description:
-            0. Check the Output Message Queue; Dispatch any messages;
-            1. Clear NEW_MESSAGE_TO_SEND, if set;
+            0. Dispatch any messages;
+            1. Clear NEW_MESSAGE_TO_SEND signal, if set;
             2. Set the SENDER_IS_RUNNING signal;
             3. Loop and wait for the NEW_MESSAGE_TO_SEND signal.
 
@@ -43,32 +97,37 @@ class SenderThread(ThreadTemplate):
             the NEW_MESSAGE_TO_SEND signal must be set after the EXIT_SIGNAL.
 
         Raises:
-            DispatcherException: propagation
             SenderException
+            DispatcherException: propagation
+            OMQException: propagation
+            IMQException: propagation
         """
         try:
-            self._process_all_messages()
+            Sender.process_outgoing_messages()
+
             if NEW_MESSAGE_TO_SEND.is_set():
                 NEW_MESSAGE_TO_SEND.clear()
             self._set_the_signal()
             self._test_exception_after_signal()
 
             while True:
-                if NEW_MESSAGE_TO_SEND.wait():
+                if NEW_MESSAGE_TO_SEND.wait(3600):
                     pass
                 if EXIT_SIGNAL.is_set():
                     break
-                self._process_all_messages()
-                NEW_MESSAGE_TO_SEND.clear()
-                self._test_sender_cycle()
+                else:
+                    Sender.process_outgoing_messages()
+
+                    if NEW_MESSAGE_TO_SEND.is_set():
+                        NEW_MESSAGE_TO_SEND.clear()
+                    self._test_sender_cycle()
 
         except StopTheSenderGently:
             EXIT_SIGNAL.set()
-        except DispatcherException as exc:
+        except (OutputDispatcherException, OMQException, IMQException) as exc:
             raise exc
         except Exception as exc:
-            event.error('sender: exception')
-            console('sender: exception')
+            Log.error('sender: a normal exception')
             raise SenderException(exc)
 
     def merge(self):
@@ -77,56 +136,6 @@ class SenderThread(ThreadTemplate):
         if not NEW_MESSAGE_TO_SEND.is_set():
             NEW_MESSAGE_TO_SEND.set()
         super().merge()
-
-    def _process_all_messages(self):
-        while True:
-            msg_obj = OutputQueue.get_first_message()
-            if msg_obj:
-                self._process_a_delivery(msg_obj)
-                OutputQueue.delete_message(msg_obj)
-            else:
-                break
-
-    @staticmethod
-    def _process_a_delivery(msg_obj):
-        """ Calls Dispatcher and handles its exceptions.
-
-        Raises:
-            DispatcherException: propagation
-            StopTheSenderGently
-        """
-
-        try:
-            dispatcher.send_message(msg_obj.destination, msg_obj.text)
-
-        except DispatcherWrongToken:
-            event.error('sender: stopping because of api error')
-            console('sender: stopping because of api error')
-            raise StopTheSenderGently
-
-        except DispatcherTimeout:
-            event.warning('sender: stopping because of tg timeout')
-            console('sender: stopping because of tg timeout')
-            raise StopTheSenderGently
-
-        except DispatcherUndefinedExc:
-            msg = 'sender: deleting the broken message; delete the uid manually if the exception persists'
-            event.warning(msg)
-            console(msg)
-
-        except DispatcherNoAccess:
-            event.info('sender: deleting the inaccessible uid')
-            console('sender: deleting the inaccessible uid')
-            InputQueue.add_message(f'/sender delete {msg_obj.destination}', int(time()))
-            INCOMING_MESSAGE.set()
-
-        except (DispatcherException, Exception) as exc:
-            event.error('sender: stopping because of dispatcher exception')
-            console('sender: stopping because of dispatcher exception')
-            if isinstance(exc, DispatcherException):
-                raise exc
-            else:
-                raise DispatcherException(exc)
 
     @staticmethod
     def _test_sender_cycle():

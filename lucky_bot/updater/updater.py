@@ -1,11 +1,8 @@
-""" Updater thread.
-Integrated with Dispatcher, the main database and the Output Message Queue.
-"""
 from datetime import datetime, timezone
 
 from lucky_bot.helpers.constants import (
     UpdaterException, DatabaseException,
-    UpdateDispatcherException,
+    UpdateDispatcherException, OMQException,
 )
 from lucky_bot.helpers.misc import (
     CurrentTime, first_update_time,
@@ -19,78 +16,35 @@ from lucky_bot.helpers.misc import ThreadTemplate
 from lucky_bot.updater import update_dispatcher
 
 import logging
-from logs.config import console, event
 logger = logging.getLogger(__name__)
+from logs.config import Log
 
 
-class UpdaterThread(ThreadTemplate):
-    is_running_signal = UPDATER_IS_RUNNING
-    is_stopped_signal = UPDATER_IS_STOPPED
+class Updater:
+    """ Makes calls to the update dispatcher. """
 
-    def __str__(self):
-        return 'updater thread'
-
-    def body(self):
+    @classmethod
+    def works(cls):
         """
-        Description:
-            0. Check the timing; send notifications or pass;
-            1. Set the UPDATER_IS_RUNNING signal;
-            2. Loop and wait for the UPDATER_CYCLE timing to pass.
-
-            To break the updater from the loop and stop its work,
-            the UPDATER_CYCLE signal must be set after the EXIT_SIGNAL.
-
         Raises:
-            UpdateDispatcherException propagation
-            UpdaterException
+            UpdateDispatcherException
+            DatabaseException: propagation
+            OMQException: propagation
         """
-        try:
-            self.work_steps()
-            self._set_the_signal()
-            self._test_exception_after_signal()
-
-            while True:
-                if UPDATER_CYCLE.is_set():
-                    UPDATER_CYCLE.clear()
-
-                wait = self._time_to_wait()
-                if UPDATER_CYCLE.wait(wait):
-                    pass
-
-                if EXIT_SIGNAL.is_set():
-                    break
-                else:
-                    self.work_steps()
-                    self._test_updater_cycle()
-
-        except (UpdateDispatcherException, DatabaseException) as exc:
-            raise exc
-        except Exception as exc:
-            event.error('updater: exception')
-            console('updater: exception')
-            raise UpdaterException(exc)
-
-    def work_steps(self):
-        current_time = self._get_current_time()
+        current_time = cls._get_current_time()
         try:
             update_dispatcher.clear_all_users_flags(current_time)
             update_dispatcher.send_messages(current_time)
-        except DatabaseException as exc:
+
+        except (DatabaseException, OMQException) as exc:
             raise exc
         except Exception as exc:
             msg = 'updater: exception in the update dispatcher'
-            event.error(msg)
-            console(msg)
+            Log.error(msg)
             raise UpdateDispatcherException(exc)
 
-    def merge(self):
-        if not EXIT_SIGNAL.is_set():
-            EXIT_SIGNAL.set()
-        if not UPDATER_CYCLE.is_set():
-            UPDATER_CYCLE.set()
-        super().merge()
-
-    def _get_current_time(self) -> CurrentTime:
+    @staticmethod
+    def _get_current_time() -> CurrentTime:
         current_time = CurrentTime()
         now = datetime.now(timezone.utc)
         update_one = first_update_time()
@@ -108,9 +62,66 @@ class UpdaterThread(ThreadTemplate):
 
         return current_time
 
+
+class UpdaterThread(ThreadTemplate):
+    is_running_signal = UPDATER_IS_RUNNING
+    is_stopped_signal = UPDATER_IS_STOPPED
+
+    def __str__(self):
+        return 'updater thread'
+
+    def body(self):
+        """
+        Description:
+            0. Send messages or pass;
+            1. Set the UPDATER_IS_RUNNING signal;
+            2. Loop and wait for the UPDATER_CYCLE timing to pass.
+
+            To break the updater from the loop and stop its work,
+            the UPDATER_CYCLE signal must be set after the EXIT_SIGNAL.
+
+        Raises:
+            UpdaterException
+            UpdateDispatcherException: propagation
+            DatabaseException: propagation
+            OMQException: propagation
+        """
+        try:
+            Updater.works()
+
+            self._set_the_signal()
+            self._test_exception_after_signal()
+
+            while True:
+                if UPDATER_CYCLE.is_set():
+                    UPDATER_CYCLE.clear()
+
+                wait = self._time_to_wait()
+                if UPDATER_CYCLE.wait(wait):
+                    pass
+
+                if EXIT_SIGNAL.is_set():
+                    break
+                else:
+                    Updater.works()
+                    self._test_updater_cycle()
+
+        except (UpdateDispatcherException, DatabaseException, OMQException) as exc:
+            raise exc
+        except Exception as exc:
+            Log.error('updater: a normal exception')
+            raise UpdaterException(exc)
+
+    def merge(self):
+        if not EXIT_SIGNAL.is_set():
+            EXIT_SIGNAL.set()
+        if not UPDATER_CYCLE.is_set():
+            UPDATER_CYCLE.set()
+        super().merge()
+
     @staticmethod
     def _time_to_wait() -> int:
-        """ Sleep after the dispatcher has worked out. """
+        """ Time to sleep after the update dispatcher has worked out. """
         now = datetime.now(timezone.utc)
         update_one = first_update_time()
         update_two = second_update_time()

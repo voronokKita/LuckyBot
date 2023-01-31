@@ -73,6 +73,7 @@ class TestUpdateDispatcher(unittest.TestCase):
 
         note = Mock()
         note.text = 'foo'
+        note.number = 1
         db.get_notifications_for_the_updater.return_value = [note]
 
         t = int(time())
@@ -80,11 +81,8 @@ class TestUpdateDispatcher(unittest.TestCase):
 
         db.get_users_with_notes.assert_called_once()
         db.get_notifications_for_the_updater.assert_called_once_with(user.tg_id)
-        omq.add_message.assert_called_once()
-        args = omq.add_message.call_args.args
-        self.assertEqual(args[0], user.tg_id)
-        self.assertEqual(args[1], note.text)
-        self.assertGreaterEqual(args[2], t)
+        omq.add_message.assert_called_once_with(user.tg_id, note.text)
+        db.update_user_last_notes_list.assert_called_once_with(user.tg_id, note.number)
         db.set_user_flag.assert_called_once_with(user.tg_id, 'first update')
 
     def test_dispatcher_second_update(self, db, omq):
@@ -97,6 +95,7 @@ class TestUpdateDispatcher(unittest.TestCase):
 
         note = Mock()
         note.text = 'bar'
+        note.number = 1
         db.get_notifications_for_the_updater.return_value = [note]
 
         t = int(time())
@@ -104,11 +103,8 @@ class TestUpdateDispatcher(unittest.TestCase):
 
         db.get_users_with_notes.assert_called_once()
         db.get_notifications_for_the_updater.assert_called_once_with(user.tg_id)
-        omq.add_message.assert_called_once()
-        args = omq.add_message.call_args.args
-        self.assertEqual(args[0], user.tg_id)
-        self.assertEqual(args[1], note.text)
-        self.assertGreaterEqual(args[2], t)
+        omq.add_message.assert_called_once_with(user.tg_id, note.text)
+        db.update_user_last_notes_list.assert_called_once_with(user.tg_id, note.number)
         db.set_user_flag.assert_called_once_with(user.tg_id, 'second update')
 
     @patch('lucky_bot.updater.update_dispatcher.set_update_flag')

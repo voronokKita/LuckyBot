@@ -2,7 +2,7 @@
 from time import sleep
 from unittest.mock import patch
 
-from lucky_bot.helpers.constants import TestException, DatabaseException, PROJECT_DIR
+from lucky_bot.helpers.constants import TestException, DatabaseException, OMQException, PROJECT_DIR
 from lucky_bot.helpers.signals import (
     CONTROLLER_IS_RUNNING, CONTROLLER_IS_STOPPED,
     INCOMING_MESSAGE, NEW_MESSAGE_TO_SEND, EXIT_SIGNAL,
@@ -104,10 +104,23 @@ class TestControllerWorks(ThreadSmallTestTemplate):
             raise TestException('The time to start the controller has passed.')
 
         func.side_effect = TestException('boom')
-        InputQueue.add_message(self.telegram_start, 1)
+        InputQueue.add_message(self.telegram_start, 3)
         INCOMING_MESSAGE.set()
         if not CONTROLLER_IS_STOPPED.wait(10):
             self.thread_obj.merge()
             raise TestException('The time to stop the controller has passed.')
 
         self.assertRaises(DatabaseException, self.thread_obj.merge)
+
+    @patch('lucky_bot.sender.output_mq.test_func2')
+    def test_controller_omq_exception(self, func, *args):
+        func.side_effect = TestException('boom')
+        MainDB.add_user(self.uid)
+        InputQueue.add_message(self.telegram_text, 4)
+
+        self.thread_obj.start()
+        if not CONTROLLER_IS_STOPPED.wait(10):
+            self.thread_obj.merge()
+            raise TestException('The time to stop the controller has passed.')
+
+        self.assertRaises(OMQException, self.thread_obj.merge)

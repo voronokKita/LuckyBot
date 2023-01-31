@@ -43,7 +43,7 @@ class ThreadTemplate(threading.Thread):
         The start and stop events behave differently in each thread.
         A thread may need to do some work before signaling its start.
         And after the stop signal, it may take a few ticks
-        before the self.is_alive() will return False.
+        before self.is_alive() will return False.
     """
     exception = None
     is_running_signal = None
@@ -82,7 +82,7 @@ class ThreadTemplate(threading.Thread):
         """
         if not EXIT_SIGNAL.is_set():
             EXIT_SIGNAL.set()
-        if self.is_stopped_signal.wait(10):
+        if self.is_stopped_signal.wait(5):
             pass
 
         threading.Thread.join(self, 5)

@@ -10,12 +10,13 @@ from lucky_bot.helpers.signals import (
     CONTROLLER_IS_RUNNING, CONTROLLER_IS_STOPPED,
     INCOMING_MESSAGE, EXIT_SIGNAL,
 )
+from lucky_bot.controller.controller import Controller
 from lucky_bot.controller import ControllerThread
 
 from tests.presets import ThreadTestTemplate, ThreadSmallTestTemplate
 
 
-@patch('lucky_bot.controller.controller.ControllerThread._check_new_messages')
+@patch('lucky_bot.controller.controller.Controller.check_new_messages')
 class TestControllerThreadBase(ThreadTestTemplate):
     thread_class = ControllerThread
     is_running_signal = CONTROLLER_IS_RUNNING
@@ -35,9 +36,9 @@ class TestControllerThreadBase(ThreadTestTemplate):
 
 @patch('lucky_bot.controller.controller.ControllerThread._test_controller_cycle')
 @patch('lucky_bot.controller.controller.BOT')
-@patch('lucky_bot.controller.controller.ControllerThread.respond')
+@patch('lucky_bot.controller.controller.Controller.responder')
 @patch('lucky_bot.controller.controller.InputQueue')
-class TestSender(ThreadSmallTestTemplate):
+class TestSenderExecution(ThreadSmallTestTemplate):
     thread_class = ControllerThread
     is_running_signal = CONTROLLER_IS_RUNNING
     is_stopped_signal = CONTROLLER_IS_STOPPED
@@ -55,10 +56,10 @@ class TestSender(ThreadSmallTestTemplate):
         self.msg_obj2 = Mock()
         self.msg_obj3 = Mock()
 
-    def test_sender_normal_message(self, mock_InputQueue, respond, bot, controller_cycle):
+    def test_sender_normal_message(self, imq, respond, bot, controller_cycle):
         self.msg_obj1.data = '/sender delete 42'
         self.msg_obj2.data = self.telegram_request
-        mock_InputQueue.get_first_message.side_effect = [self.msg_obj1, self.msg_obj2, None]
+        imq.get_first_message.side_effect = [self.msg_obj1, self.msg_obj2, None]
         INCOMING_MESSAGE.set()
 
         self.thread_obj.start()
@@ -70,18 +71,18 @@ class TestSender(ThreadSmallTestTemplate):
         self.assertFalse(EXIT_SIGNAL.is_set(), msg='first')
         respond.delete_user.assert_called_once_with('42')
         bot.process_new_updates.assert_called_once()
-        self.assertEqual(mock_InputQueue.delete_message.call_count, 2, msg='first')
+        self.assertEqual(imq.delete_message.call_count, 2, msg='first')
         controller_cycle.assert_not_called()
 
         self.msg_obj3.data = '/sender delete 404'
-        mock_InputQueue.get_first_message.side_effect = [self.msg_obj3, None]
+        imq.get_first_message.side_effect = [self.msg_obj3, None]
         INCOMING_MESSAGE.set()
         sleep(0.2)
         self.assertFalse(INCOMING_MESSAGE.is_set(), msg='cycle')
         self.assertFalse(EXIT_SIGNAL.is_set(), msg='cycle')
         self.assertEqual(respond.delete_user.call_count, 2, msg='cycle')
         bot.process_new_updates.assert_called_once()
-        self.assertEqual(mock_InputQueue.delete_message.call_count, 3, msg='cycle')
+        self.assertEqual(imq.delete_message.call_count, 3, msg='cycle')
         controller_cycle.assert_called_once()
 
         EXIT_SIGNAL.set()
@@ -93,9 +94,9 @@ class TestSender(ThreadSmallTestTemplate):
         self.thread_obj.merge()
         controller_cycle.assert_called_once()
 
-    def test_controller_exception_in_message_process(self, mock_InputQueue, respond, bot, controller_cycle):
+    def test_controller_exception_in_message_process(self, imq, respond, bot, controller_cycle):
         self.msg_obj1.data = self.telegram_request
-        mock_InputQueue.get_first_message.side_effect = [self.msg_obj1, None]
+        imq.get_first_message.side_effect = [self.msg_obj1, None]
         bot.process_new_updates.side_effect = TestException('boom')
 
         self.thread_obj.start()
@@ -110,7 +111,7 @@ class TestSender(ThreadSmallTestTemplate):
 
 
 @patch('lucky_bot.controller.controller.BOT')
-@patch('lucky_bot.controller.controller.ControllerThread.respond')
+@patch('lucky_bot.controller.controller.Controller.responder')
 class TestControllerCallToResponder(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -119,7 +120,7 @@ class TestControllerCallToResponder(unittest.TestCase):
             cls.telegram_request = f.read().strip()
 
     def setUp(self):
-        self.controller = ControllerThread()
+        self.controller = Controller()
         self.msg_obj = Mock()
 
     def test_internal_sender_delete(self, respond, *args):

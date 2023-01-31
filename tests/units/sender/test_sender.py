@@ -4,20 +4,21 @@ from unittest.mock import patch, Mock
 from time import sleep
 
 from lucky_bot.helpers.constants import (
-    TestException, DispatcherTimeout,
-    DispatcherUndefinedExc, DispatcherException,
+    TestException, DispatcherTimeout, IMQException,
+    DispatcherUndefinedExc, OutputDispatcherException,
     StopTheSenderGently, DispatcherWrongToken, DispatcherNoAccess,
 )
 from lucky_bot.helpers.signals import (
     SENDER_IS_RUNNING, SENDER_IS_STOPPED,
     EXIT_SIGNAL, NEW_MESSAGE_TO_SEND, INCOMING_MESSAGE,
 )
+from lucky_bot.sender.sender import Sender
 from lucky_bot.sender import SenderThread
 
 from tests.presets import ThreadTestTemplate, ThreadSmallTestTemplate
 
 
-@patch('lucky_bot.sender.sender.SenderThread._process_all_messages')
+@patch('lucky_bot.sender.sender.Sender.process_outgoing_messages')
 class TestSenderThreadBase(ThreadTestTemplate):
     thread_class = SenderThread
     is_running_signal = SENDER_IS_RUNNING
@@ -35,19 +36,20 @@ class TestSenderThreadBase(ThreadTestTemplate):
 
 
 @patch('lucky_bot.sender.sender.SenderThread._test_sender_cycle')
-@patch('lucky_bot.sender.sender.dispatcher')
+@patch('lucky_bot.sender.sender.output_dispatcher')
 @patch('lucky_bot.sender.sender.OutputQueue')
-class TestSender(ThreadSmallTestTemplate):
+@patch('lucky_bot.sender.sender.InputQueue')
+class TestSenderExecution(ThreadSmallTestTemplate):
     thread_class = SenderThread
     is_running_signal = SENDER_IS_RUNNING
     is_stopped_signal = SENDER_IS_STOPPED
-    other_signals = [NEW_MESSAGE_TO_SEND]
+    other_signals = [NEW_MESSAGE_TO_SEND, INCOMING_MESSAGE]
 
-    def test_sender_normal_message(self, mock_OutputQueue, disp, sender_cycle):
+    def test_sender_normal_message(self, imq, omq, disp, sender_cycle):
         msg_obj = Mock()
         msg_obj.destination = 42
         msg_obj.text = 'hello'
-        mock_OutputQueue.get_first_message.side_effect = [msg_obj, None]
+        omq.get_first_message.side_effect = [msg_obj, None]
         NEW_MESSAGE_TO_SEND.set()
 
         self.thread_obj.start()
@@ -58,16 +60,18 @@ class TestSender(ThreadSmallTestTemplate):
         self.assertFalse(NEW_MESSAGE_TO_SEND.is_set(), msg='first msg')
         self.assertFalse(EXIT_SIGNAL.is_set(), msg='first msg')
         disp.send_message.assert_called_once_with(42, 'hello')
-        mock_OutputQueue.delete_message.assert_called_once_with(msg_obj)
+        omq.delete_message.assert_called_once_with(msg_obj)
+        imq.assert_not_called()
         sender_cycle.assert_not_called()
 
-        mock_OutputQueue.get_first_message.side_effect = [msg_obj, None]
+        omq.get_first_message.side_effect = [msg_obj, None]
         NEW_MESSAGE_TO_SEND.set()
         sleep(0.2)
         self.assertFalse(NEW_MESSAGE_TO_SEND.is_set(), msg='cycle')
         self.assertFalse(EXIT_SIGNAL.is_set(), msg='cycle')
         self.assertEqual(disp.send_message.call_count, 2, msg='cycle')
-        self.assertEqual(mock_OutputQueue.delete_message.call_count, 2, msg='cycle')
+        self.assertEqual(omq.delete_message.call_count, 2, msg='cycle')
+        imq.assert_not_called()
         sender_cycle.assert_called_once()
 
         EXIT_SIGNAL.set()
@@ -79,10 +83,10 @@ class TestSender(ThreadSmallTestTemplate):
         self.thread_obj.merge()
         sender_cycle.assert_called_once()
 
-    @patch('lucky_bot.sender.sender.SenderThread._process_a_delivery')
-    def test_sender_exception_stop_gently(self, func, mock_OutputQueue, disp, sender_cycle):
-        mock_OutputQueue.get_first_message.side_effect = [Mock(), None]
-        func.side_effect = StopTheSenderGently('please')
+    @patch('lucky_bot.sender.sender.Sender._handle_a_delivery')
+    def test_sender_exception_stop_gently(self, func, imq, omq, disp, sender_cycle):
+        omq.get_first_message.side_effect = [Mock(), None]
+        func.side_effect = StopTheSenderGently('pretty please')
 
         self.thread_obj.start()
         if not SENDER_IS_STOPPED.wait(10):
@@ -92,11 +96,11 @@ class TestSender(ThreadSmallTestTemplate):
         self.assertFalse(SENDER_IS_RUNNING.is_set(), msg='exception before this signal')
         sender_cycle.assert_not_called()
         self.assertTrue(EXIT_SIGNAL.is_set())
-        self.thread_obj.merge()  # no exceptions
+        self.thread_obj.merge()  # no exceptions, just stops
 
-    def test_sender_exception_in_dispatcher(self, mock_OutputQueue, disp, sender_cycle):
-        mock_OutputQueue.get_first_message.side_effect = [Mock(), None]
-        disp.send_message.side_effect = DispatcherException('boom')
+    def test_sender_exception_in_dispatcher(self, imq, omq, disp, sender_cycle):
+        omq.get_first_message.side_effect = [Mock(), None]
+        disp.send_message.side_effect = OutputDispatcherException('boom')
 
         self.thread_obj.start()
         if not SENDER_IS_STOPPED.wait(10):
@@ -106,45 +110,53 @@ class TestSender(ThreadSmallTestTemplate):
         self.assertFalse(SENDER_IS_RUNNING.is_set(), msg='exception before this signal')
         sender_cycle.assert_not_called()
         self.assertTrue(EXIT_SIGNAL.is_set())
-        self.assertRaises(DispatcherException, self.thread_obj.merge)
+        self.assertRaises(OutputDispatcherException, self.thread_obj.merge)
 
 
 @patch('lucky_bot.sender.sender.InputQueue')
-@patch('lucky_bot.sender.sender.dispatcher')
+@patch('lucky_bot.sender.sender.output_dispatcher')
 class TestSenderCallToDispatcher(unittest.TestCase):
     ''' The dispatcher exceptions that are caught in sender after a call. '''
 
     def test_sender_call_exception_wrong_token(self, disp, imq):
         disp.send_message.side_effect = DispatcherWrongToken('boom')
-        self.assertRaises(StopTheSenderGently, SenderThread._process_a_delivery, Mock())
+        self.assertRaises(StopTheSenderGently, Sender._handle_a_delivery, Mock())
 
     def test_sender_call_exception_timeout(self, disp, imq):
         disp.send_message.side_effect = DispatcherTimeout('boom')
-        self.assertRaises(StopTheSenderGently, SenderThread._process_a_delivery, Mock())
+        self.assertRaises(StopTheSenderGently, Sender._handle_a_delivery, Mock())
 
     def test_sender_call_exception_undefined(self, disp, imq):
         disp.send_message.side_effect = DispatcherUndefinedExc('boom')
-        SenderThread._process_a_delivery(Mock())
+        Sender._handle_a_delivery(Mock())
 
-    def test_sender_call_exception_access(self, disp, imq):
+    def test_sender_call_exception_no_access(self, disp, imq):
         disp.send_message.side_effect = DispatcherNoAccess('boom')
-        SenderThread._process_a_delivery(Mock())
+        Sender._handle_a_delivery(Mock())
+
         imq.add_message.assert_called_once()
         self.assertTrue(INCOMING_MESSAGE.is_set())
         INCOMING_MESSAGE.clear()
 
+    def test_sender_call_dispatcher_imq_exception(self, disp, imq):
+        disp.send_message.side_effect = DispatcherNoAccess('boom')
+        imq.add_message.side_effect = IMQException('badoom')
+
+        self.assertRaises(IMQException, Sender._handle_a_delivery, Mock())
+        self.assertFalse(INCOMING_MESSAGE.is_set())
+
     def test_sender_call_exception_in_dispatcher(self, disp, imq):
-        disp.send_message.side_effect = DispatcherException('boom')
-        self.assertRaises(DispatcherException, SenderThread._process_a_delivery, Mock())
+        disp.send_message.side_effect = OutputDispatcherException('boom')
+        self.assertRaises(OutputDispatcherException, Sender._handle_a_delivery, Mock())
 
     def test_sender_call_exception_normal(self, disp, imq):
         disp.send_message.side_effect = Exception('boom')
-        self.assertRaises(DispatcherException, SenderThread._process_a_delivery, Mock())
+        self.assertRaises(OutputDispatcherException, Sender._handle_a_delivery, Mock())
 
     def test_sender_call_dispatcher_normal(self, disp, imq):
         msg_obj = Mock()
         msg_obj.destination = 42
         msg_obj.text = 'hello'
 
-        SenderThread._process_a_delivery(msg_obj)
+        Sender._handle_a_delivery(msg_obj)
         disp.send_message.assert_called_once_with(42, 'hello')

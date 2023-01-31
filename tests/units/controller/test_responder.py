@@ -1,5 +1,4 @@
 """ python -m unittest tests.units.controller.test_responder """
-import time
 import unittest
 from unittest.mock import patch, Mock
 
@@ -19,14 +18,9 @@ class TestResponder(unittest.TestCase):
             NEW_MESSAGE_TO_SEND.clear()
 
     def test_responder_send_message(self, output, *args):
-        t = int(time.time())
         self.responder.send_message(1, 'hello')
 
-        output.add_message.assert_called_once()
-        result = output.add_message.call_args.args
-        self.assertEqual(result[0], 1)
-        self.assertEqual(result[1], 'hello')
-        self.assertGreaterEqual(result[2], t)
+        output.add_message.assert_called_once_with(1, 'hello')
         self.assertTrue(NEW_MESSAGE_TO_SEND.is_set())
 
     def test_responder_delete_user(self, arg, db):
@@ -34,13 +28,14 @@ class TestResponder(unittest.TestCase):
         db.delete_user.assert_called_once_with(2)
 
     def test_responder_delete_notes(self, output, db):
-        expected = "Note #1 - deleted\n" \
-                   "Note #2 - deleted\n" \
-                   "Note #3 - deleted\n"
         self.responder.delete_notes(3, [1, 2, 3])
 
         self.assertEqual(db.delete_user_note.call_count, 3)
         output.add_message.assert_called_once()
+
+        expected = "Note #`1` - deleted\n" \
+                   "Note #`2` - deleted\n" \
+                   "Note #`3` - deleted\n"
         result = output.add_message.call_args.args
         self.assertEqual(result[1], expected)
 
@@ -50,18 +45,20 @@ class TestResponder(unittest.TestCase):
 
         db.delete_user_note.assert_called_once()
         output.add_message.assert_called_once()
+
         result = output.add_message.call_args.args
-        self.assertEqual(result[1], 'Note #1 - not found\n')
+        self.assertEqual(result[1], 'Note #`1` - not found\n')
 
     def test_responder_delete_notes_exception(self, output, db):
         db.delete_user_note.side_effect = [False, True, DatabaseException('boom')]
-        expected = "Note #1 - not found\n" \
-                   "Note #2 - deleted\n" \
-                   "Some internal Error...\n"
         self.assertRaises(DatabaseException, self.responder.delete_notes, 3, [1, 2, 3])
 
         self.assertEqual(db.delete_user_note.call_count, 3)
         output.add_message.assert_called_once()
+
+        expected = "Note #`1` - not found\n" \
+                   "Note #`2` - deleted\n" \
+                   "Some internal Error...\n"
         result = output.add_message.call_args.args
         self.assertEqual(result[1], expected)
 
@@ -70,11 +67,13 @@ class TestResponder(unittest.TestCase):
         note.text = 'foo, bar, baz, qux, quux, corge, grault, garply, waldo, fred, plugh, xyzzy, thud'
         note.number = 1
         db.get_user_notes.return_value = [note]
+
         self.responder.send_list(4)
-        expecting = f'Your notes:\n* №{note.number} :: "{note.text[:30]}..."\n\n'
 
         db.get_user_notes.assert_called_once()
         output.add_message.assert_called_once()
+
+        expecting = f'Your notes:\n* №`{note.number}` :: "{note.text[:30]}..."\n\n'
         result = output.add_message.call_args.args
         self.assertEqual(result[1], expecting)
 

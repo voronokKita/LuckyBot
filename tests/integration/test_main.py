@@ -5,33 +5,37 @@ from unittest.mock import Mock, patch
 from lucky_bot.helpers.constants import MainException, TestException, ThreadException
 from lucky_bot.helpers.signals import (
     ALL_THREADS_ARE_GO, ALL_DONE_SIGNAL, EXIT_SIGNAL,
+    INCOMING_MESSAGE, NEW_MESSAGE_TO_SEND, UPDATER_CYCLE,
+
     RECEIVER_IS_RUNNING, CONTROLLER_IS_RUNNING,
     UPDATER_IS_RUNNING, SENDER_IS_RUNNING,
+
     RECEIVER_IS_STOPPED, CONTROLLER_IS_STOPPED,
     UPDATER_IS_STOPPED, SENDER_IS_STOPPED,
-    INCOMING_MESSAGE, NEW_MESSAGE_TO_SEND, UPDATER_CYCLE,
 )
 from main import MainAsThread
 
 from tests.presets import mock_ngrok, mock_telebot, mock_serving
 
 
-@patch('lucky_bot.updater.updater.UpdaterThread.work_steps')
+@patch('lucky_bot.updater.updater.Updater.works')
 @patch('lucky_bot.updater.updater.UpdaterThread._time_to_wait', Mock(return_value=100))
-@patch('lucky_bot.controller.controller.ControllerThread._check_new_messages')
-@patch('lucky_bot.sender.sender.SenderThread._process_all_messages')
-@patch('lucky_bot.receiver.receiver.ReceiverThread._remove_webhook')
-@patch('lucky_bot.receiver.receiver.ReceiverThread._start_server', new_callable=mock_serving)
+@patch('lucky_bot.controller.controller.Controller.check_new_messages')
+@patch('lucky_bot.sender.sender.Sender.process_outgoing_messages')
+@patch('lucky_bot.receiver.receiver.Receiver._remove_webhook')
+@patch('lucky_bot.receiver.receiver.Receiver.start_server', new_callable=mock_serving)
 @patch('lucky_bot.receiver.receiver.BOT', new_callable=mock_telebot)
 @patch('lucky_bot.receiver.receiver.ngrok', new_callable=mock_ngrok)
 class TestMain(unittest.TestCase):
     signals = [
         ALL_THREADS_ARE_GO, ALL_DONE_SIGNAL, EXIT_SIGNAL,
+        INCOMING_MESSAGE, NEW_MESSAGE_TO_SEND, UPDATER_CYCLE,
+
         RECEIVER_IS_RUNNING, CONTROLLER_IS_RUNNING,
         UPDATER_IS_RUNNING, SENDER_IS_RUNNING,
+
         RECEIVER_IS_STOPPED, CONTROLLER_IS_STOPPED,
         UPDATER_IS_STOPPED, SENDER_IS_STOPPED,
-        INCOMING_MESSAGE, NEW_MESSAGE_TO_SEND, UPDATER_CYCLE,
     ]
 
     def setUp(self):

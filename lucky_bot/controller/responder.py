@@ -1,35 +1,34 @@
-""" Responder. Process commands.
-Integrated with the main db, and with Sender's Output Messages Queue.
 """
-from time import time
+Controller's command responder. Process commands.
+It makes queries to the main database and sends messages to the output messages queue.
 
+Exceptions go through:
+    DatabaseException
+    OMQException
+"""
 from lucky_bot.helpers.constants import DatabaseException
 from lucky_bot.helpers.signals import NEW_MESSAGE_TO_SEND
 from lucky_bot import MainDB
 from lucky_bot.sender import OutputQueue
 
 import logging
-from logs import console, event
 logger = logging.getLogger(__name__)
+from logs import Log
 
 
 class Respond:
-    @staticmethod
-    def send_message(tg_uid, text):
-        """ Sender's Output Messages Queue. """
-        OutputQueue.add_message(tg_uid, text, int(time()))
+    def send_message(self, tg_uid, text):
+        """ Pass message to the sender module. """
+        OutputQueue.add_message(tg_uid, text)
         if not NEW_MESSAGE_TO_SEND.is_set():
             NEW_MESSAGE_TO_SEND.set()
 
-    @staticmethod
-    def add_user(tg_uid):
+    def add_user(self, tg_uid):
         MainDB.add_user(tg_uid)
 
-    @staticmethod
-    def delete_user(tg_uid, start_cmd=False):
+    def delete_user(self, tg_uid, start_cmd=False):
         if start_cmd is False:
-            event.info('responder: delete user')
-            console('responder: delete user')
+            Log.info("controller's responder: delete a user")
         MainDB.delete_user(tg_uid)
 
     def delete_notes(self, tg_uid, notes:list):
@@ -41,11 +40,12 @@ class Respond:
             self.send_message(tg_uid, message)
 
     def _delete_note(self, tg_uid, note, message):
+        """ Propagates: DatabaseException """
         try:
             if MainDB.delete_user_note(tg_uid, note) is False:
-                message += f'Note #{note} - not found\n'
+                message += f'Note #`{note}` - not found\n'
             else:
-                message += f'Note #{note} - deleted\n'
+                message += f'Note #`{note}` - deleted\n'
             return message
 
         except DatabaseException as exc:
@@ -66,7 +66,7 @@ class Respond:
             t = note_obj.text[:30].strip()
             if len(note_obj.text) > 30:
                 t += '...'
-            message += f'* №{note_obj.number} :: "{t}"\n\n'
+            message += f'* №`{note_obj.number}` :: "{t}"\n\n'
 
         self.send_message(tg_uid, message)
 

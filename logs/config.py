@@ -5,6 +5,7 @@ import logging.config
 from lucky_bot.helpers.constants import (
     TESTING, LOG_EVENTS_FILE, LOG_TELEBOT_FILE,
     LOG_WERKZEUG_FILE, LOG_EXCEPTIONS_FILE, LOG_LIMIT,
+    TestException,
 )
 
 
@@ -146,12 +147,50 @@ werkzeug_logger = logging.getLogger('werkzeug')
 telebot_logger = logging.getLogger('TeleBot')
 
 
-def console(msg):
-    if TESTING:
-        return
-    if not isinstance(msg, str):
-        msg = str(msg)
-    debugger.debug(msg)
+class Log:
+    @staticmethod
+    def _console_print(msg):
+        debugger.debug(msg)
+
+    @classmethod
+    def _event(cls, mode, msg, console):
+        """ Bottleneck. """
+        if TESTING:
+            return
+
+        if console:
+            cls._console_print(msg)
+
+        if not mode:
+            pass
+        elif mode == 'info':
+            event.info(msg)
+        elif mode == 'warning':
+            event.warning(msg)
+        elif mode == 'error':
+            event.error(msg)
+        elif mode == 'critical':
+            event.critical(msg)
+
+    @classmethod
+    def console(cls, msg):
+        cls._event('', msg, console=True)
+
+    @classmethod
+    def info(cls, msg, console=True):
+        cls._event('info', msg, console)
+
+    @classmethod
+    def warning(cls, msg, console=True):
+        cls._event('warning', msg, console)
+
+    @classmethod
+    def error(cls, msg, console=True):
+        cls._event('error', msg, console)
+
+    @classmethod
+    def critical(cls, msg, console=True):
+        cls._event('critical', msg, console)
 
 
 def clear_old_logs():

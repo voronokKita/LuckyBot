@@ -1,4 +1,3 @@
-- In memory database.
 - Test networking.
 - Admin command interface.
 - Test logs.
@@ -21,3 +20,4 @@ BYPASS - Catch an exception from a werkzeug app.
 DONE - Need more logging.
 DONE - Rewrite the main database logic and exceptions.
 DONE - Sender: the delete-a-uid request.
+PASS - In memory database.

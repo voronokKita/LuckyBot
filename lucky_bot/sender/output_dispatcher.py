@@ -1,4 +1,6 @@
-""" Telegram messaging Dispatcher. """
+""" Telegram messaging Dispatcher.
+It sends messages to Telegram through the telebot and sorts possible exceptions.
+"""
 import time
 
 from telebot.apihelper import ApiTelegramException
@@ -6,22 +8,23 @@ from telebot.apihelper import ApiTelegramException
 from lucky_bot.helpers.constants import (
     TG_WRONG_TOKEN, TG_UID_NOT_FOUND,
     TG_BOT_BLOCKED, TG_BOT_TIMEOUT,
+
     DispatcherWrongToken, DispatcherNoAccess, DispatcherTimeout,
-    DispatcherUndefinedExc, DispatcherException,
+    DispatcherUndefinedExc, OutputDispatcherException,
 )
 from lucky_bot import BOT
 
 import logging
-from logs import console, event
 logger = logging.getLogger(__name__)
+from logs import Log
 
 
 def send_message(uid: int, text: str, file=None):
     """
-    Send a message to Telegram and handle exceptions.
+    Send a message to Telegram and handle possible exception.
 
     Raises:
-        DispatcherException
+        OutputDispatcherException
         DispatcherWrongToken
         DispatcherNoAccess
         DispatcherTimeout
@@ -32,25 +35,23 @@ def send_message(uid: int, text: str, file=None):
         attempt += 1
         try:
             BOT.send_message(uid, text)
+            break
 
         except ApiTelegramException as aexc:
             if TG_WRONG_TOKEN.search(aexc.description):
-                msg = 'dispatcher: wrong telegram token'
+                msg = 'output dispatcher: wrong telegram token'
                 logger.exception(msg)
-                event.error(msg)
-                console(msg)
+                Log.error(msg)
                 raise DispatcherWrongToken(msg)
 
             elif TG_UID_NOT_FOUND.search(aexc.description):
-                msg = 'dispatcher: uid not found'
-                event.warning(msg)
-                console(msg)
+                msg = 'output dispatcher: uid not found'
+                Log.warning(msg)
                 raise DispatcherNoAccess(msg)
 
             elif TG_BOT_BLOCKED.search(aexc.description):
-                msg = 'dispatcher: bot blocked'
-                event.warning(msg)
-                console(msg)
+                msg = 'output dispatcher: bot blocked'
+                Log.warning(msg)
                 raise DispatcherNoAccess(msg)
 
             elif TG_BOT_TIMEOUT.search(aexc.description):
@@ -58,9 +59,8 @@ def send_message(uid: int, text: str, file=None):
                     time.sleep(10)
                     continue
                 else:
-                    msg = 'dispatcher: telegram timeout'
-                    event.warning(msg)
-                    console(msg)
+                    msg = 'output dispatcher: telegram timeout'
+                    Log.warning(msg)
                     raise DispatcherTimeout(msg)
 
             else:
@@ -68,17 +68,12 @@ def send_message(uid: int, text: str, file=None):
                     time.sleep(1)
                     continue
                 else:
-                    msg = 'dispatcher: undefined ApiTelegramException'
-                    event.warning(msg)
-                    console(msg)
+                    msg = 'output dispatcher: undefined ApiTelegramException'
+                    Log.warning(msg)
                     raise DispatcherUndefinedExc(msg)
 
         except Exception as exception:
-            msg = 'dispatcher: normal exception'
+            msg = 'output dispatcher: normal exception'
             logger.exception(msg)
-            event.error(msg)
-            console(msg)
-            raise DispatcherException(exception)
-
-        else:
-            break
+            Log.error(msg)
+            raise OutputDispatcherException(exception)

@@ -4,7 +4,10 @@ from unittest.mock import patch
 
 from telebot.apihelper import ApiTelegramException
 
-from lucky_bot.helpers.constants import TestException, SenderException, DispatcherException
+from lucky_bot.helpers.constants import (
+    TestException, SenderException,
+    OutputDispatcherException, OMQException,
+)
 from lucky_bot.helpers.signals import (
     SENDER_IS_RUNNING, SENDER_IS_STOPPED,
     EXIT_SIGNAL, NEW_MESSAGE_TO_SEND,
@@ -16,7 +19,7 @@ from tests.presets import ThreadSmallTestTemplate
 
 
 @patch('lucky_bot.sender.sender.SenderThread._test_sender_cycle')
-@patch('lucky_bot.sender.dispatcher.BOT')
+@patch('lucky_bot.sender.output_dispatcher.BOT')
 class TestSenderWorks(ThreadSmallTestTemplate):
     thread_class = SenderThread
     is_running_signal = SENDER_IS_RUNNING
@@ -86,6 +89,17 @@ class TestSenderWorks(ThreadSmallTestTemplate):
 
         self.assertRaises(SenderException, self.thread_obj.merge)
 
+    @patch('lucky_bot.sender.output_mq.test_func')
+    def test_sender_exception_in_omq(self, func, *args):
+        func.side_effect = TestException('boom')
+
+        self.thread_obj.start()
+        if not SENDER_IS_STOPPED.wait(10):
+            self.thread_obj.merge()
+            raise TestException('The time to stop the sender has passed.')
+
+        self.assertRaises(OMQException, self.thread_obj.merge)
+
     def test_sender_stops_gently(self, disp_bot, *args):
         OutputQueue.add_message(42, 'hello', 1)
         exc = ApiTelegramException(
@@ -116,4 +130,4 @@ class TestSenderWorks(ThreadSmallTestTemplate):
         self.assertFalse(NEW_MESSAGE_TO_SEND.is_set())
         self.assertFalse(SENDER_IS_RUNNING.is_set())
         self.assertTrue(EXIT_SIGNAL.is_set())
-        self.assertRaises(DispatcherException, self.thread_obj.merge)
+        self.assertRaises(OutputDispatcherException, self.thread_obj.merge)

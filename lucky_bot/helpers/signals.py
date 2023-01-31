@@ -3,22 +3,22 @@ from threading import Event
 
 
 class SignalThreadStarted(Event):
-    """ Thread started successfully. """
+    """ A thread has successfully started. """
 
 class SignalThreadStopped(Event):
-    """ Thread stopped successfully. """
+    """ A thread has successfully stopped. """
 
 class SignalThreadsAreStarted(Event):
-    """ All the threads - receiver, controller, updater and sender, - are started. """
+    """ All the threads have started. """
 
 class SignalExit(Event):
-    """ Some event is demanding to stop the program. """
+    """ Some event demands to stop the program. """
 
 class SignalAllDone(Event):
-    """ main.py signaling just before the exit. """
+    """ main.py signaling just before the exit for the testing purposes. """
 
-class SignalTgMessage(Event):
-    """ A new telegram message in the receiver message queue (rmq). """
+class SignalIncomingMessage(Event):
+    """ A new message in the receiver message queue (rmq). """
 
 class SignalMessageToSend(Event):
     """ A new message to telegram in the sender message queue (smq). """
@@ -42,7 +42,7 @@ ALL_THREADS_ARE_GO = SignalThreadsAreStarted()
 
 
 # Other
-INCOMING_MESSAGE = SignalTgMessage()
+INCOMING_MESSAGE = SignalIncomingMessage()
 NEW_MESSAGE_TO_SEND = SignalMessageToSend()
 UPDATER_CYCLE = SignalUpdater()
 

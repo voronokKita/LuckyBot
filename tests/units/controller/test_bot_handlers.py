@@ -39,24 +39,29 @@ class TestBotHandlers(unittest.TestCase):
     def test_start_cmd(self, respond, *args):
         update = telebot.types.Update.de_json(self.telegram_start)
         BOT.process_new_updates([update])
+
         respond.delete_user.assert_called_once_with(self.uid, start_cmd=True)
         respond.add_user.assert_called_once_with(self.uid)
+
         msg = TEXT_HELLO.format(username=self.username, help=TEXT_HELP)
         respond.send_message.assert_called_once_with(self.uid, msg)
 
     def test_help_cmd(self, respond, *args):
         update = telebot.types.Update.de_json(self.telegram_text)
         BOT.process_new_updates([update])
+
         respond.send_message.assert_called_once_with(self.uid, TEXT_HELP)
 
         update = telebot.types.Update.de_json(self.telegram_help)
         BOT.process_new_updates([update])
+
         respond.send_message.assert_called_with(self.uid, TEXT_HELP)
         self.assertEqual(respond.send_message.call_count, 2)
 
     def test_add_cmd(self, respond, parser):
         text = 'some text'
         parser.parse_note_and_insert.return_value = 'Done add.'
+
         update = telebot.types.Update.de_json(self.telegram_add)
         BOT.process_new_updates([update])
 
@@ -67,6 +72,7 @@ class TestBotHandlers(unittest.TestCase):
         note_num = '1'
         text = 'new text'
         parser.parse_note_and_update.return_value = 'Done update.'
+
         update = telebot.types.Update.de_json(self.telegram_update)
         BOT.process_new_updates([update])
 
@@ -76,6 +82,7 @@ class TestBotHandlers(unittest.TestCase):
     def test_delete_cmd(self, respond, *args):
         note_num1 = '1'
         note_num2 = '2'
+
         update = telebot.types.Update.de_json(self.telegram_delete)
         BOT.process_new_updates([update])
 
@@ -124,6 +131,7 @@ class TestBotHandlersExceptions(unittest.TestCase):
     def test_start_cmd_exception(self, respond, *args):
         respond.delete_user.side_effect = TestException('boom')
         update = telebot.types.Update.de_json(self.telegram_start)
+
         self.assertRaises(TestException, BOT.process_new_updates, [update])
 
     def test_add_cmd_blank(self, respond, parser):

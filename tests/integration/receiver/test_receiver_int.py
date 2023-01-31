@@ -44,6 +44,8 @@ class TestReceiverServing(ThreadSmallTestTemplate):
         super().setUp()
 
     def tearDown(self):
+        if self.thread_obj.receiver.server:
+            self.thread_obj.receiver.server.socket.close()
         super().tearDown()
         InputQueue.tear_down()
         FLASK_APP.config['ENV'] = 'production'
@@ -59,12 +61,12 @@ class TestReceiverServing(ThreadSmallTestTemplate):
             raise TestException('The time to start the receiver has passed.')
 
         ngrok.connect.assert_called_once()
-        self.assertEqual(self.thread_obj.webhook_url, 'http://0.0.0.0' + WEBHOOK_ENDPOINT)
+        self.assertEqual(self.thread_obj.receiver.webhook_url, 'http://0.0.0.0' + WEBHOOK_ENDPOINT)
         bot.remove_webhook.assert_called_once()
         bot.set_webhook.assert_called_once()
-        self.assertTrue(self.thread_obj.webhook)
-        self.assertIsNotNone(self.thread_obj.server)
-        self.assertTrue(self.thread_obj.serving)
+        self.assertTrue(self.thread_obj.receiver.webhook)
+        self.assertIsNotNone(self.thread_obj.receiver.server)
+        self.assertTrue(self.thread_obj.receiver.serving)
 
         # ping-pong
         response = requests.get(f'http://{ADDRESS}:{PORT}/ping')
@@ -99,21 +101,21 @@ class TestReceiverServing(ThreadSmallTestTemplate):
         self.assertIsNone(result)
 
         # assert normal shutdown
-        self.thread_obj.server.shutdown()
+        self.thread_obj.receiver.server.shutdown()
         if not RECEIVER_IS_STOPPED.wait(10):
             self.thread_obj.merge()
             raise TestException('The time to stop the receiver has passed.')
 
-        self.assertFalse(self.thread_obj.serving)
+        self.assertFalse(self.thread_obj.receiver.serving)
         self.assertEqual(bot.remove_webhook.call_count, 2)
-        self.assertFalse(self.thread_obj.webhook)
-        self.assertIsNone(self.thread_obj.webhook_url)
+        self.assertFalse(self.thread_obj.receiver.webhook)
+        self.assertIsNone(self.thread_obj.receiver.webhook_url)
         ngrok.disconnect.assert_called_once()
         ngrok.kill.assert_called_once()
-        self.assertIsNone(self.thread_obj.tunnel)
+        self.assertIsNone(self.thread_obj.receiver.tunnel)
 
         self.thread_obj.merge()
-        self.assertIsNone(self.thread_obj.server)
+        self.assertIsNone(self.thread_obj.receiver.server)
 
     @patch('lucky_bot.receiver.flask_config.test_exception')
     def test_receiver_exception_in_flask_app(self, test_exception, ngrok, bot):
@@ -123,7 +125,7 @@ class TestReceiverServing(ThreadSmallTestTemplate):
         if not RECEIVER_IS_RUNNING.wait(10):
             self.thread_obj.merge()
             raise TestException('The time to start the receiver has passed.')
-        self.assertTrue(self.thread_obj.serving)
+        self.assertTrue(self.thread_obj.receiver.serving)
 
         response = requests.post(
             self.url,
@@ -136,11 +138,11 @@ class TestReceiverServing(ThreadSmallTestTemplate):
             raise TestException('The time to send an exit signal has passed.')
 
         # There is no way that EXIT_SIGNAL itself can stop the receiver thread
-        self.assertTrue(self.thread_obj.serving)
+        self.assertTrue(self.thread_obj.receiver.serving)
         self.assertFalse(RECEIVER_IS_STOPPED.is_set())
         self.assertTrue(self.thread_obj.is_alive())
 
-        self.thread_obj.server.shutdown()
+        self.thread_obj.receiver.server.shutdown()
         if not RECEIVER_IS_STOPPED.wait(10):
             self.thread_obj.merge()
             raise TestException('The time to stop the receiver has passed.')

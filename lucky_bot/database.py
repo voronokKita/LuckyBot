@@ -1,4 +1,7 @@
-""" Main database and its models. """
+"""
+Main Database and its models.
+Raises: DatabaseException
+"""
 from time import time
 from datetime import datetime, timezone
 
@@ -12,8 +15,8 @@ from sqlalchemy.exc import IntegrityError
 from lucky_bot.helpers.constants import DB_FILE, TESTING, LAST_NOTES_LIST, DatabaseException
 
 import logging
-from logs import console, event
 logger = logging.getLogger(__name__)
+from logs import Log
 
 def test_func(): pass
 
@@ -26,20 +29,15 @@ def catch_exception(func):
         except Exception as exc:
             msg = f'main db: {func.__name__}() exception'
             logger.exception(msg)
-            event.error(msg)
-            console(msg)
+            Log.critical(msg)
             raise DatabaseException(exc)
         else:
             return result
 
     return wrapper
 
-DB_ENGINE = create_engine(f'sqlite:///{DB_FILE}', future=True)
-
-DB_SESSION = sessionmaker(bind=DB_ENGINE)
 
 MainBase = declarative_base()
-
 
 class User(MainBase):
     __tablename__ = 'users'
@@ -88,6 +86,10 @@ class LastNoteSent(MainBase):
     time = Column('time_added', Integer, nullable=False)
 
     user = relationship(User, back_populates='last_notes')
+
+
+DB_ENGINE = create_engine(f'sqlite:///{DB_FILE}', future=True)
+DB_SESSION = sessionmaker(bind=DB_ENGINE)
 
 
 class MainDB:

@@ -1,4 +1,4 @@
-""" python -m unittest tests.units.sender.test_dispatcher """
+""" python -m unittest tests.units.sender.test_output_dispatcher """
 import unittest
 from unittest.mock import patch
 
@@ -6,22 +6,22 @@ from telebot.apihelper import ApiTelegramException
 
 from lucky_bot.helpers.constants import (
     TestException, DispatcherTimeout,
-    DispatcherUndefinedExc, DispatcherException,
+    DispatcherUndefinedExc, OutputDispatcherException,
     DispatcherWrongToken, DispatcherNoAccess,
 )
-from lucky_bot.sender import dispatcher
+from lucky_bot.sender import output_dispatcher as dispatcher
 
 
-@patch('lucky_bot.sender.dispatcher.time')
-@patch('lucky_bot.sender.dispatcher.BOT')
-class TestDispatcher(unittest.TestCase):
+@patch('lucky_bot.sender.output_dispatcher.time')
+@patch('lucky_bot.sender.output_dispatcher.BOT')
+class TestOutputDispatcher(unittest.TestCase):
     def test_dispatcher_normal_case(self, bot, *args):
         dispatcher.send_message(42, 'hello')
         bot.send_message.assert_called_once_with(42, 'hello')
 
     def test_dispatcher_normal_exception(self, bot, *args):
         bot.send_message.side_effect = TestException('boom')
-        self.assertRaises(DispatcherException, dispatcher.send_message, 42, 'hello')
+        self.assertRaises(OutputDispatcherException, dispatcher.send_message, 42, 'hello')
 
     def test_dispatcher_undefined_exception(self, bot, time):
         exc = ApiTelegramException(

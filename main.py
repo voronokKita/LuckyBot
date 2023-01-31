@@ -15,8 +15,8 @@ from lucky_bot.controller import ControllerThread
 from lucky_bot.receiver import ReceiverThread
 
 import logging
-from logs import console, event, clear_old_logs
 logger = logging.getLogger(__name__)
+from logs import Log, clear_old_logs
 
 
 class MainAsThread(threading.Thread):
@@ -44,8 +44,8 @@ class MainAsThread(threading.Thread):
 
 
 def main():
-    console('I woke up (*・ω・)ﾉ')
-    event.info('[>>> START >>>')
+    Log.console('I woke up (*・ω・)ﾉ')
+    Log.info('[>>> START >>>', console=False)
 
     # instantiate threads;
     sender = SenderThread()
@@ -62,15 +62,14 @@ def main():
 
     # run all the threads;
     active_threads = run_the_threads(threads)
-    console('all work has started (´｡• ω •｡`)')
-    event.info('normal start')
+    Log.console('all work has started (´｡• ω •｡`)')
+    Log.info('normal start', console=False)
     ALL_THREADS_ARE_GO.set()
 
     # just sleep and wait for the exit signal;
     if EXIT_SIGNAL.wait():
-        console('main: shutting down...')
-        event.info('exit signal')
-        pass
+        Log.console('shutting down...')
+        Log.info('exit signal', console=False)
 
     # done.
     finish_the_work(active_threads)
@@ -79,7 +78,8 @@ def main():
 def run_the_threads(threads):
     active_threads = []
     for unit in threads:
-        console(f'start the {unit["thread"]}')
+        Log.console(f'start the {unit["thread"]}')
+
         unit['thread'].start()
         active_threads.append(unit)
 
@@ -95,8 +95,8 @@ def run_the_threads(threads):
 
 
 def thread_loading_timeout(thread, active_threads):
-    console(f'main: {thread} loading timeout, shutting down...')
-    event.warning(f'{thread} loading timeout')
+    Log.console(f'main: {thread} loading timeout, shutting down...')
+    Log.error(f'{thread} loading timeout', console=False)
 
     EXIT_SIGNAL.set()
     main_msg = f'Failed to start the threads: {thread} timeout.'
@@ -104,8 +104,8 @@ def thread_loading_timeout(thread, active_threads):
 
 
 def thread_loading_interrupted(active_threads):
-    console('main: exit signal, shutting down...')
-    event.warning('exit signal is set')
+    Log.console('exit signal, shutting down...')
+    Log.warning('exit signal is set', console=False)
 
     main_msg = 'Failed to start the threads: exit signal.'
     finish_the_work(active_threads, MainException(main_msg))
@@ -113,21 +113,22 @@ def thread_loading_interrupted(active_threads):
 
 def finish_the_work(active_threads, main_exec=None):
     exception_in_threads = stop_active_threads(active_threads)
-    console('go to sleep (´-ω-｀)…zZZ')
-    event.info('xxx STOP xxx]')
+    Log.console('go to sleep (´-ω-｀)…zZZ')
+    Log.info('xxx STOP xxx]', console=False)
 
     try:
         if main_exec and exception_in_threads:
             raise exception_in_threads from main_exec
-        elif main_exec:
-            raise main_exec
         elif exception_in_threads:
             raise exception_in_threads
+        elif main_exec:
+            raise main_exec
         else:
             pass
     except Exception as exc:
         raise exc
     else:
+        # important
         sys.exit(0)
     finally:
         ALL_DONE_SIGNAL.set()
@@ -143,8 +144,7 @@ def stop_active_threads(threads):
         except Exception as exc:
             msg = f'main: exception in {unit["thread"]}'
             logger.exception(msg)
-            event.error(msg)
-            console(msg)
+            Log.error(msg, console=True)
             last_exception = exc
     return last_exception
 

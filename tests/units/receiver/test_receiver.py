@@ -18,8 +18,8 @@ from tests.presets import (
 )
 
 
-@patch('lucky_bot.receiver.receiver.ReceiverThread._start_server', new_callable=mock_serving)
-@patch('lucky_bot.receiver.receiver.ReceiverThread._make_server', Mock())
+@patch('lucky_bot.receiver.receiver.Receiver._make_server', Mock())
+@patch('lucky_bot.receiver.receiver.Receiver.start_server', new_callable=mock_serving)
 @patch('lucky_bot.receiver.receiver.BOT', new_callable=mock_telebot)
 @patch('lucky_bot.receiver.receiver.ngrok', new_callable=mock_ngrok)
 class TestReceiverThreadBase(ThreadTestTemplate):
@@ -29,8 +29,8 @@ class TestReceiverThreadBase(ThreadTestTemplate):
     other_signals = [INCOMING_MESSAGE]
 
     def tearDown(self):
-        if self.thread_obj.server:
-            self.thread_obj.server.socket.close()
+        if self.thread_obj.receiver.server:
+            self.thread_obj.receiver.server.socket.close()
         super().tearDown()
 
     def test_receiver_normal_start(self, *args):
@@ -44,9 +44,9 @@ class TestReceiverThreadBase(ThreadTestTemplate):
         super().forced_merge()
 
 
-@patch('lucky_bot.receiver.receiver.ReceiverThread._start_server', new_callable=mock_serving)
-@patch('lucky_bot.receiver.receiver.ReceiverThread._make_server')
-@patch('lucky_bot.receiver.receiver.ReceiverThread._set_webhook')
+@patch('lucky_bot.receiver.receiver.Receiver.start_server', new_callable=mock_serving)
+@patch('lucky_bot.receiver.receiver.Receiver._make_server')
+@patch('lucky_bot.receiver.receiver.Receiver._set_webhook')
 @patch('lucky_bot.receiver.receiver.ngrok', new_callable=mock_ngrok)
 class TestTunnel(ThreadSmallTestTemplate):
     thread_class = ReceiverThread
@@ -55,7 +55,6 @@ class TestTunnel(ThreadSmallTestTemplate):
     other_signals = [INCOMING_MESSAGE]
 
     def setUp(self):
-        self.assertFalse(REPLIT)
         super().setUp()
 
     def test_receiver_tunnel_setup(self, ngrok, *args):
@@ -66,14 +65,14 @@ class TestTunnel(ThreadSmallTestTemplate):
 
         ngrok.connect.assert_called_once_with(PORT, proto='http', bind_tls=True)
         tunnel = ngrok.connect()
-        self.assertEqual(self.thread_obj.tunnel, tunnel)
-        self.assertEqual(self.thread_obj.webhook_url, 'http://0.0.0.0' + WEBHOOK_ENDPOINT)
-        self.assertTrue(self.thread_obj.serving)
+        self.assertEqual(self.thread_obj.receiver.tunnel, tunnel)
+        self.assertEqual(self.thread_obj.receiver.webhook_url, 'http://0.0.0.0' + WEBHOOK_ENDPOINT)
+        self.assertTrue(self.thread_obj.receiver.serving)
 
         self.thread_obj.merge()
         ngrok.disconnect.assert_called_once()
         ngrok.kill.assert_called_once()
-        self.assertIsNone(self.thread_obj.tunnel)
+        self.assertIsNone(self.thread_obj.receiver.tunnel)
 
     def test_receiver_tunnel_exception(self, ngrok, set_webhook, *args):
         ngrok.connect.side_effect = TestException('boom')
@@ -84,15 +83,15 @@ class TestTunnel(ThreadSmallTestTemplate):
 
         ngrok.connect.assert_called_once()
         set_webhook.assert_not_called()
-        self.assertIsNone(self.thread_obj.tunnel)
+        self.assertIsNone(self.thread_obj.receiver.tunnel)
 
         self.assertRaises(ReceiverException, self.thread_obj.merge)
         ngrok.disconnect.assert_not_called()
         ngrok.kill.assert_not_called()
 
 
-@patch('lucky_bot.receiver.receiver.ReceiverThread._start_server', new_callable=mock_serving)
-@patch('lucky_bot.receiver.receiver.ReceiverThread._make_server')
+@patch('lucky_bot.receiver.receiver.Receiver.start_server', new_callable=mock_serving)
+@patch('lucky_bot.receiver.receiver.Receiver._make_server')
 @patch('lucky_bot.receiver.receiver.BOT', new_callable=mock_telebot)
 @patch('lucky_bot.receiver.receiver.ngrok', new_callable=mock_ngrok)
 class TestWebhook(ThreadSmallTestTemplate):
@@ -114,14 +113,14 @@ class TestWebhook(ThreadSmallTestTemplate):
             max_connections=10,
             secret_token=WEBHOOK_SECRET
         )
-        self.assertTrue(self.thread_obj.webhook)
-        self.assertIsNotNone(self.thread_obj.webhook_url)
-        self.assertTrue(self.thread_obj.serving)
+        self.assertTrue(self.thread_obj.receiver.webhook)
+        self.assertIsNotNone(self.thread_obj.receiver.webhook_url)
+        self.assertTrue(self.thread_obj.receiver.serving)
 
         self.thread_obj.merge()
         self.assertEqual(bot.remove_webhook.call_count, 2)
-        self.assertFalse(self.thread_obj.webhook)
-        self.assertIsNone(self.thread_obj.webhook_url)
+        self.assertFalse(self.thread_obj.receiver.webhook)
+        self.assertIsNone(self.thread_obj.receiver.webhook_url)
 
     def test_receiver_webhook_exception(self, ngrok, bot, make_server, *args):
         bot.set_webhook.return_value = False
@@ -137,11 +136,11 @@ class TestWebhook(ThreadSmallTestTemplate):
         make_server.assert_not_called()
         ngrok.disconnect.assert_called_once()
         ngrok.kill.assert_called_once()
-        self.assertFalse(self.thread_obj.webhook)
+        self.assertFalse(self.thread_obj.receiver.webhook)
         self.assertRaises(ReceiverException, self.thread_obj.merge)
 
 
-@patch('lucky_bot.receiver.receiver.ReceiverThread._start_server', new_callable=mock_serving)
+@patch('lucky_bot.receiver.receiver.Receiver.start_server', new_callable=mock_serving)
 @patch('lucky_bot.receiver.receiver.BOT', new_callable=mock_telebot)
 @patch('lucky_bot.receiver.receiver.ngrok', new_callable=mock_ngrok)
 class TestServer(ThreadSmallTestTemplate):
@@ -151,9 +150,6 @@ class TestServer(ThreadSmallTestTemplate):
     other_signals = [INCOMING_MESSAGE]
 
     def setUp(self):
-        self.assertIsNotNone(ADDRESS)
-        self.assertIsNotNone(PORT)
-        self.assertIsNotNone(FLASK_APP)
         super().setUp()
 
     def test_receiver_server(self, ngrok, bot, *args):
@@ -167,28 +163,28 @@ class TestServer(ThreadSmallTestTemplate):
         ngrok.connect.assert_called_once()
         bot.remove_webhook.assert_called_once()
         bot.set_webhook.assert_called_once()
-        self.assertIsNotNone(self.thread_obj.server)
-        self.assertIsInstance(self.thread_obj.server, BaseWSGIServer)
-        self.assertTrue(self.thread_obj.serving)
+        self.assertIsNotNone(self.thread_obj.receiver.server)
+        self.assertIsInstance(self.thread_obj.receiver.server, BaseWSGIServer)
+        self.assertTrue(self.thread_obj.receiver.serving)
 
         EXIT_SIGNAL.set()
         if not RECEIVER_IS_STOPPED.wait(10):
             self.thread_obj.merge()
             raise TestException('The time to stop the receiver has passed.')
 
-        self.assertFalse(self.thread_obj.serving)
-        self.assertIsNotNone(self.thread_obj.server)
+        self.assertFalse(self.thread_obj.receiver.serving)
+        self.assertIsNotNone(self.thread_obj.receiver.server)
         self.assertEqual(bot.remove_webhook.call_count, 2)
-        self.assertFalse(self.thread_obj.webhook)
-        self.assertIsNone(self.thread_obj.webhook_url)
+        self.assertFalse(self.thread_obj.receiver.webhook)
+        self.assertIsNone(self.thread_obj.receiver.webhook_url)
         ngrok.disconnect.assert_called_once()
         ngrok.kill.assert_called_once()
-        self.assertIsNone(self.thread_obj.tunnel)
+        self.assertIsNone(self.thread_obj.receiver.tunnel)
 
         self.thread_obj.merge()
-        self.assertIsNone(self.thread_obj.server)
+        self.assertIsNone(self.thread_obj.receiver.server)
 
-    @patch('lucky_bot.receiver.receiver.ReceiverThread._make_server')
+    @patch('lucky_bot.receiver.receiver.Receiver._make_server')
     def test_receiver_making_server_exception(self, make_server, ngrok, bot, *args):
         make_server.side_effect = TestException('boom')
 
@@ -199,14 +195,14 @@ class TestServer(ThreadSmallTestTemplate):
 
         bot.set_webhook.assert_called_once()
         ngrok.connect.assert_called_once()
-        self.assertFalse(self.thread_obj.serving)
+        self.assertFalse(self.thread_obj.receiver.serving)
         ngrok.disconnect.assert_called_once()
         ngrok.kill.assert_called_once()
-        self.assertIsNone(self.thread_obj.tunnel)
+        self.assertIsNone(self.thread_obj.receiver.tunnel)
         self.assertEqual(bot.remove_webhook.call_count, 2)
-        self.assertFalse(self.thread_obj.webhook)
-        self.assertIsNone(self.thread_obj.webhook_url)
-        self.assertIsNone(self.thread_obj.server)
+        self.assertFalse(self.thread_obj.receiver.webhook)
+        self.assertIsNone(self.thread_obj.receiver.webhook_url)
+        self.assertIsNone(self.thread_obj.receiver.server)
         self.assertRaises(ReceiverException, self.thread_obj.merge)
 
     @patch('lucky_bot.receiver.receiver.ReceiverThread._test_exception_after_serving')
@@ -220,14 +216,14 @@ class TestServer(ThreadSmallTestTemplate):
 
         bot.set_webhook.assert_called_once()
         ngrok.connect.assert_called_once()
-        self.assertFalse(self.thread_obj.serving)
+        self.assertFalse(self.thread_obj.receiver.serving)
         ngrok.disconnect.assert_called_once()
         ngrok.kill.assert_called_once()
-        self.assertIsNone(self.thread_obj.tunnel)
+        self.assertIsNone(self.thread_obj.receiver.tunnel)
         self.assertEqual(bot.remove_webhook.call_count, 2)
-        self.assertFalse(self.thread_obj.webhook)
-        self.assertIsNone(self.thread_obj.webhook_url)
-        self.assertIsNotNone(self.thread_obj.server)
+        self.assertFalse(self.thread_obj.receiver.webhook)
+        self.assertIsNone(self.thread_obj.receiver.webhook_url)
+        self.assertIsNotNone(self.thread_obj.receiver.server)
 
         self.assertRaises(ReceiverException, self.thread_obj.merge)
-        self.assertIsNone(self.thread_obj.server)
+        self.assertIsNone(self.thread_obj.receiver.server)

@@ -16,7 +16,7 @@ from tests.units import test_database
 from tests.units.updater import test_update_dispatcher
 from tests.units.updater import test_updater
 from tests.units.sender import test_omq
-from tests.units.sender import test_dispatcher
+from tests.units.sender import test_output_dispatcher
 from tests.units.sender import test_sender
 from tests.units.receiver import test_imq
 from tests.units.receiver import test_flask_app
@@ -49,28 +49,28 @@ modules_to_test = {
 
     test_update_dispatcher,
     test_updater,
+    test_updater_int,
 
     test_omq,
-    test_dispatcher,
+    test_output_dispatcher,
     test_sender,
+    test_sender_with_controller,
+    test_sender_int,
 
     test_imq,
     test_flask_app,
     test_receiver,
+    test_flask_with_imq,
+    test_receiver_int,
 
     test_bot_handlers,
     test_responder,
     test_controller,
-
-    test_updater_int,
-    test_sender_with_controller,
-    test_sender_int,
-    test_flask_with_imq,
-    test_receiver_int,
     test_parser_with_db,
-    test_controller_with_imq,
     test_responder_integration,
+    test_controller_with_imq,
     test_controller_int,
+
     test_main,
 }
 suite_list = []

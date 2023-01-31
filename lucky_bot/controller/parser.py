@@ -1,6 +1,9 @@
-""" Parser.
+"""
+Controller's data parser.
 Processes data and inserts it into the main database.
 Right now it's omitted and works just like an interface.
+
+Exceptions go through: DatabaseException
 """
 from lucky_bot import MainDB
 
