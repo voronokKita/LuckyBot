@@ -1,42 +1,49 @@
 """ Logging configuration. """
 import logging
-import logging.config
+import logging.config as logs_config
 
 from lucky_bot.helpers.constants import (
     TESTING, LOG_EVENTS_FILE, LOG_TELEBOT_FILE,
     LOG_WERKZEUG_FILE, LOG_EXCEPTIONS_FILE, LOG_LIMIT,
-    TestException,
 )
 
 
+class DefaultExceptionFilter(logging.Filter):
+    blacklist = {'werkzeug', 'TeleBot', 'event', 'debug'}
+    def filter(self, record):
+        return record.name not in self.blacklist
+
+
+class WerkzeugFilter(logging.Filter):
+    def filter(self, record):
+        return record.name == 'werkzeug'
+
+
+class TeleBotFilter(logging.Filter):
+    def filter(self, record):
+        return record.name == 'TeleBot'
+
+
+class EventFilter(logging.Filter):
+    def filter(self, record):
+        return record.name == 'event'
+
+
+class ConsoleFilter(logging.Filter):
+    blacklist = {'event'}
+    def filter(self, record):
+        return record.name not in self.blacklist
+
+
 def normal_logger():
-    class DetailedExceptionFilter(logging.Filter):
-        blacklist = {'werkzeug', 'TeleBot', 'event'}
-        def filter(self, record):
-            return record.name not in self.blacklist
-
-    class WerkzeugFilter(logging.Filter):
-        def filter(self, record):
-            return record.name == 'werkzeug'
-
-    class TeleBotFilter(logging.Filter):
-        def filter(self, record):
-            return record.name == 'TeleBot'
-
-    class EventFilter(logging.Filter):
-        def filter(self, record):
-            return record.name == 'event'
-
-    class ConsoleFilter(logging.Filter):
-        blacklist = {'event'}
-        def filter(self, record):
-            return record.name not in self.blacklist
-
     logging_config = {
         'version': 1,
         'disable_existing_loggers': False,
         'formatters': {
-            'event_to_file': {'format': '-- {asctime} {levelname} {message}', 'style': '{'},
+            'event_to_file': {
+                'format': '-- {asctime} {levelname} {message}',
+                'style': '{'
+            },
             'exception_to_file': {
                 'format': '\n[{levelname}] {asctime}\n'
                           '[MESSAGE] {message}',
@@ -44,27 +51,8 @@ def normal_logger():
             },
         },
         'handlers': {
-            'console_debug': {
-                'level': 'DEBUG',
-                'class': 'logging.StreamHandler',
-                'stream': 'ext://sys.stdout',
-            },
-            'event': {
-                'level': 'INFO',
-                'class': 'logging.FileHandler',
-                'filename': LOG_EVENTS_FILE,
-                'formatter': 'event_to_file',
-                'filters': [EventFilter()],
-            },
-            'detailed_exception': {
-                'level': 'ERROR',
-                'class': 'logging.FileHandler',
-                'filename': LOG_EXCEPTIONS_FILE,
-                'formatter': 'exception_to_file',
-                'filters': [DetailedExceptionFilter()],
-            },
             'werkzeug_console': {
-                'level': 'INFO',
+                'level': 'INFO',  # internal notifications
                 'class': 'logging.StreamHandler',
                 'stream': 'ext://sys.stdout',
                 'filters': [WerkzeugFilter()],
@@ -76,8 +64,9 @@ def normal_logger():
                 'formatter': 'exception_to_file',
                 'filters': [WerkzeugFilter()],
             },
+
             'telebot_console': {
-                'level': 'INFO',
+                'level': 'INFO',  # internal notifications
                 'class': 'logging.StreamHandler',
                 'stream': 'ext://sys.stdout',
                 'filters': [TeleBotFilter()],
@@ -88,6 +77,34 @@ def normal_logger():
                 'filename': LOG_TELEBOT_FILE,
                 'formatter': 'exception_to_file',
                 'filters': [TeleBotFilter()],
+            },
+
+            'console_debug': {
+                'level': 'DEBUG',
+                'class': 'logging.StreamHandler',
+                'stream': 'ext://sys.stdout',
+            },
+
+            'event': {
+                'level': 'INFO',
+                'class': 'logging.FileHandler',
+                'filename': LOG_EVENTS_FILE,
+                'formatter': 'event_to_file',
+                'filters': [EventFilter()],
+            },
+
+            'default_console': {
+                'level': 'ERROR',
+                'class': 'logging.StreamHandler',
+                'stream': 'ext://sys.stdout',
+                'filters': [DefaultExceptionFilter()],
+            },
+            'default_exception': {
+                'level': 'ERROR',
+                'class': 'logging.FileHandler',
+                'filename': LOG_EXCEPTIONS_FILE,
+                'formatter': 'exception_to_file',
+                'filters': [DefaultExceptionFilter()],
             },
         },
         'loggers': {
@@ -108,7 +125,7 @@ def normal_logger():
                 'level': 'INFO',
             },
             '': {
-                'handlers': ['detailed_exception'],
+                'handlers': ['default_console', 'default_exception'],
                 'level': 'ERROR',
             },
         }
@@ -139,12 +156,13 @@ if TESTING:
 else:
     config = normal_logger()
 
-logging.config.dictConfig(config)
+logs_config.dictConfig(config)
 
 debugger = logging.getLogger('debug')
 event = logging.getLogger('event')
 werkzeug_logger = logging.getLogger('werkzeug')
 telebot_logger = logging.getLogger('TeleBot')
+logger = logging.getLogger(__name__)
 
 
 class Log:
@@ -194,6 +212,7 @@ class Log:
 
 
 def clear_old_logs():
+    """ Will delete the first rows, if total number of rows in a log file is > LOG_LIMIT. """
     if TESTING:
         return
 

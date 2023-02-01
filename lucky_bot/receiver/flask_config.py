@@ -30,8 +30,8 @@ FLASK_APP.config.update(
     DEBUG=False,
     TESTING=False,
     PROPAGATE_EXCEPTIONS=True,
+    LOGGER_NAME='flask_webhook',
     SECRET_KEY=secrets.token_urlsafe(randint(40, 60)),
-    LOGGER_NAME=__name__,
     MAX_CONTENT_LENGTH=15*1024*1024,
 )
 
