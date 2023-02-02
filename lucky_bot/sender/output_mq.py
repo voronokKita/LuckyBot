@@ -6,7 +6,7 @@ Raises: OMQException
 from time import time as current_time
 
 from sqlalchemy import create_engine, Column, Integer, BLOB
-from sqlalchemy.orm import declarative_base, sessionmaker, Query
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 from lucky_bot.helpers.constants import TESTING, OUTPUT_MQ_FILE, IMQ_SECRET, OMQException
 from lucky_bot.helpers.misc import encrypt, decrypt

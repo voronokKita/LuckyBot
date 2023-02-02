@@ -1,6 +1,6 @@
 """ python -m unittest tests.units.sender.test_sender """
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 from time import sleep
 
 from lucky_bot.helpers.constants import (

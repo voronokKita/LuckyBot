@@ -4,7 +4,6 @@ import unittest
 from lucky_bot.sender import OutputQueue
 
 
-
 class TestSenderMessageQueue(unittest.TestCase):
     def setUp(self):
         OutputQueue.set_up()
