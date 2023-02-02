@@ -105,11 +105,13 @@ class InputQueue:
 
     @staticmethod
     @catch_exception
-    def delete_message(msg_id:int) -> True:
+    def delete_message(msg_id:int) -> bool:
         with IMQ_SESSION.begin() as session:
             msg_obj = session.query(IncomingMessage)\
                 .filter(IncomingMessage.id == msg_id)\
                 .first()
+            if not msg_obj:
+                return False
             session.delete(msg_obj)
         return True
 

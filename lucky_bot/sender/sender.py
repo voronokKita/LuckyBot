@@ -31,15 +31,16 @@ class Sender:
             IMQException
         """
         while True:
-            msg_obj = OutputQueue.get_first_message()
-            if msg_obj:
-                cls._handle_a_delivery(msg_obj)
-                OutputQueue.delete_message(msg_obj)
+            result = OutputQueue.get_first_message()
+            if result:
+                message_id, destination, message = result
+                cls._handle_a_delivery(destination, message)
+                OutputQueue.delete_message(message_id)
             else:
                 break
 
     @staticmethod
-    def _handle_a_delivery(msg_obj):
+    def _handle_a_delivery(destination, message):
         """
         Calls the dispatcher and handles its exceptions.
         Sends /delete commands to the input message queue.
@@ -52,7 +53,7 @@ class Sender:
             OutputDispatcherException: propagation
         """
         try:
-            output_dispatcher.send_message(msg_obj.destination, msg_obj.text)
+            output_dispatcher.send_message(destination, message)
 
         except DispatcherWrongToken:
             Log.error('sender: stopping because of api error')
@@ -67,7 +68,7 @@ class Sender:
 
         except DispatcherNoAccess:
             Log.info('sender: deleting the inaccessible uid')
-            InputQueue.add_message(f'/sender delete {msg_obj.destination}')
+            InputQueue.add_message(f'/sender delete {destination}')
             INCOMING_MESSAGE.set()
 
         except (OutputDispatcherException, Exception) as exc:

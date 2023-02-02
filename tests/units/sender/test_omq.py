@@ -13,15 +13,30 @@ class TestSenderMessageQueue(unittest.TestCase):
         OutputQueue.tear_down()
 
     def test_output_queue_works(self):
-        OutputQueue.add_message(42, 'foo', 1)
-        OutputQueue.add_message(42, 'bar', 2)
-        OutputQueue.add_message(42, 'baz', 3)
+        self.assertFalse(OutputQueue.delete_message(42))
+        self.assertIsNone(OutputQueue.get_first_message())
 
-        for message in ['foo', 'bar', 'baz']:
-            msg_obj = OutputQueue.get_first_message()
-            self.assertIsNotNone(msg_obj, msg=message)
-            self.assertEqual(msg_obj.text, message)
-            OutputQueue.delete_message(msg_obj)
+        uid1 = 6
+        msg1 = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, ' \
+               'sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
+        uid2 = 9
+        msg2 = '/delete 999'
+        uid3 = 42
+        msg3 = '{"id":42,"first_name":"John","last_name":"Doe","username":"john_doe"}'
 
-        result = OutputQueue.get_first_message()
-        self.assertIsNone(result)
+        self.assertTrue(OutputQueue.add_message(uid1, msg1, time=1))
+        self.assertTrue(OutputQueue.add_message(uid2, msg2, time=2))
+        self.assertTrue(OutputQueue.add_message(uid3, msg3, time=3))
+
+        for user, message in [(uid1, msg1), (uid2, msg2), (uid3, msg3)]:
+            result = OutputQueue.get_first_message()
+            self.assertIsNotNone(result, msg=user)
+
+            message_id, uid, text = result
+
+            self.assertEqual(user, uid)
+            self.assertEqual(text, message)
+
+            self.assertTrue(OutputQueue.delete_message(message_id))
+
+        self.assertIsNone(OutputQueue.get_first_message())

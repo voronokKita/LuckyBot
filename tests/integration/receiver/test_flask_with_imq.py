@@ -24,8 +24,7 @@ class TestFlaskWithMessageQueue(unittest.TestCase):
         [signal.clear() for signal in signals if signal.is_set()]
 
     def test_flask_with_imq_integration(self):
-        result = InputQueue.get_first_message()
-        self.assertIsNone(result)
+        self.assertIsNone(InputQueue.get_first_message())
 
         response = self.client.post(
             WEBHOOK_ENDPOINT,
@@ -35,9 +34,9 @@ class TestFlaskWithMessageQueue(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-        msg_obj = InputQueue.get_first_message()
-        self.assertIsNotNone(msg_obj)
-
-        InputQueue.delete_message(msg_obj)
         result = InputQueue.get_first_message()
-        self.assertIsNone(result)
+        self.assertIsNotNone(result)
+        self.assertEqual(result[1], self.telegram_request)
+
+        InputQueue.delete_message(result[0])
+        self.assertIsNone(InputQueue.get_first_message())

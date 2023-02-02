@@ -12,6 +12,9 @@ class TestReceiverMessageQueue(unittest.TestCase):
         InputQueue.tear_down()
 
     def test_output_queue_works(self):
+        self.assertFalse(InputQueue.delete_message(42))
+        self.assertIsNone(InputQueue.get_first_message())
+
         msg1 = 'foo'
         msg2 = '/delete 42'
         msg3 = '''{"id":999,"first_name":"John","last_name":"Doe","username":"john_doe"}'''
@@ -28,5 +31,4 @@ class TestReceiverMessageQueue(unittest.TestCase):
             self.assertEqual(text, message)
             self.assertTrue(InputQueue.delete_message(id_))
 
-        result = InputQueue.get_first_message()
-        self.assertIsNone(result)
+        self.assertIsNone(InputQueue.get_first_message())

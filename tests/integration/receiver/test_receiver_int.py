@@ -88,17 +88,16 @@ class TestReceiverServing(ThreadSmallTestTemplate):
             raise TestException('The request code 200, but there is no signal...')
 
         # input message queue
-        msg_obj = InputQueue.get_first_message()
-        self.assertIsNotNone(msg_obj)
-        InputQueue.delete_message(msg_obj)
         result = InputQueue.get_first_message()
-        self.assertIsNone(result)
+        self.assertIsNotNone(result)
+        self.assertEqual(result[1], self.telegram_request)
+        InputQueue.delete_message(result[0])
+        self.assertIsNone(InputQueue.get_first_message())
 
         # wrong request
         response = requests.post(self.url, data=r'junk')
         self.assertEqual(response.status_code, 400)
-        result = InputQueue.get_first_message()
-        self.assertIsNone(result)
+        self.assertIsNone(InputQueue.get_first_message())
 
         # assert normal shutdown
         self.thread_obj.receiver.server.shutdown()

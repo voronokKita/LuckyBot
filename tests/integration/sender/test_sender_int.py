@@ -35,19 +35,23 @@ class TestSenderWorks(ThreadSmallTestTemplate):
         OutputQueue.tear_down()
 
     def test_sender_integration_normal_case(self, disp_bot, sender_cycle):
-        OutputQueue.add_message(42, 'hello', 1)
+        uid1 = '42'
+        text1 = 'hello'
+        OutputQueue.add_message(uid1, text1)
 
         self.thread_obj.start()
         if not SENDER_IS_RUNNING.wait(10):
             self.thread_obj.merge()
             raise TestException('The time to start the sender has passed.')
 
-        disp_bot.send_message.assert_called_once_with(42, 'hello')
+        disp_bot.send_message.assert_called_once_with(uid1, text1)
         sender_cycle.assert_not_called()
         self.assertFalse(NEW_MESSAGE_TO_SEND.is_set(), msg='first msg')
         self.assertFalse(EXIT_SIGNAL.is_set(), msg='first msg')
 
-        OutputQueue.add_message(42, 'world', 2)
+        uid2 = '142'
+        text2 = 'world'
+        OutputQueue.add_message(uid2, text2)
         NEW_MESSAGE_TO_SEND.set()
         time.sleep(0.2)
 
@@ -55,7 +59,7 @@ class TestSenderWorks(ThreadSmallTestTemplate):
         self.assertFalse(NEW_MESSAGE_TO_SEND.is_set(), msg='cycle')
         self.assertFalse(EXIT_SIGNAL.is_set(), msg='cycle')
         self.assertEqual(disp_bot.send_message.call_count, 2)
-        disp_bot.send_message.assert_called_with(42, 'world')
+        disp_bot.send_message.assert_called_with(uid2, text2)
 
         EXIT_SIGNAL.set()
         NEW_MESSAGE_TO_SEND.set()
@@ -101,7 +105,7 @@ class TestSenderWorks(ThreadSmallTestTemplate):
         self.assertRaises(OMQException, self.thread_obj.merge)
 
     def test_sender_stops_gently(self, disp_bot, *args):
-        OutputQueue.add_message(42, 'hello', 1)
+        OutputQueue.add_message(3, 'foo')
         exc = ApiTelegramException(
             function_name='foo', result='bar',
             result_json={'error_code': 401, 'description': 'Unauthorized'}
@@ -119,7 +123,7 @@ class TestSenderWorks(ThreadSmallTestTemplate):
         self.thread_obj.merge()  # no exceptions
 
     def test_sender_dispatcher_exception(self, disp_bot, sender_cycle):
-        OutputQueue.add_message(42, 'hello', 1)
+        OutputQueue.add_message(4, 'bar')
         disp_bot.send_message.side_effect = TestException('boom')
 
         self.thread_obj.start()
