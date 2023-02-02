@@ -1,4 +1,4 @@
-""" python -m unittest tests.integration.sender.test_sender_with_controller """
+""" python -m unittest tests.integration.sender.test_sender_receiver_controller """
 import unittest
 from unittest.mock import patch
 from time import sleep
