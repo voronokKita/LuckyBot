@@ -72,6 +72,7 @@ class OutputQueue:
             time = int(current_time())
 
         if not encrypted:
+            uid = encrypt(str(uid).encode(), IMQ_SECRET)
             message = encrypt(message.encode(), IMQ_SECRET)
 
         with OMQ_SESSION.begin() as session:
@@ -98,8 +99,9 @@ class OutputQueue:
             if not msg_obj:
                 return None
 
+            uid = decrypt(msg_obj.destination, IMQ_SECRET)
             text = decrypt(msg_obj.text, IMQ_SECRET)
-            return msg_obj.id, msg_obj.destination, text
+            return msg_obj.id, uid, text
 
     @staticmethod
     @catch_exception

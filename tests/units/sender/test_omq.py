@@ -16,12 +16,12 @@ class TestSenderMessageQueue(unittest.TestCase):
         self.assertFalse(OutputQueue.delete_message(42))
         self.assertIsNone(OutputQueue.get_first_message())
 
-        uid1 = 6
+        uid1 = '6'
         msg1 = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, ' \
                'sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
-        uid2 = 9
+        uid2 = '9'
         msg2 = '/delete 999'
-        uid3 = 42
+        uid3 = '42'
         msg3 = '{"id":42,"first_name":"John","last_name":"Doe","username":"john_doe"}'
 
         self.assertTrue(OutputQueue.add_message(uid1, msg1, time=1))

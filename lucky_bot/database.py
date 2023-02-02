@@ -12,7 +12,11 @@ from sqlalchemy import (
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship, Query
 from sqlalchemy.exc import IntegrityError
 
-from lucky_bot.helpers.constants import DB_FILE, TESTING, LAST_NOTES_LIST, DatabaseException
+from lucky_bot.helpers.constants import (
+    DB_FILE, DB_SECRET, TESTING,
+    LAST_NOTES_LIST, DatabaseException,
+)
+from lucky_bot.helpers.misc import encrypt, decrypt
 
 import logging
 logger = logging.getLogger(__name__)
