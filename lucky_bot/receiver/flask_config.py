@@ -64,8 +64,8 @@ def save_message_to_queue(data):
     try:
         test_exception()
         d = json.loads(data)
-        date = d['message']['date']
-        InputQueue.add_message(data, date)
+        time = d['message']['date']
+        InputQueue.add_message(data, time)
 
     except IMQException as exc:
         EXIT_SIGNAL.set()

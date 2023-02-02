@@ -2,8 +2,18 @@
 import threading
 from datetime import datetime, timezone, timedelta
 
+from cryptography.fernet import Fernet
+
 from lucky_bot.helpers.constants import ThreadException
 from lucky_bot.helpers.signals import EXIT_SIGNAL
+
+
+def encrypt(text: bytes, key: bytes) -> bytes:
+    return Fernet(key).encrypt(text)
+
+
+def decrypt(cypher: bytes, key: bytes) -> str:
+    return Fernet(key).decrypt(cypher).decode('utf-8')
 
 
 def first_update_time() -> datetime:

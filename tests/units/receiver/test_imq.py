@@ -12,15 +12,21 @@ class TestReceiverMessageQueue(unittest.TestCase):
         InputQueue.tear_down()
 
     def test_output_queue_works(self):
-        InputQueue.add_message('foo', 1)
-        InputQueue.add_message('bar', 2)
-        InputQueue.add_message('baz', 3)
+        msg1 = 'foo'
+        msg2 = '/delete 42'
+        msg3 = '''{"id":999,"first_name":"John","last_name":"Doe","username":"john_doe"}'''
 
-        for message in ['foo', 'bar', 'baz']:
-            msg_obj = InputQueue.get_first_message()
-            self.assertIsNotNone(msg_obj, msg=message)
-            self.assertEqual(msg_obj.data, message)
-            InputQueue.delete_message(msg_obj)
+        self.assertTrue(InputQueue.add_message(msg1, time=1))
+        self.assertTrue(InputQueue.add_message(msg2, time=2))
+        self.assertTrue(InputQueue.add_message(msg3, time=3))
+
+        for message in [msg1, msg2, msg3]:
+            result = InputQueue.get_first_message()
+            self.assertIsNotNone(result, msg=message)
+
+            id_, text = result
+            self.assertEqual(text, message)
+            self.assertTrue(InputQueue.delete_message(id_))
 
         result = InputQueue.get_first_message()
         self.assertIsNone(result)

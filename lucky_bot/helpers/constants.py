@@ -39,17 +39,32 @@ WEBHOOK_ENDPOINT = '/webhook'
 WEBHOOK_WAS_SET = re.compile('was set|already set')
 
 if not REPLIT:
-    API = PROJECT_DIR / 'resources' / '.tgapi'
-    with open(API) as f:
-        API = f.read().strip()
+    api = PROJECT_DIR / 'resources' / '.tgapi'
+    with api.open('r') as f: API = f.read().strip()
 
-    WEBHOOK_SECRET = PROJECT_DIR / 'resources' / '.webhook_secret_token'
-    with open(WEBHOOK_SECRET) as f:
-        WEBHOOK_SECRET = f.read().strip()
+    webhook_secret = PROJECT_DIR / 'resources' / '.webhook_secret_token'
+    with webhook_secret.open('r') as f: WEBHOOK_SECRET = f.read().strip()
 
 else:
     API = os.environ['TGAPI']
     WEBHOOK_SECRET = os.environ['WEBHOOK_SECRET']
+
+
+# Cryptography
+if not REPLIT:
+    imq_secret = PROJECT_DIR / 'resources' / '.imq_secret_key'
+    with imq_secret.open('rb') as f: IMQ_SECRET = f.read()
+
+    omq_secret = PROJECT_DIR / 'resources' / '.omq_secret_key'
+    with omq_secret.open('rb') as f: OMQ_SECRET = f.read()
+
+    db_secret = PROJECT_DIR / 'resources' / '.db_secret_key'
+    with db_secret.open('rb') as f: DB_SECRET = f.read()
+
+else:
+    IMQ_SECRET = os.environ['IMQ_SECRET']
+    OMQ_SECRET = os.environ['OMQ_SECRET']
+    DB_SECRET = os.environ['DB_SECRET']
 
 
 # Logs

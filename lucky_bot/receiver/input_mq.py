@@ -3,12 +3,13 @@ Input Message Queue.
 Saves a message data from Telegram, or internal and admin commands, for future processing.
 Raises: IMQException
 """
-from time import time
+from time import time as current_time
 
-from sqlalchemy import create_engine, Column, Integer, Text
-from sqlalchemy.orm import declarative_base, sessionmaker, Query
+from sqlalchemy import create_engine, Column, Integer, BLOB
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-from lucky_bot.helpers.constants import TESTING, INPUT_MQ_FILE, IMQException
+from lucky_bot.helpers.constants import TESTING, INPUT_MQ_FILE, IMQ_SECRET, IMQException
+from lucky_bot.helpers.misc import encrypt, decrypt
 
 import logging
 logger = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ class IncomingMessage(IMQBase):
     __tablename__ = 'incoming_messages'
 
     id = Column(Integer, primary_key=True)
-    data = Column('message_body', Text, nullable=False)
+    data = Column('message_body', BLOB, nullable=False)
     time = Column('message_date', Integer, nullable=False)
 
     def __str__(self):
@@ -51,7 +52,7 @@ IMQ_SESSION = sessionmaker(bind=IMQ_ENGINE)
 
 
 class InputQueue:
-    """ Wrapper for the queries to the input message queue. """
+    """ Wrapper for the queries to the input message queue. FIFO. """
 
     @staticmethod
     @catch_exception
@@ -66,30 +67,51 @@ class InputQueue:
 
     @staticmethod
     @catch_exception
-    def add_message(data, date=None):
+    def add_message(data, time=None, encrypted=False) -> True:
+        """ Cypher any data. """
         test_func()
-        if not date:
-            date = int(time())
+        if not time:
+            time = int(current_time())
+
+        if not encrypted:
+            data = encrypt(data.encode(), IMQ_SECRET)
+
         with IMQ_SESSION.begin() as session:
-            msg_obj = IncomingMessage(data=data, time=date)
+            msg_obj = IncomingMessage(data=data, time=time)
             session.add(msg_obj)
+        return True
 
     @staticmethod
     @catch_exception
-    def get_first_message() -> Query | None:
-        """ FIFO """
+    def get_first_message() -> tuple | None:
+        """
+        Decipher and return original data, if any.
+
+        Returns:
+            tuple: (message_id, message_data)
+
+            None: if the queue is empty
+        """
         test_func2()
         with IMQ_SESSION() as session:
             msg_obj = session.query(IncomingMessage)\
                 .order_by(IncomingMessage.time)\
                 .first()
-            return msg_obj
+            if not msg_obj:
+                return None
+
+            data = decrypt(msg_obj.data, IMQ_SECRET)
+            return msg_obj.id, data
 
     @staticmethod
     @catch_exception
-    def delete_message(msg_obj):
+    def delete_message(msg_id:int) -> True:
         with IMQ_SESSION.begin() as session:
+            msg_obj = session.query(IncomingMessage)\
+                .filter(IncomingMessage.id == msg_id)\
+                .first()
             session.delete(msg_obj)
+        return True
 
 
 if not TESTING and not INPUT_MQ_FILE.exists():
