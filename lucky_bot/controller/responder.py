@@ -19,12 +19,13 @@ from logs import Log
 
 class Respond:
     @staticmethod
-    def send_message(uid: str | int | bytes, message: str | bytes, encrypted=False):
+    def send_message(uid: str | int | bytes, message: str | bytes,
+                     markup=False, encrypted=False):
         """ Pass message to the sender module. """
         if encrypted:
-            OutputQueue.add_message(uid, message, encrypted=True)
+            OutputQueue.add_message(uid, message, markup=markup, encrypted=True)
         else:
-            OutputQueue.add_message(uid, message)
+            OutputQueue.add_message(uid, message, markup=markup)
         if not NEW_MESSAGE_TO_SEND.is_set():
             NEW_MESSAGE_TO_SEND.set()
 
@@ -45,19 +46,24 @@ class Respond:
         message = 'Your notes:\n'
         for note_obj in result:
             decrypted_text = decrypt(note_obj.text)
-            text = decrypted_text[:30].strip()
-            if len(decrypted_text) > 30:
-                text += '...'
-            message += f'* №`{note_obj.number}` :: "{text}"\n\n'
+
+            lines = decrypted_text[:40].splitlines()
+            text1 = '_'.join([l for l in lines if l])
+            text2 = text1[:30].strip()
+
+            if len(text1) > 30:
+                text2 += '...'
+            message += f'* №{note_obj.number} :: "{text2}"\n\n'
 
         self.send_message(uid, message)
 
     def send_note(self, uid: str | int, note_num: str | int):
         result = MainDB.get_user_note(uid, note_num)
         if not result:
-            self.send_message(uid, 'Number not found. Check the note number by calling /list.')
+            msg = 'Number not found. Check the note number by calling /list.'
+            self.send_message(uid, msg)
         else:
-            self.send_message(encrypt(uid), result.text, encrypted=True)
+            self.send_message(encrypt(uid), result.text, markup=True, encrypted=True)
 
     def delete_notes(self, uid: str | int, notes: list):
         message = ''
@@ -74,9 +80,9 @@ class Respond:
         """ Propagates: DatabaseException """
         try:
             if MainDB.delete_user_note(tg_id_hash, note_num) is False:
-                message += f'Note #`{note_num}` - not found\n'
+                message += f'Note #{note_num} - not found\n'
             else:
-                message += f'Note #`{note_num}` - deleted\n'
+                message += f'Note #{note_num} - deleted\n'
             return message
 
         except DatabaseException as exc:

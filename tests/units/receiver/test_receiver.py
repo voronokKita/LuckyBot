@@ -5,10 +5,7 @@ from lucky_bot.helpers.constants import (
     TestException, ReceiverException,
     PORT, WEBHOOK_SECRET, WEBHOOK_ENDPOINT,
 )
-from lucky_bot.helpers.signals import (
-    RECEIVER_IS_RUNNING, RECEIVER_IS_STOPPED,
-    EXIT_SIGNAL, INCOMING_MESSAGE,
-)
+from lucky_bot.helpers.signals import RECEIVER_IS_RUNNING, RECEIVER_IS_STOPPED, EXIT_SIGNAL
 from lucky_bot.receiver import ReceiverThread
 
 from tests.presets import (

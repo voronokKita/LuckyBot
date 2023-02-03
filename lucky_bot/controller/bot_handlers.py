@@ -31,33 +31,13 @@ import logging
 logger = logging.getLogger(__name__)
 from logs import Log
 
-from lucky_bot.helpers.constants import MASTER
+from lucky_bot.helpers.constants import MASTER, TEXT_HELLO, TEXT_HELP, AdminExitSignal
 from lucky_bot.helpers.signals import EXIT_SIGNAL
 from lucky_bot.bot_init import BOT
 from lucky_bot.controller import parser
 from lucky_bot.controller import Respond
 
 respond = Respond()
-
-TEXT_HELLO = '''Hello, @{username}!
-This bot was made to remind you.
-You can save text notes in the database. A couple of times a day I will take a random note and send it to you.
-All notes are stored in an encrypted form.
-
-ⓘ The server may be slow so don't rush to use commands again if there is no immediate response. (´･ᴗ･ ` )
-
-{help}'''
-
-TEXT_HELP = '''ⓘ Commands:
-
-/add [text] — save the note to the database
-/list — will send you a list of saved notes with their `numbers`
-/show [number] — will send you a saved note
-/update [number] [text] — replace the note N with the new text
-/delete [number, ...] — delete the notes with the specified numbers
-/restart
-/help
-'''
 
 
 @BOT.message_handler(commands=['start', 'restart'])
@@ -145,7 +125,7 @@ def admin_commands(message):
 
     if re.search(r'(/admin)\s+(stop)', message.text):
         Log.info('handler: /admin stop')
-        EXIT_SIGNAL.set()
+        raise AdminExitSignal('stop')
 
     elif re.search(r'(/admin)\s+(users)', message.text):
         Log.info('handler: /admin users')

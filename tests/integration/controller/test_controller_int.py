@@ -55,7 +55,7 @@ class TestControllerWorks(ThreadSmallTestTemplate):
             self.thread_obj.merge()
             raise TestException('The time to start the controller has passed.')
 
-        sleep(0.2)
+        sleep(0.4)
         self.assertFalse(EXIT_SIGNAL.is_set(), msg='first')
         self.assertFalse(INCOMING_MESSAGE.is_set(), msg='first')
         self.assertIsNone(InputQueue.get_first_message(), msg='first')

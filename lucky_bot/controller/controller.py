@@ -2,7 +2,7 @@ import telebot
 
 from lucky_bot.helpers.constants import (
     ControllerException, TelebotHandlerException,
-    DatabaseException, OMQException, IMQException,
+    DatabaseException, OMQException, IMQException, AdminExitSignal,
 )
 from lucky_bot.helpers.signals import (
     CONTROLLER_IS_RUNNING, CONTROLLER_IS_STOPPED,
@@ -40,6 +40,7 @@ class Controller:
             OMQException
             DatabaseException
             TelebotHandlerException
+            AdminExitSignal
         """
         while True:
             result = InputQueue.get_first_message()
@@ -59,6 +60,7 @@ class Controller:
             TelebotHandlerException
             DatabaseException: propagation
             OMQException: propagation
+            AdminExitSignal: propagation
         """
         if data.startswith('/'):
             if data.startswith('/sender delete'):
@@ -74,6 +76,8 @@ class Controller:
                 update = telebot.types.Update.de_json(data)
                 BOT.process_new_updates([update])
 
+            except AdminExitSignal as exc:
+                raise exc
             except (DatabaseException, OMQException) as exc:
                 raise exc
             except Exception as exc:
@@ -127,6 +131,8 @@ class ControllerThread(ThreadTemplate):
                         INCOMING_MESSAGE.clear()
                     self._test_controller_cycle()
 
+        except AdminExitSignal as exc:
+            EXIT_SIGNAL.set()
         except (TelebotHandlerException, DatabaseException, OMQException, IMQException) as exc:
             raise exc
         except Exception as exc:

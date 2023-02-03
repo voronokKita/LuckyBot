@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "f780649a6a957daac5f7fb7a326d02640b241e83370499947ff98ea6427aa0b8"
+            "sha256": "749d2fda1876da8460fa30bb0d6a45a98aa1e9acd541c4105ddf9c3fea735bae"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -294,7 +294,7 @@
                 "sha256:f82d4d717d8ef19188687aa32b8363e96062911e63ba22a0cff7802a8e58e5f1",
                 "sha256:fc3a569657468b6f3fb60587e48356fe512c1754ca05a564f11366ac9e306526"
             ],
-            "markers": "python_version >= '3' and platform_machine == 'aarch64' or (platform_machine == 'ppc64le' or (platform_machine == 'x86_64' or (platform_machine == 'amd64' or (platform_machine == 'AMD64' or (platform_machine == 'win32' or platform_machine == 'WIN32')))))",
+            "markers": "python_version >= '3' and (platform_machine == 'aarch64' or (platform_machine == 'ppc64le' or (platform_machine == 'x86_64' or (platform_machine == 'amd64' or (platform_machine == 'AMD64' or (platform_machine == 'win32' or platform_machine == 'WIN32'))))))",
             "version": "==2.0.2"
         },
         "idna": {

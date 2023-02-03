@@ -14,6 +14,34 @@ else:
     TESTING = False
 
 
+# Help
+TEXT_HELLO = '''(*・ω・)ﾉ" Hello, @{username}!
+This bot was made to remind you.
+You can save text notes in the database. A couple of times a day I will take a random note and send it to you.
+All notes are stored in an encrypted form.
+
+ⓘ The server may be slow so don't rush to use commands again if there is no immediate response. (´･ᴗ･ ` )
+
+{help}'''
+
+TEXT_HELP = '''ⓘ Commands:
+/add [text] — save the note to the database
+/list — will send you a list of saved notes with their numbers
+/show [number] — will send you a saved note
+/update [number] [text] — replace the note N with the new text
+/delete [number, ...] — delete the notes with the specified numbers
+/restart
+/help
+/ping
+
+ⓘ Text markup:
+<b>bold</b>
+<i>italic</i>
+<u>underline</u>
+<code>monospace code</code>
+'''
+
+
 # Databases
 LAST_NOTES_LIST = 10
 
@@ -144,6 +172,9 @@ class IMQException(ReceiverException):
 
 class ControllerException(ThreadException):
     """ Something wrong in the controller. """
+
+class AdminExitSignal(ControllerException):
+    """ An admin exit command in the bot handler. """
 
 class TelebotHandlerException(ControllerException):
     """ Something wrong in the telebot handlers. """

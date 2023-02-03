@@ -31,10 +31,11 @@ class TestSenderMessageQueue(unittest.TestCase):
             result = OutputQueue.get_first_message()
             self.assertIsNotNone(result, msg=user)
 
-            message_id, uid, text = result
+            message_id, uid, text, markup = result
 
             self.assertEqual(user, uid)
             self.assertEqual(text, message)
+            self.assertFalse(markup)
 
             self.assertTrue(OutputQueue.delete_message(message_id))
 

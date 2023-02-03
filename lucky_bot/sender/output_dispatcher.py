@@ -18,8 +18,10 @@ import logging
 logger = logging.getLogger(__name__)
 from logs import Log
 
+MAX_ATTEMPT = 3
 
-def send_message(uid: str | int, text: str, file=None):
+
+def send_message(uid: str | int, text: str, markup=False, file=None):
     """
     Send a message to Telegram and handle possible exception.
 
@@ -31,10 +33,15 @@ def send_message(uid: str | int, text: str, file=None):
         DispatcherUndefinedExc
     """
     attempt = 0
-    while attempt < 3:
+    while attempt < MAX_ATTEMPT:
         attempt += 1
+        if attempt > 1 and markup:
+            markup = False
         try:
-            BOT.send_message(uid, text)
+            if markup:
+                BOT.send_message(uid, text, parse_mode='HTML')
+            else:
+                BOT.send_message(uid, text)
             break
 
         except ApiTelegramException as aexc:

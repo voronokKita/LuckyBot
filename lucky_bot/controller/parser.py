@@ -23,3 +23,4 @@ def parse_note_and_update(uid: str | int, text: str, note_num: str | int) -> str
         return 'Updated.'
     else:
         return 'Error: wrong note number.'
+

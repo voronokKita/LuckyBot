@@ -5,7 +5,7 @@ Raises: OMQException
 """
 from time import time as current_time
 
-from sqlalchemy import create_engine, Column, Integer, BLOB
+from sqlalchemy import create_engine, Column, Integer, BLOB, Boolean
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from lucky_bot.helpers.constants import TESTING, OUTPUT_MQ_FILE, OMQException
@@ -43,6 +43,7 @@ class OutgoingMessage(OMQBase):
     destination = Column('address', BLOB, nullable=False)
     text = Column('message_text', BLOB, nullable=False)
     stream = Column('file', BLOB, nullable=True, default=None)
+    markup = Column('markup_text?', Boolean, nullable=False, default=False)
     time = Column('date', Integer, nullable=False)
 
 
@@ -65,8 +66,8 @@ class OutputQueue:
 
     @staticmethod
     @catch_exception
-    def add_message(uid: str | int, message: str,
-                    time=None, file=None, encrypted=False) -> True:
+    def add_message(uid: str | int, message: str, time=None,
+                    file=None, markup=False, encrypted=False) -> True:
         """ Cypher any data. """
         test_func2()
         if not time:
@@ -77,7 +78,7 @@ class OutputQueue:
             message = encrypt(message.encode())
 
         with OMQ_SESSION.begin() as session:
-            msg_obj = OutgoingMessage(destination=uid, text=message, time=time)
+            msg_obj = OutgoingMessage(destination=uid, text=message, time=time, markup=markup)
             session.add(msg_obj)
         return True
 
@@ -88,7 +89,7 @@ class OutputQueue:
         Decipher and return original data, if any.
 
         Returns:
-            tuple: (message_id, uid, text)
+            tuple: (message_id, uid, text, markup)
 
             None: if the queue is empty
         """
@@ -102,7 +103,7 @@ class OutputQueue:
 
             uid = decrypt(msg_obj.destination)
             text = decrypt(msg_obj.text)
-            return msg_obj.id, uid, text
+            return msg_obj.id, uid, text, msg_obj.markup
 
     @staticmethod
     @catch_exception

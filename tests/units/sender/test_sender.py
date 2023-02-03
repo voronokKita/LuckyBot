@@ -49,7 +49,8 @@ class TestSenderExecution(ThreadSmallTestTemplate):
         id_ = 1
         uid = '42'
         text = 'hello'
-        message = (id_, uid, text)
+        markup = True
+        message = (id_, uid, text, markup)
         omq.get_first_message.side_effect = [message, None]
         NEW_MESSAGE_TO_SEND.set()
 
@@ -60,7 +61,7 @@ class TestSenderExecution(ThreadSmallTestTemplate):
 
         self.assertFalse(NEW_MESSAGE_TO_SEND.is_set(), msg='first msg')
         self.assertFalse(EXIT_SIGNAL.is_set(), msg='first msg')
-        disp.send_message.assert_called_once_with(uid, text)
+        disp.send_message.assert_called_once_with(uid, text, markup)
         omq.delete_message.assert_called_once_with(id_)
         imq.assert_not_called()
         sender_cycle.assert_not_called()
@@ -86,7 +87,7 @@ class TestSenderExecution(ThreadSmallTestTemplate):
 
     @patch('lucky_bot.sender.sender.Sender._handle_a_delivery')
     def test_sender_exception_stop_gently(self, func, imq, omq, disp, sender_cycle):
-        omq.get_first_message.side_effect = [(1, '9', 'foobar'), None]
+        omq.get_first_message.side_effect = [(1, '9', 'foobar', False), None]
         func.side_effect = StopTheSenderGently('pretty please')
 
         self.thread_obj.start()
@@ -100,7 +101,7 @@ class TestSenderExecution(ThreadSmallTestTemplate):
         self.thread_obj.merge()  # no exceptions, just stops
 
     def test_sender_exception_in_dispatcher(self, imq, omq, disp, sender_cycle):
-        omq.get_first_message.side_effect = [(2, '33', 'bazqux'), None]
+        omq.get_first_message.side_effect = [(2, '33', 'bazqux', False), None]
         disp.send_message.side_effect = OutputDispatcherException('boom')
 
         self.thread_obj.start()
@@ -124,19 +125,21 @@ class TestSenderCallToDispatcher(unittest.TestCase):
 
     def test_sender_call_exception_wrong_token(self, disp, imq):
         disp.send_message.side_effect = DispatcherWrongToken('boom')
-        self.assertRaises(StopTheSenderGently, Sender._handle_a_delivery, 1, 'foo')
+        self.assertRaises(StopTheSenderGently, Sender._handle_a_delivery, 1, 'foo', False)
 
     def test_sender_call_exception_timeout(self, disp, imq):
         disp.send_message.side_effect = DispatcherTimeout('boom')
-        self.assertRaises(StopTheSenderGently, Sender._handle_a_delivery, 2, 'bar')
+        self.assertRaises(StopTheSenderGently, Sender._handle_a_delivery, 2, 'bar', False)
 
     def test_sender_call_exception_undefined(self, disp, imq):
-        disp.send_message.side_effect = DispatcherUndefinedExc('boom')
-        Sender._handle_a_delivery(3, 'baz')
+        disp.send_message.side_effect = [DispatcherUndefinedExc('boom'), None]
+        Sender._handle_a_delivery(3, 'baz', False)
+        text = 'Undefined error while trying to send you a message :C'
+        disp.send_message.assert_called_with(3, text)
 
     def test_sender_call_exception_no_access(self, disp, imq):
         disp.send_message.side_effect = DispatcherNoAccess('boom')
-        Sender._handle_a_delivery(4, 'qux')
+        Sender._handle_a_delivery(4, 'qux', False)
 
         imq.add_message.assert_called_once()
         self.assertTrue(INCOMING_MESSAGE.is_set())
@@ -145,17 +148,17 @@ class TestSenderCallToDispatcher(unittest.TestCase):
         disp.send_message.side_effect = DispatcherNoAccess('boom')
         imq.add_message.side_effect = IMQException('badoom')
 
-        self.assertRaises(IMQException, Sender._handle_a_delivery, 5, 'quux')
+        self.assertRaises(IMQException, Sender._handle_a_delivery, 5, 'quux', False)
         self.assertFalse(INCOMING_MESSAGE.is_set())
 
     def test_sender_call_exception_in_dispatcher(self, disp, imq):
         disp.send_message.side_effect = OutputDispatcherException('boom')
-        self.assertRaises(OutputDispatcherException, Sender._handle_a_delivery, 6, 'corge')
+        self.assertRaises(OutputDispatcherException, Sender._handle_a_delivery, 6, 'corge', False)
 
     def test_sender_call_exception_normal(self, disp, imq):
         disp.send_message.side_effect = Exception('boom')
-        self.assertRaises(OutputDispatcherException, Sender._handle_a_delivery, 7, 'grault')
+        self.assertRaises(OutputDispatcherException, Sender._handle_a_delivery, 7, 'grault', False)
 
     def test_sender_call_dispatcher_normal(self, disp, imq):
         Sender._handle_a_delivery(8, 'garply')
-        disp.send_message.assert_called_once_with(8, 'garply')
+        disp.send_message.assert_called_once_with(8, 'garply', False)

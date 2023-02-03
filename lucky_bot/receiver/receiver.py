@@ -47,10 +47,10 @@ class Receiver:
             self.tunnel = None
 
     def final_clean_up(self):
-        if self.server:
-            self._shutdown_server()
         if self.tunnel or self.webhook:
             self.disconnect()
+        if self.server:
+            self._shutdown_server()
 
     def _make_tunnel(self):
         if REPLIT:
@@ -88,6 +88,7 @@ class Receiver:
     def _shutdown_server(self):
         if self.server and self.serving:
             self.server.shutdown()
+            self.server.socket.close()
             self.serving = False
         elif self.server and not self.serving:
             # it may happen in some cases

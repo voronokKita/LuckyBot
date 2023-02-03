@@ -23,7 +23,7 @@ class TestResponder(unittest.TestCase):
         text = 'hello'
         self.responder.send_message(uid, text)
 
-        output.add_message.assert_called_once_with(uid, text)
+        output.add_message.assert_called_once_with(uid, text, markup=False)
         self.assertTrue(NEW_MESSAGE_TO_SEND.is_set())
 
     def test_responder_delete_user(self, arg, db):
@@ -38,9 +38,9 @@ class TestResponder(unittest.TestCase):
         self.assertEqual(db.delete_user_note.call_count, 3)
         output.add_message.assert_called_once()
 
-        expected = "Note #`1` - deleted\n" \
-                   "Note #`2` - deleted\n" \
-                   "Note #`3` - deleted\n"
+        expected = "Note #1 - deleted\n" \
+                   "Note #2 - deleted\n" \
+                   "Note #3 - deleted\n"
         result = output.add_message.call_args.args
         self.assertEqual(result[1], expected)
 
@@ -53,7 +53,7 @@ class TestResponder(unittest.TestCase):
         output.add_message.assert_called_once()
 
         result = output.add_message.call_args.args
-        self.assertEqual(result[1], 'Note #`1` - not found\n')
+        self.assertEqual(result[1], 'Note #1 - not found\n')
 
     def test_responder_delete_notes_exception(self, output, db):
         uid = 3
@@ -63,8 +63,8 @@ class TestResponder(unittest.TestCase):
         self.assertEqual(db.delete_user_note.call_count, 3)
         output.add_message.assert_called_once()
 
-        expected = "Note #`1` - not found\n" \
-                   "Note #`2` - deleted\n" \
+        expected = "Note #1 - not found\n" \
+                   "Note #2 - deleted\n" \
                    "Some internal Error...\n"
         result = output.add_message.call_args.args
         self.assertEqual(result[1], expected)
@@ -72,9 +72,15 @@ class TestResponder(unittest.TestCase):
     def test_responder_send_list(self, output, db):
         uid = 4
         note = Mock()
-        text = 'foo, bar, baz, qux, quux, corge, grault, garply, waldo, fred, plugh, xyzzy, thud'
+
+        text = 'foo, bar, baz, qux, quux\ncorge, grault, garply, waldo\nfred, plugh, xyzzy, thud'
+        lines = text[:40].splitlines()
+        text1 = '_'.join([l for l in lines if l])
+        text2 = text1[:30].strip()
+
         note.number = 1
-        expecting = f'Your notes:\n* №`{note.number}` :: "{text[:30]}..."\n\n'
+        expecting = f'Your notes:\n* №{note.number} :: "{text2[:30]}..."\n\n'
+
         note.text = encrypt(text)
         db.get_user_notes.return_value = [note]
 

@@ -33,14 +33,14 @@ class Sender:
         while True:
             result = OutputQueue.get_first_message()
             if result:
-                message_id, destination, message = result
-                cls._handle_a_delivery(destination, message)
+                message_id, destination, message, markup = result
+                cls._handle_a_delivery(destination, message, markup)
                 OutputQueue.delete_message(message_id)
             else:
                 break
 
     @staticmethod
-    def _handle_a_delivery(destination, message):
+    def _handle_a_delivery(destination, message, markup=False):
         """
         Calls the dispatcher and handles its exceptions.
         Sends /delete commands to the input message queue.
@@ -53,7 +53,7 @@ class Sender:
             OutputDispatcherException: propagation
         """
         try:
-            output_dispatcher.send_message(destination, message)
+            output_dispatcher.send_message(destination, message, markup)
 
         except DispatcherWrongToken:
             Log.error('sender: stopping because of api error')
@@ -63,13 +63,15 @@ class Sender:
             Log.warning('sender: stopping because of tg timeout')
             raise StopTheSenderGently
 
-        except DispatcherUndefinedExc:
-            Log.warning('sender: deleting the broken message; delete the uid manually if the exception persists')
-
         except DispatcherNoAccess:
             Log.info('sender: deleting the inaccessible uid')
             InputQueue.add_message(f'/sender delete {destination}')
             INCOMING_MESSAGE.set()
+
+        except DispatcherUndefinedExc:
+            Log.warning('sender: deleting the broken message; delete the uid manually if the exception persists')
+            text = 'Undefined error while trying to send you a message :C'
+            output_dispatcher.send_message(destination, text)
 
         except (OutputDispatcherException, Exception) as exc:
             Log.error('sender: stopping because of dispatcher exception')

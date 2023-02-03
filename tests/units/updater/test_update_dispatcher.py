@@ -82,7 +82,7 @@ class TestUpdateDispatcher(unittest.TestCase):
 
         db.get_users_with_notes.assert_called_once()
         db.get_notifications_for_the_updater.assert_called_once_with(user)
-        omq.add_message.assert_called_once_with(user.c_id, note.text, encrypted=True)
+        omq.add_message.assert_called_once_with(user.c_id, note.text, markup=True, encrypted=True)
         db.update_user_last_notes_list.assert_called_once_with(user.tg_id, note.number)
         db.set_user_flag.assert_called_once_with(user.tg_id, 'first update')
 
@@ -105,7 +105,7 @@ class TestUpdateDispatcher(unittest.TestCase):
 
         db.get_users_with_notes.assert_called_once()
         db.get_notifications_for_the_updater.assert_called_once_with(user)
-        omq.add_message.assert_called_once_with(user.c_id, note.text, encrypted=True)
+        omq.add_message.assert_called_once_with(user.c_id, note.text, markup=True, encrypted=True)
         db.update_user_last_notes_list.assert_called_once_with(user.tg_id, note.number)
         db.set_user_flag.assert_called_once_with(user.tg_id, 'second update')
 

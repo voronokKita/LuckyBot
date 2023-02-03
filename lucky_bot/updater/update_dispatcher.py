@@ -50,7 +50,7 @@ def notifications_dispatcher(current_time):
         else:
             note = random.choice(notes)
 
-        OutputQueue.add_message(user.c_id, note.text, encrypted=True)
+        OutputQueue.add_message(user.c_id, note.text, markup=True, encrypted=True)
         MainDB.update_user_last_notes_list(user.tg_id, note.number)
         set_update_flag(user.tg_id, current_time)
 

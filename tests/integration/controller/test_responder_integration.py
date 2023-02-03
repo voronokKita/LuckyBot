@@ -28,7 +28,7 @@ class TestResponderIntegration(unittest.TestCase):
 
         result = OutputQueue.get_first_message()
         self.assertIsNotNone(result)
-        msg_id, msg_uid, msg_text = result
+        msg_id, msg_uid, msg_text, markup = result
         self.assertEqual(msg_uid, uid)
         self.assertEqual(msg_text, text)
 
@@ -48,12 +48,12 @@ class TestResponderIntegration(unittest.TestCase):
         self.respond.delete_notes(uid, [1, 2, 3])
 
         self.assertEqual(MainDB.get_user_notes(uid), [])
-        expected = "Note #`1` - deleted\n" \
-                   "Note #`2` - deleted\n" \
-                   "Note #`3` - deleted\n"
+        expected = "Note #1 - deleted\n" \
+                   "Note #2 - deleted\n" \
+                   "Note #3 - deleted\n"
         msg = OutputQueue.get_first_message()
         self.assertIsNotNone(msg)
-        msg_id, msg_uid, msg_text = msg
+        msg_id, msg_uid, msg_text, markup = msg
         self.assertEqual(msg_text, expected)
 
     def test_responder_delete_notes_wrong(self):
@@ -63,12 +63,17 @@ class TestResponderIntegration(unittest.TestCase):
 
         msg = OutputQueue.get_first_message()
         self.assertIsNotNone(msg)
-        msg_id, msg_uid, msg_text = msg
-        self.assertEqual(msg_text, f'Note #`1` - not found\n')
+        msg_id, msg_uid, msg_text, markup = msg
+        self.assertEqual(msg_text, f'Note #1 - not found\n')
 
     def test_responder_send_list(self):
         uid = '4'
         note_text = 'foo, bar, baz, qux, quux, corge, grault, garply, waldo, fred, plugh, xyzzy, thud'
+
+        lines = note_text[:40].splitlines()
+        text1 = '_'.join([l for l in lines if l])
+        text2 = text1[:30].strip()
+
         MainDB.add_user(uid)
         MainDB.add_note(uid, note_text)
 
@@ -76,8 +81,8 @@ class TestResponderIntegration(unittest.TestCase):
 
         msg = OutputQueue.get_first_message()
         self.assertIsNotNone(msg)
-        msg_id, msg_uid, msg_text = msg
-        expecting = f'Your notes:\n* №`1` :: "{note_text[:30]}..."\n\n'
+        msg_id, msg_uid, msg_text, markup = msg
+        expecting = f'Your notes:\n* №1 :: "{text2[:30]}..."\n\n'
         self.assertEqual(msg_text, expecting)
 
     def test_responder_send_list_empty(self):
@@ -88,7 +93,7 @@ class TestResponderIntegration(unittest.TestCase):
 
         msg = OutputQueue.get_first_message()
         self.assertIsNotNone(msg)
-        msg_id, msg_uid, msg_text = msg
+        msg_id, msg_uid, msg_text, markup = msg
         self.assertEqual(msg_text, 'Nothing.')
 
     def test_responder_send_note(self):
@@ -101,7 +106,7 @@ class TestResponderIntegration(unittest.TestCase):
 
         msg = OutputQueue.get_first_message()
         self.assertIsNotNone(msg)
-        msg_id, msg_uid, msg_text = msg
+        msg_id, msg_uid, msg_text, markup = msg
         self.assertEqual(msg_text, note_text)
 
     def test_responder_send_note_wrong(self):
@@ -112,6 +117,6 @@ class TestResponderIntegration(unittest.TestCase):
 
         msg = OutputQueue.get_first_message()
         self.assertIsNotNone(msg)
-        msg_id, msg_uid, msg_text = msg
+        msg_id, msg_uid, msg_text, markup = msg
         expecting = 'Number not found. Check the note number by calling /list.'
         self.assertEqual(msg_text, expecting)
