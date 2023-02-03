@@ -20,7 +20,6 @@ class TestUpdaterWorks(ThreadSmallTestTemplate):
     thread_class = UpdaterThread
     is_running_signal = UPDATER_IS_RUNNING
     is_stopped_signal = UPDATER_IS_STOPPED
-    other_signals = [UPDATER_CYCLE]
 
     def setUp(self):
         MainDB.set_up()

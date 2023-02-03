@@ -5,6 +5,7 @@ from unittest.mock import patch
 import telebot
 
 from lucky_bot.helpers.constants import TestException, PROJECT_DIR
+from lucky_bot.helpers.signals import EXIT_SIGNAL
 from lucky_bot.controller.bot_handlers import TEXT_HELLO, TEXT_HELP
 from lucky_bot import BOT
 
@@ -35,6 +36,10 @@ class TestBotHandlers(unittest.TestCase):
             cls.telegram_show = f.read().strip()
         with open(fixtures / 'telegram_show_overload.json') as f:
             cls.telegram_show_overload = f.read().strip()
+
+    def tearDown(self):
+        if EXIT_SIGNAL.is_set():
+            EXIT_SIGNAL.clear()
 
     def test_start_cmd(self, respond, *args):
         update = telebot.types.Update.de_json(self.telegram_start)
@@ -127,6 +132,10 @@ class TestBotHandlersExceptions(unittest.TestCase):
             cls.telegram_delete_wrong = f.read().strip()
         with open(fixtures / 'telegram_show_wrong.json') as f:
             cls.telegram_show_wrong = f.read().strip()
+
+    def tearDown(self):
+        if EXIT_SIGNAL.is_set():
+            EXIT_SIGNAL.clear()
 
     def test_start_cmd_exception(self, respond, *args):
         respond.delete_user.side_effect = TestException('boom')

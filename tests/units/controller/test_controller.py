@@ -21,7 +21,7 @@ class TestControllerThreadBase(ThreadTestTemplate):
     thread_class = ControllerThread
     is_running_signal = CONTROLLER_IS_RUNNING
     is_stopped_signal = CONTROLLER_IS_STOPPED
-    other_signals = [INCOMING_MESSAGE]
+    signal_after_exit = INCOMING_MESSAGE
 
     def test_controller_normal_start(self, *args):
         super().normal_case()
@@ -73,7 +73,6 @@ class TestSenderExecution(ThreadSmallTestTemplate):
     thread_class = ControllerThread
     is_running_signal = CONTROLLER_IS_RUNNING
     is_stopped_signal = CONTROLLER_IS_STOPPED
-    other_signals = [INCOMING_MESSAGE]
 
     @classmethod
     def setUpClass(cls):

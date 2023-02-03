@@ -2,7 +2,7 @@
 from unittest.mock import patch
 
 from lucky_bot.helpers.constants import TestException, DatabaseException
-from lucky_bot.helpers.misc import encrypt, decrypt, make_hash
+from lucky_bot.helpers.misc import decrypt, make_hash
 from lucky_bot import MainDB
 
 from tests.presets import MainDBTemplate

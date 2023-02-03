@@ -18,6 +18,7 @@ class TestUpdaterThreadBase(ThreadTestTemplate):
     thread_class = UpdaterThread
     is_running_signal = UPDATER_IS_RUNNING
     is_stopped_signal = UPDATER_IS_STOPPED
+    signal_after_exit = UPDATER_CYCLE
 
     def test_updater_normal_start(self, *args):
         super().normal_case()
@@ -109,7 +110,6 @@ class TestUpdaterExecution(ThreadSmallTestTemplate):
     thread_class = UpdaterThread
     is_running_signal = UPDATER_IS_RUNNING
     is_stopped_signal = UPDATER_IS_STOPPED
-    other_signals = [UPDATER_CYCLE]
 
     def test_updater_normal_case(self, fut, sut, dt, dispatcher, updater_cycle):
         fut.return_value = timedelta(hours=12)

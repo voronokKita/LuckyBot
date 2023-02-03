@@ -20,7 +20,6 @@ class TestControllerWorks(ThreadSmallTestTemplate):
     thread_class = ControllerThread
     is_running_signal = CONTROLLER_IS_RUNNING
     is_stopped_signal = CONTROLLER_IS_STOPPED
-    other_signals = [INCOMING_MESSAGE, NEW_MESSAGE_TO_SEND]
 
     @classmethod
     def setUpClass(cls):

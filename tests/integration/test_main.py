@@ -5,17 +5,12 @@ from unittest.mock import Mock, patch
 from lucky_bot.helpers.constants import MainException, TestException, ThreadException
 from lucky_bot.helpers.signals import (
     ALL_THREADS_ARE_GO, ALL_DONE_SIGNAL, EXIT_SIGNAL,
-    INCOMING_MESSAGE, NEW_MESSAGE_TO_SEND, UPDATER_CYCLE,
-
     RECEIVER_IS_RUNNING, CONTROLLER_IS_RUNNING,
     UPDATER_IS_RUNNING, SENDER_IS_RUNNING,
-
-    RECEIVER_IS_STOPPED, CONTROLLER_IS_STOPPED,
-    UPDATER_IS_STOPPED, SENDER_IS_STOPPED,
 )
 from main import MainAsThread
 
-from tests.presets import mock_ngrok, mock_telebot, mock_serving
+from tests.presets import mock_ngrok, mock_telebot, mock_serving, SIGNALS
 
 
 @patch('lucky_bot.updater.updater.Updater.works')
@@ -28,29 +23,14 @@ from tests.presets import mock_ngrok, mock_telebot, mock_serving
 @patch('lucky_bot.receiver.receiver.BOT', new_callable=mock_telebot)
 @patch('lucky_bot.receiver.receiver.ngrok', new_callable=mock_ngrok)
 class TestMain(unittest.TestCase):
-    signals = [
-        ALL_THREADS_ARE_GO, ALL_DONE_SIGNAL, EXIT_SIGNAL,
-        INCOMING_MESSAGE, NEW_MESSAGE_TO_SEND, UPDATER_CYCLE,
-
-        RECEIVER_IS_RUNNING, CONTROLLER_IS_RUNNING,
-        UPDATER_IS_RUNNING, SENDER_IS_RUNNING,
-
-        RECEIVER_IS_STOPPED, CONTROLLER_IS_STOPPED,
-        UPDATER_IS_STOPPED, SENDER_IS_STOPPED,
-    ]
-
     def setUp(self):
         self.main_thread = MainAsThread()
 
     def tearDown(self):
         if self.main_thread.is_alive():
             self.main_thread.merge()
-        self._clear_signals()
+        [signal.clear() for signal in SIGNALS if signal.is_set()]
         self.assertFalse(self.main_thread.is_alive())
-
-    @classmethod
-    def _clear_signals(cls):
-        [signal.clear() for signal in cls.signals if signal.is_set()]
 
     def test_main_integrity(self, *args):
         self.main_thread.start()

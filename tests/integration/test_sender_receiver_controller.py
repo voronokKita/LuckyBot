@@ -9,13 +9,15 @@ from lucky_bot.helpers.constants import TestException, IMQException
 from lucky_bot.helpers.signals import (
     SENDER_IS_RUNNING, SENDER_IS_STOPPED,
     CONTROLLER_IS_RUNNING, CONTROLLER_IS_STOPPED,
-    NEW_MESSAGE_TO_SEND, INCOMING_MESSAGE, EXIT_SIGNAL,
+    INCOMING_MESSAGE, EXIT_SIGNAL,
 )
 from lucky_bot import MainDB
 from lucky_bot.receiver import InputQueue
 from lucky_bot.sender import OutputQueue
 from lucky_bot.sender import SenderThread
 from lucky_bot.controller import ControllerThread
+
+from tests.presets import SIGNALS
 
 
 @patch('lucky_bot.sender.output_dispatcher.BOT')
@@ -40,13 +42,9 @@ class TestSenderReceiverControllerAndDB(unittest.TestCase):
         InputQueue.tear_down()
         OutputQueue.tear_down()
         MainDB.tear_down()
-        self._clear_signals()
-
-    def _clear_signals(self):
-        signals = [SENDER_IS_RUNNING, SENDER_IS_STOPPED,
-                   CONTROLLER_IS_RUNNING, CONTROLLER_IS_STOPPED,
-                   NEW_MESSAGE_TO_SEND, INCOMING_MESSAGE, EXIT_SIGNAL]
-        [signal.clear() for signal in signals if signal.is_set()]
+        [signal.clear() for signal in SIGNALS if signal.is_set()]
+        self.assertFalse(self.sender.is_alive())
+        self.assertFalse(self.controller.is_alive())
 
     def test_sender_deletes_user_after_bot_blocked(self, bot):
         bot.send_message.side_effect = self.exception

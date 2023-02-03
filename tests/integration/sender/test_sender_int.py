@@ -10,7 +10,7 @@ from lucky_bot.helpers.constants import (
 )
 from lucky_bot.helpers.signals import (
     SENDER_IS_RUNNING, SENDER_IS_STOPPED,
-    EXIT_SIGNAL, NEW_MESSAGE_TO_SEND, INCOMING_MESSAGE,
+    EXIT_SIGNAL, NEW_MESSAGE_TO_SEND
 )
 from lucky_bot.sender import OutputQueue
 from lucky_bot.sender import SenderThread
@@ -24,7 +24,6 @@ class TestSenderWorks(ThreadSmallTestTemplate):
     thread_class = SenderThread
     is_running_signal = SENDER_IS_RUNNING
     is_stopped_signal = SENDER_IS_STOPPED
-    other_signals = [NEW_MESSAGE_TO_SEND, INCOMING_MESSAGE]
 
     def setUp(self):
         OutputQueue.set_up()

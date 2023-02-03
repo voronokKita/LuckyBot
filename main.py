@@ -155,14 +155,17 @@ def stop_active_threads(threads):
 
 
 def count_total_errors():
-    errors_total = ''
-    with ERRORS_TOTAL.open('r') as f:
-        errors_total = int(f.read().strip())
+    try:
+        errors_total = ''
+        with ERRORS_TOTAL.open('r') as f:
+            errors_total = int(f.read().strip())
 
-    errors_total += 1
+        errors_total += 1
 
-    with ERRORS_TOTAL.open('w') as f:
-        f.write(errors_total)
+        with ERRORS_TOTAL.open('w') as f:
+            f.write(errors_total)
+    except Exception:
+        pass
 
 
 if __name__ == '__main__':

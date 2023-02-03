@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import patch, Mock
 
 from lucky_bot.helpers.constants import DatabaseException
-from lucky_bot.helpers.misc import encrypt, decrypt
+from lucky_bot.helpers.misc import encrypt
 from lucky_bot.helpers.signals import NEW_MESSAGE_TO_SEND
 from lucky_bot.controller import Respond
 

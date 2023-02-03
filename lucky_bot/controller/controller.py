@@ -66,7 +66,7 @@ class Controller:
                 cls.responder.delete_user(uid)
 
             elif data.startswith('/admin'):
-                # TODO
+                # skipped for now
                 pass
 
         else:

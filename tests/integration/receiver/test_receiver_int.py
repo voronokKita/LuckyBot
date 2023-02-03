@@ -25,7 +25,6 @@ class TestReceiverServing(ThreadSmallTestTemplate):
     thread_class = ReceiverThread
     is_running_signal = RECEIVER_IS_RUNNING
     is_stopped_signal = RECEIVER_IS_STOPPED
-    other_signals = [INCOMING_MESSAGE]
 
     @classmethod
     def setUpClass(cls):

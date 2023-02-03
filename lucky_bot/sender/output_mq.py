@@ -40,7 +40,7 @@ class OutgoingMessage(OMQBase):
     __tablename__ = 'messages_to_telegram'
 
     id = Column(Integer, primary_key=True)
-    destination = Column('address', Integer, nullable=False)
+    destination = Column('address', BLOB, nullable=False)
     text = Column('message_text', BLOB, nullable=False)
     stream = Column('file', BLOB, nullable=True, default=None)
     time = Column('date', Integer, nullable=False)

@@ -42,14 +42,14 @@ MainBase = declarative_base()
 
 class User(MainBase):
     """
-    tg_id: hashed sum for the search
-    c_id: encrypted token for messages sending
+    tg_id: hashed key for the queries
+    c_id: encrypted token, for messages sending
     """
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True)
-    tg_id = Column('telegram_id', String(100), nullable=False, unique=True, index=True)
-    c_id = Column('ciphered_id', BLOB, nullable=False)
+    tg_id = Column('telegram_uid', String(100), nullable=False, unique=True, index=True)
+    c_id = Column('ciphered_uid', BLOB, nullable=False)
     last_note = Column('last_note_num', Integer, nullable=False, default=0)
     notes_total = Column('notes_total', Integer, nullable=False, default=0)
 

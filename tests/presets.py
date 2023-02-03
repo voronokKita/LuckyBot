@@ -2,11 +2,28 @@ import unittest
 from unittest.mock import Mock
 
 from lucky_bot.helpers.signals import (
-    EXIT_SIGNAL, NEW_MESSAGE_TO_SEND,
-    INCOMING_MESSAGE, UPDATER_CYCLE,
+    SENDER_IS_RUNNING, UPDATER_IS_RUNNING,
+    CONTROLLER_IS_RUNNING, RECEIVER_IS_RUNNING,
+
+    SENDER_IS_STOPPED, UPDATER_IS_STOPPED,
+    CONTROLLER_IS_STOPPED, RECEIVER_IS_STOPPED,
+
+    ALL_THREADS_ARE_GO, ALL_DONE_SIGNAL,
+    INCOMING_MESSAGE, NEW_MESSAGE_TO_SEND,
+    EXIT_SIGNAL, UPDATER_CYCLE,
 )
 from lucky_bot.helpers.constants import TestException
 from lucky_bot import MainDB
+
+SIGNALS = [
+    SENDER_IS_RUNNING, UPDATER_IS_RUNNING,
+    CONTROLLER_IS_RUNNING, RECEIVER_IS_RUNNING,
+    SENDER_IS_STOPPED, UPDATER_IS_STOPPED,
+    CONTROLLER_IS_STOPPED, RECEIVER_IS_STOPPED,
+    ALL_THREADS_ARE_GO, ALL_DONE_SIGNAL,
+    INCOMING_MESSAGE, NEW_MESSAGE_TO_SEND,
+    EXIT_SIGNAL, UPDATER_CYCLE,
+]
 
 
 def mock_ngrok():
@@ -34,7 +51,7 @@ class ThreadTestTemplate(unittest.TestCase):
     thread_class = None
     is_running_signal = None
     is_stopped_signal = None
-    other_signals = []
+    signal_after_exit = None
 
     def setUp(self):
         self.thread_obj = self.thread_class()
@@ -42,15 +59,8 @@ class ThreadTestTemplate(unittest.TestCase):
     def tearDown(self):
         if self.thread_obj.is_alive():
             self.thread_obj.merge()
-        self._clear_signals()
+        [signal.clear() for signal in SIGNALS if signal.is_set()]
         self.assertFalse(self.thread_obj.is_alive())
-
-    def _clear_signals(self):
-        signals = [EXIT_SIGNAL, self.is_running_signal, self.is_stopped_signal,
-                   NEW_MESSAGE_TO_SEND, INCOMING_MESSAGE, UPDATER_CYCLE]
-        if self.other_signals:
-            signals += self.other_signals
-        [signal.clear() for signal in signals if signal.is_set()]
 
     def normal_case(self):
         self.thread_obj.start()
@@ -60,12 +70,8 @@ class ThreadTestTemplate(unittest.TestCase):
             raise TestException(f'The time to start the {self.thread_obj} has passed.')
 
         EXIT_SIGNAL.set()
-        if str(self.thread_obj) == 'sender thread':
-            NEW_MESSAGE_TO_SEND.set()
-        elif str(self.thread_obj) == 'controller thread':
-            INCOMING_MESSAGE.set()
-        elif str(self.thread_obj) == 'updater thread':
-            UPDATER_CYCLE.set()
+        if self.signal_after_exit:
+            self.signal_after_exit.set()
 
         if not self.is_stopped_signal.wait(10):
             self.thread_obj.merge()
@@ -106,7 +112,6 @@ class ThreadSmallTestTemplate(unittest.TestCase):
     thread_class = None
     is_running_signal = None
     is_stopped_signal = None
-    other_signals = []
 
     def setUp(self):
         self.thread_obj = self.thread_class()
@@ -114,14 +119,8 @@ class ThreadSmallTestTemplate(unittest.TestCase):
     def tearDown(self):
         if self.thread_obj.is_alive():
             self.thread_obj.merge()
-        self._clear_signals()
+        [signal.clear() for signal in SIGNALS if signal.is_set()]
         self.assertFalse(self.thread_obj.is_alive())
-
-    def _clear_signals(self):
-        signals = [EXIT_SIGNAL, self.is_running_signal, self.is_stopped_signal]
-        if self.other_signals:
-            signals += self.other_signals
-        [signal.clear() for signal in signals if signal.is_set()]
 
 
 class MainDBTemplate(unittest.TestCase):

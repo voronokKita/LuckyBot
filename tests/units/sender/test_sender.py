@@ -23,6 +23,7 @@ class TestSenderThreadBase(ThreadTestTemplate):
     thread_class = SenderThread
     is_running_signal = SENDER_IS_RUNNING
     is_stopped_signal = SENDER_IS_STOPPED
+    signal_after_exit = NEW_MESSAGE_TO_SEND
 
     def test_sender_normal_start(self, *args):
         super().normal_case()
@@ -43,7 +44,6 @@ class TestSenderExecution(ThreadSmallTestTemplate):
     thread_class = SenderThread
     is_running_signal = SENDER_IS_RUNNING
     is_stopped_signal = SENDER_IS_STOPPED
-    other_signals = [NEW_MESSAGE_TO_SEND, INCOMING_MESSAGE]
 
     def test_sender_normal_message(self, imq, omq, disp, sender_cycle):
         id_ = 1
@@ -118,6 +118,9 @@ class TestSenderExecution(ThreadSmallTestTemplate):
 @patch('lucky_bot.sender.sender.output_dispatcher')
 class TestSenderCallToDispatcher(unittest.TestCase):
     ''' The dispatcher exceptions that are caught in sender after a call. '''
+    def tearDown(self):
+        if INCOMING_MESSAGE.is_set():
+            INCOMING_MESSAGE.clear()
 
     def test_sender_call_exception_wrong_token(self, disp, imq):
         disp.send_message.side_effect = DispatcherWrongToken('boom')
@@ -137,7 +140,6 @@ class TestSenderCallToDispatcher(unittest.TestCase):
 
         imq.add_message.assert_called_once()
         self.assertTrue(INCOMING_MESSAGE.is_set())
-        INCOMING_MESSAGE.clear()
 
     def test_sender_call_dispatcher_imq_exception(self, disp, imq):
         disp.send_message.side_effect = DispatcherNoAccess('boom')
