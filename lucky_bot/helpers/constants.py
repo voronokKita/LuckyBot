@@ -52,19 +52,15 @@ else:
 
 # Cryptography
 if not REPLIT:
-    imq_secret = PROJECT_DIR / 'resources' / '.imq_secret_key'
-    with imq_secret.open('rb') as f: IMQ_SECRET = f.read()
+    fernet_secret = PROJECT_DIR / 'resources' / '.fernet_secret_key'
+    with fernet_secret.open('rb') as f: ENCRYPTION_KEY = f.read()
 
-    omq_secret = PROJECT_DIR / 'resources' / '.omq_secret_key'
-    with omq_secret.open('rb') as f: OMQ_SECRET = f.read()
-
-    db_secret = PROJECT_DIR / 'resources' / '.db_secret_key'
-    with db_secret.open('rb') as f: DB_SECRET = f.read()
+    salt = PROJECT_DIR / 'resources' / '.salt'
+    with salt.open('rb') as f: SALT = f.read()
 
 else:
-    IMQ_SECRET = os.environ['IMQ_SECRET']
-    OMQ_SECRET = os.environ['OMQ_SECRET']
-    DB_SECRET = os.environ['DB_SECRET']
+    ENCRYPTION_KEY = os.environ['FERNET_SECRET'].encode()
+    SALT = os.environ['SALT'].encode()
 
 
 # Logs

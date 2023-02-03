@@ -7,6 +7,7 @@ Exceptions go through:
     OMQException
 """
 import random
+
 from lucky_bot.sender import OutputQueue
 from lucky_bot import MainDB
 
@@ -41,14 +42,15 @@ def notifications_dispatcher(current_time):
         if not is_waiting_for_update(user, current_time):
             continue
 
-        notes = MainDB.get_notifications_for_the_updater(user.tg_id)
+        notes = MainDB.get_notifications_for_the_updater(user)
         if not notes:
             msg = f"update dispatcher: got a user that don't have any notes to send, id #{user.id}"
             Log.warning(msg)
             continue
+        else:
+            note = random.choice(notes)
 
-        note = random.choice(notes)
-        OutputQueue.add_message(user.tg_id, note.text)
+        OutputQueue.add_message(user.c_id, note.text, encrypted=True)
         MainDB.update_user_last_notes_list(user.tg_id, note.number)
         set_update_flag(user.tg_id, current_time)
 
@@ -62,8 +64,8 @@ def is_waiting_for_update(user, current_time):
         return False
 
 
-def set_update_flag(uid, current_time):
+def set_update_flag(tg_id_hash: str, current_time):
     if current_time.first_update:
-        MainDB.set_user_flag(uid, 'first update')
+        MainDB.set_user_flag(tg_id_hash, 'first update')
     elif current_time.second_update:
-        MainDB.set_user_flag(uid, 'second update')
+        MainDB.set_user_flag(tg_id_hash, 'second update')

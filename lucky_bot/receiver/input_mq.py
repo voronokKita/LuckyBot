@@ -8,7 +8,7 @@ from time import time as current_time
 from sqlalchemy import create_engine, Column, Integer, BLOB
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-from lucky_bot.helpers.constants import TESTING, INPUT_MQ_FILE, IMQ_SECRET, IMQException
+from lucky_bot.helpers.constants import TESTING, INPUT_MQ_FILE, IMQException
 from lucky_bot.helpers.misc import encrypt, decrypt
 
 import logging
@@ -67,14 +67,14 @@ class InputQueue:
 
     @staticmethod
     @catch_exception
-    def add_message(data, time=None, encrypted=False) -> True:
+    def add_message(data: str, time=None, encrypted=False) -> True:
         """ Cypher any data. """
         test_func()
         if not time:
             time = int(current_time())
 
         if not encrypted:
-            data = encrypt(data.encode(), IMQ_SECRET)
+            data = encrypt(data.encode())
 
         with IMQ_SESSION.begin() as session:
             msg_obj = IncomingMessage(data=data, time=time)
@@ -100,12 +100,12 @@ class InputQueue:
             if not msg_obj:
                 return None
 
-            data = decrypt(msg_obj.data, IMQ_SECRET)
+            data = decrypt(msg_obj.data)
             return msg_obj.id, data
 
     @staticmethod
     @catch_exception
-    def delete_message(msg_id:int) -> bool:
+    def delete_message(msg_id: int) -> bool:
         with IMQ_SESSION.begin() as session:
             msg_obj = session.query(IncomingMessage)\
                 .filter(IncomingMessage.id == msg_id)\

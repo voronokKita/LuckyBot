@@ -1,6 +1,5 @@
 - Test networking.
-- Admin command interface.
-- Save user data in hash.
+- Admin commands.
 
 DONE - Run the threads in order: sender, updater, input controller and webhook in the last.
 DONE - Test thread timeout in the main.
@@ -21,3 +20,4 @@ DONE - Rewrite the main database logic and exceptions.
 DONE - Sender: the delete-a-uid request.
 PASS - In memory database.
 DONE - Test logs.
+DONE - User data encrypted.

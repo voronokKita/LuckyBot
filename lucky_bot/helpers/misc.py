@@ -1,30 +1,39 @@
 """ If it's not a constant, a setting variable, an exception, or a signal, then it goes here. """
 import threading
+from hashlib import sha3_256
 from datetime import datetime, timezone, timedelta
 
 from cryptography.fernet import Fernet
 
-from lucky_bot.helpers.constants import ThreadException
+from lucky_bot.helpers.constants import ThreadException, SALT, ENCRYPTION_KEY
 from lucky_bot.helpers.signals import EXIT_SIGNAL
 
 
-def encrypt(text: bytes, key: bytes) -> bytes:
-    return Fernet(key).encrypt(text)
+# Security
+def encrypt(data) -> bytes:
+    if not isinstance(data, bytes):
+        data = str(data).encode()
+    return Fernet(ENCRYPTION_KEY).encrypt(data)
+
+def decrypt(token) -> str:
+    if not isinstance(token, bytes):
+        text = token.encode()
+    return Fernet(ENCRYPTION_KEY).decrypt(token).decode('utf-8')
+
+def make_hash(key) -> str:
+    if not isinstance(key, bytes):
+        key = str(key).encode()
+    return sha3_256(key + SALT).hexdigest()
 
 
-def decrypt(cypher: bytes, key: bytes) -> str:
-    return Fernet(key).decrypt(cypher).decode('utf-8')
-
-
+# Time
 def first_update_time() -> datetime:
     """ 12 p.m. UTC """
     return datetime.now(timezone.utc).replace(hour=12, minute=0, second=0, microsecond=0)
 
-
 def second_update_time() -> datetime:
     """ 18 p.m. UTC """
     return datetime.now(timezone.utc).replace(hour=18, minute=0, second=0, microsecond=0)
-
 
 def next_day_time() -> datetime:
     """ 12 a.m. UTC """
@@ -32,13 +41,13 @@ def next_day_time() -> datetime:
     t += timedelta(days=1)
     return t.replace(hour=0, minute=0, second=0, microsecond=0)
 
-
 class CurrentTime:
     before_the_first_update = False
     first_update = False
     second_update = False
 
 
+# Threading
 class ThreadTemplate(threading.Thread):
     """
     Base class for all the threads.

@@ -1,4 +1,4 @@
-""" python -m unittest tests.integration.sender.test_sender_receiver_controller """
+""" python -m unittest tests.integration.test_sender_receiver_controller """
 import unittest
 from unittest.mock import patch
 from time import sleep
@@ -48,12 +48,12 @@ class TestSenderReceiverControllerAndDB(unittest.TestCase):
                    NEW_MESSAGE_TO_SEND, INCOMING_MESSAGE, EXIT_SIGNAL]
         [signal.clear() for signal in signals if signal.is_set()]
 
-    def test_sender_deletes_user(self, bot):
+    def test_sender_deletes_user_after_bot_blocked(self, bot):
         bot.send_message.side_effect = self.exception
-        user = 42
+        user = '42'
         MainDB.add_user(user)
         self.assertIsNotNone(MainDB.get_user(user))
-        OutputQueue.add_message(user, 'take something', 1)
+        OutputQueue.add_message(user, 'do something')
 
         self.sender.start()
         if not SENDER_IS_RUNNING.wait(10):
@@ -66,18 +66,18 @@ class TestSenderReceiverControllerAndDB(unittest.TestCase):
             raise TestException('The time to start the controller has passed.')
 
         sleep(0.5)
-        self.assertIsNone(MainDB.get_user(user))
+        self.assertIsNone(MainDB.get_user(user), msg='the unreachable user has been deleted')
 
         self.sender.merge()
         self.controller.merge()
 
     @patch('lucky_bot.receiver.input_mq.test_func')
-    def test_sender_exception_in_the_imq(self, func, bot):
+    def test_exception_in_the_imq(self, func, bot):
         func.side_effect = TestException('boom')
         bot.send_message.side_effect = self.exception
-        user = 142
+        user = '142'
         MainDB.add_user(user)
-        OutputQueue.add_message(user, 'please die', 1)
+        OutputQueue.add_message(user, 'please die')
 
         self.controller.start()
         self.sender.start()

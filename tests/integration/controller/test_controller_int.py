@@ -25,7 +25,6 @@ class TestControllerWorks(ThreadSmallTestTemplate):
     @classmethod
     def setUpClass(cls):
         cls.uid = 1266575762
-        cls.username = 'john_doe'
         fixtures = PROJECT_DIR / 'tests' / 'fixtures'
         with open(fixtures / 'telegram_request.json') as f:
             cls.telegram_text = f.read().strip()
@@ -45,7 +44,7 @@ class TestControllerWorks(ThreadSmallTestTemplate):
         MainDB.tear_down()
 
     def test_controller_cmd_start(self, controller_cycle):
-        InputQueue.add_message(self.telegram_start, 1)
+        InputQueue.add_message(self.telegram_start)
         INCOMING_MESSAGE.set()
 
         self.thread_obj.start()
@@ -65,14 +64,14 @@ class TestControllerWorks(ThreadSmallTestTemplate):
 
         msg1 = OutputQueue.get_first_message()
         self.assertIsNotNone(msg1)
-        user = MainDB.get_user(self.uid)
-        self.assertIsNotNone(user)
+        self.assertIsNotNone(MainDB.get_user(self.uid))
 
-        OutputQueue.delete_message(msg1)
+        OutputQueue.delete_message(msg1[0])
+        self.assertIsNone(OutputQueue.get_first_message())
         NEW_MESSAGE_TO_SEND.clear()
 
         # 2nd msg
-        InputQueue.add_message(self.telegram_text, 2)
+        InputQueue.add_message(self.telegram_text)
         INCOMING_MESSAGE.set()
         if not NEW_MESSAGE_TO_SEND.wait(10):
             self.thread_obj.merge()
@@ -84,8 +83,7 @@ class TestControllerWorks(ThreadSmallTestTemplate):
         self.assertIsNone(InputQueue.get_first_message(), msg='cycle')
         controller_cycle.assert_called_once()
 
-        msg2 = OutputQueue.get_first_message()
-        self.assertIsNotNone(msg2)
+        self.assertIsNotNone(OutputQueue.get_first_message())
 
         EXIT_SIGNAL.set()
         INCOMING_MESSAGE.set()
@@ -104,7 +102,7 @@ class TestControllerWorks(ThreadSmallTestTemplate):
             raise TestException('The time to start the controller has passed.')
 
         func.side_effect = TestException('boom')
-        InputQueue.add_message(self.telegram_start, 3)
+        InputQueue.add_message(self.telegram_start)
         INCOMING_MESSAGE.set()
         if not CONTROLLER_IS_STOPPED.wait(10):
             self.thread_obj.merge()
@@ -116,7 +114,7 @@ class TestControllerWorks(ThreadSmallTestTemplate):
     def test_controller_omq_exception(self, func, *args):
         func.side_effect = TestException('boom')
         MainDB.add_user(self.uid)
-        InputQueue.add_message(self.telegram_text, 4)
+        InputQueue.add_message(self.telegram_text)
 
         self.thread_obj.start()
         if not CONTROLLER_IS_STOPPED.wait(10):

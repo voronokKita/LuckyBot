@@ -42,15 +42,16 @@ class Controller:
             TelebotHandlerException
         """
         while True:
-            msg_obj = InputQueue.get_first_message()
-            if msg_obj:
-                cls._process_the_message(msg_obj)
-                InputQueue.delete_message(msg_obj)
+            result = InputQueue.get_first_message()
+            if result:
+                message_id, data = result
+                cls._process_the_message(data)
+                InputQueue.delete_message(message_id)
             else:
                 break
 
     @classmethod
-    def _process_the_message(cls, msg_obj):
+    def _process_the_message(cls, data: str):
         """
         Calls the responder or the bot processor, depending on message data.
 
@@ -59,18 +60,18 @@ class Controller:
             DatabaseException: propagation
             OMQException: propagation
         """
-        if msg_obj.data.startswith('/'):
-            if msg_obj.data.startswith('/sender delete'):
-                tg_uid = msg_obj.data.removeprefix('/sender delete ')
-                cls.responder.delete_user(tg_uid)
+        if data.startswith('/'):
+            if data.startswith('/sender delete'):
+                uid = data.removeprefix('/sender delete ')
+                cls.responder.delete_user(uid)
 
-            elif msg_obj.data.startswith('/admin'):
+            elif data.startswith('/admin'):
                 # TODO
                 pass
 
         else:
             try:
-                update = telebot.types.Update.de_json(msg_obj.data)
+                update = telebot.types.Update.de_json(data)
                 BOT.process_new_updates([update])
 
             except (DatabaseException, OMQException) as exc:

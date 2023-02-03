@@ -8,7 +8,7 @@ from time import time as current_time
 from sqlalchemy import create_engine, Column, Integer, BLOB
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-from lucky_bot.helpers.constants import TESTING, OUTPUT_MQ_FILE, IMQ_SECRET, OMQException
+from lucky_bot.helpers.constants import TESTING, OUTPUT_MQ_FILE, OMQException
 from lucky_bot.helpers.misc import encrypt, decrypt
 
 import logging
@@ -65,15 +65,16 @@ class OutputQueue:
 
     @staticmethod
     @catch_exception
-    def add_message(uid, message, time=None, file=None, encrypted=False) -> True:
+    def add_message(uid: str | int, message: str,
+                    time=None, file=None, encrypted=False) -> True:
         """ Cypher any data. """
         test_func2()
         if not time:
             time = int(current_time())
 
         if not encrypted:
-            uid = encrypt(str(uid).encode(), IMQ_SECRET)
-            message = encrypt(message.encode(), IMQ_SECRET)
+            uid = encrypt(str(uid).encode())
+            message = encrypt(message.encode())
 
         with OMQ_SESSION.begin() as session:
             msg_obj = OutgoingMessage(destination=uid, text=message, time=time)
@@ -99,13 +100,13 @@ class OutputQueue:
             if not msg_obj:
                 return None
 
-            uid = decrypt(msg_obj.destination, IMQ_SECRET)
-            text = decrypt(msg_obj.text, IMQ_SECRET)
+            uid = decrypt(msg_obj.destination)
+            text = decrypt(msg_obj.text)
             return msg_obj.id, uid, text
 
     @staticmethod
     @catch_exception
-    def delete_message(msg_id:int) -> bool:
+    def delete_message(msg_id: int) -> bool:
         with OMQ_SESSION.begin() as session:
             msg_obj = session.query(OutgoingMessage)\
                 .filter(OutgoingMessage.id == msg_id)\

@@ -8,7 +8,7 @@ import logging.config as logging_config
 
 from lucky_bot.helpers.constants import PROJECT_DIR, TestException
 
-from logs.config import normal_logger, dummy_logger, clear_old_logs
+from logs.config import normal_logger, dummy_logger
 
 fixtures = PROJECT_DIR / 'tests' / 'fixtures'
 assert fixtures.exists() is True

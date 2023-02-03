@@ -39,9 +39,9 @@ class TestControllerWithMessageQueue(ThreadSmallTestTemplate):
 
     @patch('lucky_bot.controller.controller.Controller._process_the_message')
     def test_controller_with_imq_integration(self, process_the_message, *args):
-        InputQueue.add_message('foo', 1)
-        InputQueue.add_message('bar', 2)
-        InputQueue.add_message('baz', 3)
+        InputQueue.add_message('foo', time=1)
+        InputQueue.add_message('bar', time=2)
+        InputQueue.add_message('baz', time=3)
 
         Controller.check_new_messages()
 
@@ -49,8 +49,8 @@ class TestControllerWithMessageQueue(ThreadSmallTestTemplate):
         self.assertIsNone(InputQueue.get_first_message())
 
     def test_controller_normal_messages(self, respond, bot, controller_cycle):
-        InputQueue.add_message('/sender delete 42', 1)
-        InputQueue.add_message(self.telegram_request, 2)
+        InputQueue.add_message('/sender delete 42', time=1)
+        InputQueue.add_message(self.telegram_request, time=2)
         INCOMING_MESSAGE.set()
 
         self.thread_obj.start()
@@ -65,7 +65,7 @@ class TestControllerWithMessageQueue(ThreadSmallTestTemplate):
         self.assertIsNone(InputQueue.get_first_message(), msg='first')
         controller_cycle.assert_not_called()
 
-        InputQueue.add_message('/sender delete 404', 3)
+        InputQueue.add_message('/sender delete 404', time=3)
         INCOMING_MESSAGE.set()
         sleep(0.2)
         self.assertFalse(INCOMING_MESSAGE.is_set(), msg='cycle')

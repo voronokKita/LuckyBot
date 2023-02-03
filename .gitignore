@@ -13,6 +13,7 @@ resources/
 .imq_secret_key
 .omq_secret_key
 .db_secret_key
+.salt
 data/
 data.sqlite3
 input_message_queue.sqlite3

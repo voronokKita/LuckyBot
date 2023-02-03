@@ -21,6 +21,7 @@ from tests.presets import mock_ngrok, mock_telebot, mock_serving
 @patch('lucky_bot.updater.updater.Updater.works')
 @patch('lucky_bot.updater.updater.UpdaterThread._time_to_wait', Mock(return_value=100))
 @patch('lucky_bot.controller.controller.Controller.check_new_messages')
+@patch('lucky_bot.sender.output_dispatcher.BOT')
 @patch('lucky_bot.sender.sender.Sender.process_outgoing_messages')
 @patch('lucky_bot.receiver.receiver.Receiver._remove_webhook')
 @patch('lucky_bot.receiver.receiver.Receiver.start_server', new_callable=mock_serving)

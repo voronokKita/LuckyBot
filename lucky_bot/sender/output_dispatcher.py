@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 from logs import Log
 
 
-def send_message(uid: int, text: str, file=None):
+def send_message(uid: str | int, text: str, file=None):
     """
     Send a message to Telegram and handle possible exception.
 

@@ -1,5 +1,4 @@
 """ python -m unittest tests.integration.controller.test_responder_integration """
-import time
 import unittest
 
 from lucky_bot.helpers.signals import NEW_MESSAGE_TO_SEND
@@ -21,28 +20,26 @@ class TestResponderIntegration(unittest.TestCase):
             NEW_MESSAGE_TO_SEND.clear()
 
     def test_responder_send_message(self):
-        uid = 1
-        t = int(time.time())
-        self.respond.send_message(uid, 'hello')
+        uid = '1'
+        text = 'hello'
+        self.respond.send_message(uid, text)
 
         self.assertTrue(NEW_MESSAGE_TO_SEND.is_set())
 
         result = OutputQueue.get_first_message()
         self.assertIsNotNone(result)
-        self.assertEqual(result.destination, uid)
-        self.assertEqual(result.text, 'hello')
-        self.assertGreaterEqual(result.time, t)
+        msg_id, msg_uid, msg_text = result
+        self.assertEqual(msg_uid, uid)
+        self.assertEqual(msg_text, text)
 
     def test_responder_delete_user(self):
-        uid = 2
+        uid = '2'
         self.assertTrue(MainDB.add_user(uid))
-
         self.respond.delete_user(uid, True)
-
         self.assertIsNone(MainDB.get_user(uid))
 
     def test_responder_delete_notes(self):
-        uid = 3
+        uid = '3'
         MainDB.add_user(uid)
         MainDB.add_note(uid, 'foo')
         MainDB.add_note(uid, 'bar')
@@ -56,21 +53,22 @@ class TestResponderIntegration(unittest.TestCase):
                    "Note #`3` - deleted\n"
         msg = OutputQueue.get_first_message()
         self.assertIsNotNone(msg)
-        self.assertEqual(msg.text, expected)
+        msg_id, msg_uid, msg_text = msg
+        self.assertEqual(msg_text, expected)
 
     def test_responder_delete_notes_wrong(self):
-        uid = 3
+        uid = '3'
         MainDB.add_user(uid)
         self.respond.delete_notes(uid, [1])
 
         msg = OutputQueue.get_first_message()
         self.assertIsNotNone(msg)
-        self.assertEqual(msg.text, f'Note #`1` - not found\n')
+        msg_id, msg_uid, msg_text = msg
+        self.assertEqual(msg_text, f'Note #`1` - not found\n')
 
     def test_responder_send_list(self):
+        uid = '4'
         note_text = 'foo, bar, baz, qux, quux, corge, grault, garply, waldo, fred, plugh, xyzzy, thud'
-        expecting = f'Your notes:\n* №`1` :: "{note_text[:30]}..."\n\n'
-        uid = 4
         MainDB.add_user(uid)
         MainDB.add_note(uid, note_text)
 
@@ -78,37 +76,42 @@ class TestResponderIntegration(unittest.TestCase):
 
         msg = OutputQueue.get_first_message()
         self.assertIsNotNone(msg)
-        self.assertEqual(msg.text, expecting)
+        msg_id, msg_uid, msg_text = msg
+        expecting = f'Your notes:\n* №`1` :: "{note_text[:30]}..."\n\n'
+        self.assertEqual(msg_text, expecting)
 
     def test_responder_send_list_empty(self):
-        uid = 4
+        uid = '4'
         MainDB.add_user(uid)
 
         self.respond.send_list(uid)
 
         msg = OutputQueue.get_first_message()
         self.assertIsNotNone(msg)
-        self.assertEqual(msg.text, 'Nothing.')
+        msg_id, msg_uid, msg_text = msg
+        self.assertEqual(msg_text, 'Nothing.')
 
     def test_responder_send_note(self):
+        uid = '5'
         note_text = 'foobar'
-        uid = 5
         MainDB.add_user(uid)
         MainDB.add_note(uid, note_text)
 
-        self.respond.send_note(uid, 1)
+        self.respond.send_note(uid, note_num=1)
 
         msg = OutputQueue.get_first_message()
         self.assertIsNotNone(msg)
-        self.assertEqual(msg.text, note_text)
+        msg_id, msg_uid, msg_text = msg
+        self.assertEqual(msg_text, note_text)
 
     def test_responder_send_note_wrong(self):
-        uid = 5
+        uid = '5'
         MainDB.add_user(uid)
 
-        self.respond.send_note(uid, 1)
+        self.respond.send_note(uid, note_num=1)
 
         msg = OutputQueue.get_first_message()
         self.assertIsNotNone(msg)
+        msg_id, msg_uid, msg_text = msg
         expecting = 'Number not found. Check the note number by calling /list.'
-        self.assertEqual(msg.text, expecting)
+        self.assertEqual(msg_text, expecting)

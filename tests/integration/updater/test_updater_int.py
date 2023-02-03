@@ -55,7 +55,7 @@ class TestUpdaterWorks(ThreadSmallTestTemplate):
         self.assertTrue(user_q1.got_first_update)
         msg_q1 = OutputQueue.get_first_message()
         self.assertIsNotNone(msg_q1)
-        OutputQueue.delete_message(msg_q1)
+        OutputQueue.delete_message(msg_q1[0])
 
         # 2nd
         dt.now.return_value = timedelta(days=1,hours=19)

@@ -24,19 +24,19 @@ class TestUpdateDispatcher(unittest.TestCase):
         db.clear_all_users_flags.assert_called_once()
 
     def test_set_up_flag(self, db, arg):
-        uid = 22
-        update_dispatcher.set_update_flag(uid, self.current_time)
+        tg_id = 'uid-22'
+        update_dispatcher.set_update_flag(tg_id, self.current_time)
         db.set_user_flag.assert_not_called()
 
         self.current_time.first_update = True
-        update_dispatcher.set_update_flag(uid, self.current_time)
-        db.set_user_flag.assert_called_once_with(uid, 'first update')
+        update_dispatcher.set_update_flag(tg_id, self.current_time)
+        db.set_user_flag.assert_called_once_with(tg_id, 'first update')
 
         self.current_time.first_update = False
         self.current_time.second_update = True
-        update_dispatcher.set_update_flag(uid, self.current_time)
+        update_dispatcher.set_update_flag(tg_id, self.current_time)
         self.assertEqual(db.set_user_flag.call_count, 2)
-        db.set_user_flag.assert_called_with(uid, 'second update')
+        db.set_user_flag.assert_called_with(tg_id, 'second update')
 
     def test_is_waiting_for_update(self, *args):
         user = Mock()
@@ -66,13 +66,14 @@ class TestUpdateDispatcher(unittest.TestCase):
 
     def test_dispatcher_first_update(self, db, omq):
         user = Mock()
-        user.tg_id = 1
+        user.tg_id = 'uid-1'
+        user.c_id = b'1'
         user.got_first_update = False
         self.current_time.first_update = True
         db.get_users_with_notes.return_value = [user]
 
         note = Mock()
-        note.text = 'foo'
+        note.text = b'foo'
         note.number = 1
         db.get_notifications_for_the_updater.return_value = [note]
 
@@ -80,21 +81,22 @@ class TestUpdateDispatcher(unittest.TestCase):
         update_dispatcher.notifications_dispatcher(self.current_time)
 
         db.get_users_with_notes.assert_called_once()
-        db.get_notifications_for_the_updater.assert_called_once_with(user.tg_id)
-        omq.add_message.assert_called_once_with(user.tg_id, note.text)
+        db.get_notifications_for_the_updater.assert_called_once_with(user)
+        omq.add_message.assert_called_once_with(user.c_id, note.text, encrypted=True)
         db.update_user_last_notes_list.assert_called_once_with(user.tg_id, note.number)
         db.set_user_flag.assert_called_once_with(user.tg_id, 'first update')
 
     def test_dispatcher_second_update(self, db, omq):
         user = Mock()
-        user.tg_id = 2
+        user.tg_id = 'uid-2'
+        user.c_id = b'2'
         user.got_first_update = True
         user.got_second_update = False
         self.current_time.second_update = True
         db.get_users_with_notes.return_value = [user]
 
         note = Mock()
-        note.text = 'bar'
+        note.text = b'bar'
         note.number = 1
         db.get_notifications_for_the_updater.return_value = [note]
 
@@ -102,8 +104,8 @@ class TestUpdateDispatcher(unittest.TestCase):
         update_dispatcher.notifications_dispatcher(self.current_time)
 
         db.get_users_with_notes.assert_called_once()
-        db.get_notifications_for_the_updater.assert_called_once_with(user.tg_id)
-        omq.add_message.assert_called_once_with(user.tg_id, note.text)
+        db.get_notifications_for_the_updater.assert_called_once_with(user)
+        omq.add_message.assert_called_once_with(user.c_id, note.text, encrypted=True)
         db.update_user_last_notes_list.assert_called_once_with(user.tg_id, note.number)
         db.set_user_flag.assert_called_once_with(user.tg_id, 'second update')
 
@@ -112,7 +114,6 @@ class TestUpdateDispatcher(unittest.TestCase):
     def test_dispatcher_user_without_notes_error(self, is_waiting, set_flag, db, omq):
         is_waiting.return_value = True
         user = Mock()
-        user.tg_id = 3
         db.get_users_with_notes.return_value = [user]
         db.get_notifications_for_the_updater.return_value = None
 
@@ -120,7 +121,7 @@ class TestUpdateDispatcher(unittest.TestCase):
 
         db.get_users_with_notes.assert_called_once()
         is_waiting.assert_called_once_with(user, self.current_time)
-        db.get_notifications_for_the_updater.assert_called_once_with(user.tg_id)
+        db.get_notifications_for_the_updater.assert_called_once_with(user)
 
         omq.add_message.assert_not_called()
         set_flag.assert_not_called()

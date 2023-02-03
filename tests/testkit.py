@@ -1,8 +1,8 @@
-""" python tests/testsuite.py """
+""" python tests/testkit.py """
 import sys
 
 if __name__ != '__main__':
-    print('Run testsuite.py as main.')
+    print('Run testkit.py as main.')
     sys.exit(1)
 
 import pathlib
@@ -36,35 +36,54 @@ from tests.integration import test_sender_receiver_controller
 from tests.integration import test_main
 
 loader = unittest.TestLoader()
+test_runner = unittest.TextTestRunner(verbosity=2)
 
-result = unittest.TextTestRunner(verbosity=2).run(
-    loader.loadTestsFromModule(test_base)
-)
-if result.wasSuccessful() is False:
+
+base_result = test_runner.run(loader.loadTestsFromModule(test_base))
+if base_result.wasSuccessful() is False:
     # don't go farther if the base tests are failed
     sys.exit(1)
 
-modules_to_test = {
+
+print('\n------------------------------unit tests------------------------------')
+unit_tests = {
     test_database,
 
     test_update_dispatcher,
     test_updater,
-    test_updater_int,
 
     test_omq,
     test_output_dispatcher,
     test_sender,
-    test_sender_int,
 
     test_imq,
     test_flask_app,
     test_receiver,
-    test_flask_with_imq,
-    test_receiver_int,
 
     test_bot_handlers,
     test_responder,
     test_controller,
+}
+unit_list = []
+for module in unit_tests:
+    suite = loader.loadTestsFromModule(module)
+    unit_list.append(suite)
+big_suite_of_unit_tests = unittest.TestSuite(unit_list)
+
+units_result = test_runner.run(big_suite_of_unit_tests)
+if units_result.wasSuccessful() is False:
+    sys.exit(2)
+
+
+print('\n--------------------------integration tests---------------------------')
+integration_tests = {
+    test_updater_int,
+
+    test_sender_int,
+
+    test_flask_with_imq,
+    test_receiver_int,
+
     test_parser_with_db,
     test_responder_integration,
     test_controller_with_imq,
@@ -73,10 +92,10 @@ modules_to_test = {
     test_sender_receiver_controller,
     test_main,
 }
-suite_list = []
-for module in modules_to_test:
+int_list = []
+for module in integration_tests:
     suite = loader.loadTestsFromModule(module)
-    suite_list.append(suite)
-big_suite_of_tests = unittest.TestSuite(suite_list)
+    int_list.append(suite)
+big_suite_of_integration_tests = unittest.TestSuite(int_list)
 
-unittest.TextTestRunner(verbosity=2).run(big_suite_of_tests)
+test_runner.run(big_suite_of_integration_tests)
