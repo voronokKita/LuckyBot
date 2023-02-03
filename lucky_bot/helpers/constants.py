@@ -63,12 +63,23 @@ else:
     SALT = os.environ['SALT'].encode()
 
 
+# Admin
+if not REPLIT:
+    master = PROJECT_DIR / 'resources' / '.master'
+    with master.open('r') as f: MASTER = f.read().strip()
+else:
+    MASTER = os.environ['MASTER']
+
+
 # Logs
 LOG_LIMIT = 1000
 LOG_EVENTS_FILE = PROJECT_DIR / 'logs' / 'events.log'
 LOG_EXCEPTIONS_FILE = PROJECT_DIR / 'logs' / 'exceptions.log'
 LOG_WERKZEUG_FILE = PROJECT_DIR / 'logs' / 'werkzeug.log'
 LOG_TELEBOT_FILE = PROJECT_DIR / 'logs' / 'pyTelegramBotAPI.log'
+ERRORS_TOTAL = PROJECT_DIR / 'logs' / 'errors_total'
+if not ERRORS_TOTAL.exists():
+    with ERRORS_TOTAL.open('w') as f: f.write('0')
 
 
 # Main

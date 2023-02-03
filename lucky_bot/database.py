@@ -294,6 +294,13 @@ class MainDB:
 
     @staticmethod
     @catch_exception
+    def get_all_users() -> list:
+        with DB_SESSION() as session:
+            users = session.query(User).filter().all()
+            return users
+
+    @staticmethod
+    @catch_exception
     def get_notifications_for_the_updater(user: User, tg_id=None) -> list:
         """
         Will return an empty list if the user don't exist.
@@ -316,6 +323,24 @@ class MainDB:
                     .filter(User.tg_id == user.tg_id).all()
 
             return notes
+
+    @staticmethod
+    @catch_exception
+    def count_users() -> list | None:
+        with DB_SESSION() as session:
+            users = session.query(User).filter().all()
+            if not users or len(users) == 1:
+                return None
+            else:
+                users_total = len(users)
+
+            notes = session.query(Note).filter().all()
+            if not notes:
+                notes_total = 0
+            else:
+                notes_total = len(notes)
+
+            return users_total, notes_total
 
 
 if not TESTING and not DB_FILE.exists():

@@ -14,6 +14,7 @@ resources/
 .omq_secret_key
 .db_secret_key
 .salt
+.notifications.txt
 data/
 data.sqlite3
 input_message_queue.sqlite3

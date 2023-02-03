@@ -6,7 +6,7 @@ Exceptions go through:
     DatabaseException
     OMQException
 """
-from lucky_bot.helpers.constants import DatabaseException
+from lucky_bot.helpers.constants import DatabaseException, ERRORS_TOTAL, MASTER
 from lucky_bot.helpers.misc import encrypt, decrypt, make_hash
 from lucky_bot.helpers.signals import NEW_MESSAGE_TO_SEND
 from lucky_bot import MainDB
@@ -85,3 +85,25 @@ class Respond:
                 message += 'Some internal Error...\n'
                 cls.send_message(uid, message)
             raise exc
+
+    def admin_total_errors(self):
+        with ERRORS_TOTAL.open('r') as f:
+            errors_total = f.read().strip()
+
+        self.send_message(MASTER, f'Errors count: {errors_total}')
+
+        if int(errors_total) > 0:
+            with ERRORS_TOTAL.open('w') as f: f.write('0')
+
+    def admin_count_users(self):
+        result = MainDB.count_users()
+        if not result:
+            self.send_message(MASTER, 'There is no one here.')
+        else:
+            users, notes = result
+            self.send_message(MASTER, f'Users: {users}, notes total: {notes}.')
+
+    def admin_mail_users(self, msg: str):
+        users = MainDB.get_all_users()
+        for user in users:
+            self.send_message(user.c_id, encrypt(f'Notification:\n{msg}'), encrypted=True)

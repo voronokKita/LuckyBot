@@ -2,7 +2,10 @@ import sys
 import signal
 import threading
 
-from lucky_bot.helpers.constants import MainException, TREAD_RUNNING_TIMEOUT
+from lucky_bot.helpers.constants import (
+    MainException, TREAD_RUNNING_TIMEOUT,
+    ERRORS_TOTAL, TESTING,
+)
 from lucky_bot.helpers.signals import (
     RECEIVER_IS_RUNNING, CONTROLLER_IS_RUNNING,
     UPDATER_IS_RUNNING, SENDER_IS_RUNNING,
@@ -126,6 +129,8 @@ def finish_the_work(active_threads, main_exec=None):
         else:
             pass
     except Exception as exc:
+        if not TESTING:
+            count_total_errors()
         raise exc
     else:
         # important
@@ -147,6 +152,17 @@ def stop_active_threads(threads):
             Log.error(msg, console=True)
             last_exception = exc
     return last_exception
+
+
+def count_total_errors():
+    errors_total = ''
+    with ERRORS_TOTAL.open('r') as f:
+        errors_total = int(f.read().strip())
+
+    errors_total += 1
+
+    with ERRORS_TOTAL.open('w') as f:
+        f.write(errors_total)
 
 
 if __name__ == '__main__':

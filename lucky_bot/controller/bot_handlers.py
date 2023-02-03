@@ -7,6 +7,8 @@ pyTelegramBotAPI update handlers.
 
 * /help -> responder -> 'help message'
 
+* /ping -> responder -> 'pong'
+
 * some text or wrong command -> responder -> 'help message'
 
 * /add [text] -> parser inserts data -> responder -> 'OK or ERROR message'
@@ -29,6 +31,8 @@ import logging
 logger = logging.getLogger(__name__)
 from logs import Log
 
+from lucky_bot.helpers.constants import MASTER
+from lucky_bot.helpers.signals import EXIT_SIGNAL
 from lucky_bot.bot_init import BOT
 from lucky_bot.controller import parser
 from lucky_bot.controller import Respond
@@ -125,6 +129,39 @@ def show_user_note(message):
     else:
         note_num = match.group(2)
         respond.send_note(message.chat.id, note_num)
+
+
+@BOT.message_handler(commands=['ping'])
+def ping(message):
+    Log.info('handler: /ping')
+    respond.send_message(message.chat.id, 'pong')
+
+
+@BOT.message_handler(commands=['admin'])
+def admin_commands(message):
+    if str(message.chat.id) != MASTER:
+        Log.info('handler: /admin - wrong master uid')
+        return
+
+    if re.search(r'(/admin)\s+(stop)', message.text):
+        Log.info('handler: /admin stop')
+        EXIT_SIGNAL.set()
+
+    elif re.search(r'(/admin)\s+(users)', message.text):
+        Log.info('handler: /admin users')
+        respond.admin_count_users()
+
+    elif re.search(r'(/admin)\s+(errors)', message.text):
+        Log.info('handler: /admin errors')
+        respond.admin_total_errors()
+
+    elif re.search(r'(/admin)\s+(mail)', message.text):
+        Log.info('handler: /admin mail')
+        parts = re.findall(r'(/admin)\s+(mail)\s+(.+)', message.text, flags=re.DOTALL)
+        if not parts:
+            return
+        message_text = parts[0][2].strip()
+        respond.admin_mail_users(message_text)
 
 
 @BOT.message_handler(commands=['help'])
