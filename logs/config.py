@@ -8,12 +8,6 @@ from lucky_bot.helpers.constants import (
 )
 
 
-class DefaultExceptionFilter(logging.Filter):
-    blacklist = {'werkzeug', 'TeleBot', 'event', 'debug'}
-    def filter(self, record):
-        return record.name not in self.blacklist
-
-
 class WerkzeugFilter(logging.Filter):
     def filter(self, record):
         return record.name == 'werkzeug'
@@ -29,6 +23,12 @@ class EventFilter(logging.Filter):
         return record.name == 'event'
 
 
+class DefaultExceptionFilter(logging.Filter):
+    blacklist = {'werkzeug', 'TeleBot', 'event', 'debug'}
+    def filter(self, record):
+        return record.name not in self.blacklist
+
+
 class ConsoleFilter(logging.Filter):
     blacklist = {'event'}
     def filter(self, record):
@@ -39,9 +39,15 @@ def normal_logger():
     logging_config = {
         'version': 1,
         'disable_existing_loggers': False,
+        'filters': {
+            'werkzeug_filter': {'()': WerkzeugFilter},
+            'telebot_filter': {'()': TeleBotFilter},
+            'event_filter': {'()': EventFilter},
+            'default_exception_filter': {'()': DefaultExceptionFilter},
+        },
         'formatters': {
             'event_to_file': {
-                'format': '-- {asctime} {levelname} {message}',
+                'format': '-- {asctime} {levelname} :: {message}',
                 'style': '{'
             },
             'exception_to_file': {
@@ -55,28 +61,28 @@ def normal_logger():
                 'level': 'INFO',  # internal notifications
                 'class': 'logging.StreamHandler',
                 'stream': 'ext://sys.stdout',
-                'filters': [WerkzeugFilter()],
+                'filters': ['werkzeug_filter'],
             },
             'werkzeug_exception': {
                 'level': 'ERROR',
                 'class': 'logging.FileHandler',
                 'filename': LOG_WERKZEUG_FILE,
                 'formatter': 'exception_to_file',
-                'filters': [WerkzeugFilter()],
+                'filters': ['werkzeug_filter'],
             },
 
             'telebot_console': {
                 'level': 'INFO',  # internal notifications
                 'class': 'logging.StreamHandler',
                 'stream': 'ext://sys.stdout',
-                'filters': [TeleBotFilter()],
+                'filters': ['telebot_filter'],
             },
             'telebot_exception': {
                 'level': 'ERROR',
                 'class': 'logging.FileHandler',
                 'filename': LOG_TELEBOT_FILE,
                 'formatter': 'exception_to_file',
-                'filters': [TeleBotFilter()],
+                'filters': ['telebot_filter'],
             },
 
             'console_debug': {
@@ -90,21 +96,21 @@ def normal_logger():
                 'class': 'logging.FileHandler',
                 'filename': LOG_EVENTS_FILE,
                 'formatter': 'event_to_file',
-                'filters': [EventFilter()],
+                'filters': ['event_filter'],
             },
 
             'default_console': {
                 'level': 'ERROR',
                 'class': 'logging.StreamHandler',
                 'stream': 'ext://sys.stdout',
-                'filters': [DefaultExceptionFilter()],
+                'filters': ['default_exception_filter'],
             },
             'default_exception': {
                 'level': 'ERROR',
                 'class': 'logging.FileHandler',
                 'filename': LOG_EXCEPTIONS_FILE,
                 'formatter': 'exception_to_file',
-                'filters': [DefaultExceptionFilter()],
+                'filters': ['default_exception_filter'],
             },
         },
         'loggers': {
@@ -221,14 +227,15 @@ def clear_old_logs():
 
     for logfile in files:
         limit = False
-        lines = None
+        old_lines = []
         with logfile.open('r') as f:
+            count = 0
             for count, line in enumerate(f):
                 pass
             if count > LOG_LIMIT:
                 limit = True
                 f.seek(0)
-                lines = f.readlines()
+                old_lines = f.readlines()
 
         if not limit:
             continue
@@ -237,5 +244,5 @@ def clear_old_logs():
             f.write('--------- old lines has ben removed ---------\n')
             lines_to_save = count - LOG_LIMIT // 2
             f.writelines(
-                lines[lines_to_save:]
+                old_lines[lines_to_save:]
             )

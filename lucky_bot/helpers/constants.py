@@ -16,7 +16,7 @@ else:
 
 # Help
 TEXT_HELLO = '''(*・ω・)ﾉ" Hello, @{username}!
-This bot was made to remind you.
+This bot was made to remind you of the things you don't want to forget.
 You can save text notes in the database. A couple of times a day I will take a random note and send it to you.
 All notes are stored in an encrypted form.
 
@@ -47,7 +47,7 @@ LAST_NOTES_LIST = 10
 
 if TESTING:
     ''' Note:
-    :memory: does not always work, because some parts are 
+    :memory: does not always work, because some parts are
     running in subprocesses, i.e. in another memory areas.
     '''
     DB_FILE = PROJECT_DIR / 'tests' / 'fixtures' / 'test_data.sqlite3'

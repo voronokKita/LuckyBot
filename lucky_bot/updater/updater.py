@@ -31,6 +31,7 @@ class Updater:
             DatabaseException: propagation
             OMQException: propagation
         """
+        Log.info('updater works')
         current_time = cls._get_current_time()
         try:
             update_dispatcher.clear_all_users_flags(current_time)

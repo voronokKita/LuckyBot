@@ -344,4 +344,4 @@ class MainDB:
 
 
 if not TESTING and not DB_FILE.exists():
-    MainBase.set_up()
+    MainDB.set_up()

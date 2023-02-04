@@ -40,16 +40,20 @@ class Controller:
             OMQException
             DatabaseException
             TelebotHandlerException
-            AdminExitSignal
+            AdminExitSignal: propagation
         """
         while True:
             result = InputQueue.get_first_message()
-            if result:
-                message_id, data = result
+            if not result:
+                break
+
+            message_id, data = result
+            try:
                 cls._process_the_message(data)
                 InputQueue.delete_message(message_id)
-            else:
-                break
+            except AdminExitSignal as exc:
+                InputQueue.delete_message(message_id)
+                raise exc
 
     @classmethod
     def _process_the_message(cls, data: str):
