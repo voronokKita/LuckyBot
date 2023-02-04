@@ -94,7 +94,7 @@ class TestUpdaterWorks(ThreadSmallTestTemplate):
             raise TestException('The time to stop the updater has passed.')
 
         self.assertTrue(EXIT_SIGNAL.is_set())
-        self.assertFalse(UPDATER_CYCLE.is_set())
+        self.assertTrue(UPDATER_CYCLE.is_set())
         flag.assert_called_once()
         updater_cycle.assert_not_called()
 

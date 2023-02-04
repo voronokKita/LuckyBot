@@ -67,6 +67,7 @@ class ThreadTemplate(threading.Thread):
     exception = None
     is_running_signal = None
     is_stopped_signal = None
+    signal_after_exit = None
 
     def __int__(self):
         threading.Thread.__init__(self)
@@ -90,6 +91,8 @@ class ThreadTemplate(threading.Thread):
         except Exception as e:
             self.exception = e
             EXIT_SIGNAL.set()
+            if self.signal_after_exit:
+                self.signal_after_exit.set()
         finally:
             self.is_stopped_signal.set()
 
@@ -101,9 +104,11 @@ class ThreadTemplate(threading.Thread):
         """
         if not EXIT_SIGNAL.is_set():
             EXIT_SIGNAL.set()
-        if self.is_stopped_signal.wait(5):
-            pass
+        if self.signal_after_exit and not self.signal_after_exit.is_set():
+            self.signal_after_exit.set()
 
+        if self.is_stopped_signal.wait(10):
+            pass
         threading.Thread.join(self, 5)
 
         if self.exception:

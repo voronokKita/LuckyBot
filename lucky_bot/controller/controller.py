@@ -51,6 +51,7 @@ class Controller:
             try:
                 cls._process_the_message(data)
                 InputQueue.delete_message(message_id)
+
             except AdminExitSignal as exc:
                 InputQueue.delete_message(message_id)
                 raise exc
@@ -70,11 +71,6 @@ class Controller:
             if data.startswith('/sender delete'):
                 uid = data.removeprefix('/sender delete ')
                 cls.responder.delete_user(uid)
-
-            elif data.startswith('/admin'):
-                # skipped for now
-                pass
-
         else:
             try:
                 update = telebot.types.Update.de_json(data)
@@ -93,6 +89,8 @@ class Controller:
 class ControllerThread(ThreadTemplate):
     is_running_signal = CONTROLLER_IS_RUNNING
     is_stopped_signal = CONTROLLER_IS_STOPPED
+    signal_after_exit = INCOMING_MESSAGE
+    controller = Controller()
 
     def __str__(self):
         return 'controller thread'
@@ -116,39 +114,33 @@ class ControllerThread(ThreadTemplate):
             OMQException: propagation
         """
         try:
-            Controller.check_new_messages()
-
-            if INCOMING_MESSAGE.is_set():
-                INCOMING_MESSAGE.clear()
-            self._set_the_signal()
-            self._test_exception_after_signal()
+            self.work_before_the_loop()
 
             while True:
                 if INCOMING_MESSAGE.wait(3600):
                     pass
+
                 if EXIT_SIGNAL.is_set():
                     break
                 else:
-                    Controller.check_new_messages()
-
-                    if INCOMING_MESSAGE.is_set():
-                        INCOMING_MESSAGE.clear()
+                    self.controller.check_new_messages()
+                    INCOMING_MESSAGE.clear()
                     self._test_controller_cycle()
 
         except AdminExitSignal as exc:
             EXIT_SIGNAL.set()
-        except (TelebotHandlerException, DatabaseException, OMQException, IMQException) as exc:
+        except (OMQException, IMQException,
+                TelebotHandlerException, DatabaseException) as exc:
             raise exc
         except Exception as exc:
             Log.error('controller: a normal exception')
             raise ControllerException(exc)
 
-    def merge(self):
-        if not EXIT_SIGNAL.is_set():
-            EXIT_SIGNAL.set()
-        if not INCOMING_MESSAGE.is_set():
-            INCOMING_MESSAGE.set()
-        super().merge()
+    def work_before_the_loop(self):
+        self.controller.check_new_messages()
+        INCOMING_MESSAGE.clear()
+        self._set_the_signal()
+        self._test_exception_after_signal()
 
     @staticmethod
     def _test_controller_cycle():

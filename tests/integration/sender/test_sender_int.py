@@ -130,7 +130,7 @@ class TestSenderWorks(ThreadSmallTestTemplate):
             self.thread_obj.merge()
             raise TestException('The time to stop the sender has passed.')
 
-        self.assertFalse(NEW_MESSAGE_TO_SEND.is_set())
         self.assertFalse(SENDER_IS_RUNNING.is_set())
+        self.assertTrue(NEW_MESSAGE_TO_SEND.is_set())
         self.assertTrue(EXIT_SIGNAL.is_set())
         self.assertRaises(OutputDispatcherException, self.thread_obj.merge)

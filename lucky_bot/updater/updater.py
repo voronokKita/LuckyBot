@@ -67,6 +67,8 @@ class Updater:
 class UpdaterThread(ThreadTemplate):
     is_running_signal = UPDATER_IS_RUNNING
     is_stopped_signal = UPDATER_IS_STOPPED
+    signal_after_exit = UPDATER_CYCLE
+    updater = Updater()
 
     def __str__(self):
         return 'updater thread'
@@ -88,14 +90,10 @@ class UpdaterThread(ThreadTemplate):
             OMQException: propagation
         """
         try:
-            Updater.works()
-
-            self._set_the_signal()
-            self._test_exception_after_signal()
+            self.work_before_the_loop()
 
             while True:
-                if UPDATER_CYCLE.is_set():
-                    UPDATER_CYCLE.clear()
+                UPDATER_CYCLE.clear()
 
                 wait = self._time_to_wait()
                 if UPDATER_CYCLE.wait(wait):
@@ -104,7 +102,7 @@ class UpdaterThread(ThreadTemplate):
                 if EXIT_SIGNAL.is_set():
                     break
                 else:
-                    Updater.works()
+                    self.updater.works()
                     self._test_updater_cycle()
 
         except (UpdateDispatcherException, DatabaseException, OMQException) as exc:
@@ -113,12 +111,10 @@ class UpdaterThread(ThreadTemplate):
             Log.error('updater: a normal exception')
             raise UpdaterException(exc)
 
-    def merge(self):
-        if not EXIT_SIGNAL.is_set():
-            EXIT_SIGNAL.set()
-        if not UPDATER_CYCLE.is_set():
-            UPDATER_CYCLE.set()
-        super().merge()
+    def work_before_the_loop(self):
+        self.updater.works()
+        self._set_the_signal()
+        self._test_exception_after_signal()
 
     @staticmethod
     def _time_to_wait() -> int:

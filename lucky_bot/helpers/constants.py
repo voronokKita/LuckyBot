@@ -60,7 +60,7 @@ else:
 
 
 # Web settings
-REPLIT_URL = 'https://LuckyBot.kitavoronok.repl.co'
+REPLIT_URL = 'https://luckybot.kitavoronok.repl.co'
 PORT = 5000
 ADDRESS = '0.0.0.0'
 WEBHOOK_ENDPOINT = '/webhook'

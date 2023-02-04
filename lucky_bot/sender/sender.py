@@ -84,6 +84,8 @@ class Sender:
 class SenderThread(ThreadTemplate):
     is_running_signal = SENDER_IS_RUNNING
     is_stopped_signal = SENDER_IS_STOPPED
+    signal_after_exit = NEW_MESSAGE_TO_SEND
+    sender = Sender()
 
     def __str__(self):
         return 'sender thread'
@@ -106,23 +108,17 @@ class SenderThread(ThreadTemplate):
             IMQException: propagation
         """
         try:
-            Sender.process_outgoing_messages()
-
-            if NEW_MESSAGE_TO_SEND.is_set():
-                NEW_MESSAGE_TO_SEND.clear()
-            self._set_the_signal()
-            self._test_exception_after_signal()
+            self.work_before_the_loop()
 
             while True:
                 if NEW_MESSAGE_TO_SEND.wait(3600):
                     pass
+
                 if EXIT_SIGNAL.is_set():
                     break
                 else:
-                    Sender.process_outgoing_messages()
-
-                    if NEW_MESSAGE_TO_SEND.is_set():
-                        NEW_MESSAGE_TO_SEND.clear()
+                    self.sender.process_outgoing_messages()
+                    NEW_MESSAGE_TO_SEND.clear()
                     self._test_sender_cycle()
 
         except StopTheSenderGently:
@@ -133,12 +129,11 @@ class SenderThread(ThreadTemplate):
             Log.error('sender: a normal exception')
             raise SenderException(exc)
 
-    def merge(self):
-        if not EXIT_SIGNAL.is_set():
-            EXIT_SIGNAL.set()
-        if not NEW_MESSAGE_TO_SEND.is_set():
-            NEW_MESSAGE_TO_SEND.set()
-        super().merge()
+    def work_before_the_loop(self):
+        self.sender.process_outgoing_messages()
+        NEW_MESSAGE_TO_SEND.clear()
+        self._set_the_signal()
+        self._test_exception_after_signal()
 
     @staticmethod
     def _test_sender_cycle():
