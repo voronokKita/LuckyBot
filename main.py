@@ -156,7 +156,7 @@ def stop_active_threads(threads):
 
 def count_total_errors():
     try:
-        errors_total = ''
+        errors_total = 0
         with ERRORS_TOTAL.open('r') as f:
             errors_total = int(f.read().strip())
 

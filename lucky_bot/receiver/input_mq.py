@@ -77,8 +77,9 @@ class InputQueue:
             data = encrypt(data.encode())
 
         with IMQ_SESSION.begin() as session:
-            msg_obj = IncomingMessage(data=data, time=time)
-            session.add(msg_obj)
+            session.add(
+                IncomingMessage(data=data, time=time)
+            )
         return True
 
     @staticmethod
@@ -94,23 +95,20 @@ class InputQueue:
         """
         test_func2()
         with IMQ_SESSION() as session:
-            msg_obj = session.query(IncomingMessage)\
-                .order_by(IncomingMessage.time)\
-                .first()
-            if not msg_obj:
+            if not (msg_obj := session.query(IncomingMessage)
+                    .order_by(IncomingMessage.time)
+                    .first()):
                 return None
-
-            data = decrypt(msg_obj.data)
-            return msg_obj.id, data
+            else:
+                return msg_obj.id, decrypt(msg_obj.data)
 
     @staticmethod
     @catch_exception
     def delete_message(msg_id: int) -> bool:
         with IMQ_SESSION.begin() as session:
-            msg_obj = session.query(IncomingMessage)\
-                .filter(IncomingMessage.id == msg_id)\
-                .first()
-            if not msg_obj:
+            if not (msg_obj := session.query(IncomingMessage)
+                    .filter(IncomingMessage.id == msg_id)
+                    .first()):
                 return False
             session.delete(msg_obj)
         return True

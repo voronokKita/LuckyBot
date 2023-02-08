@@ -48,10 +48,9 @@ def get_message_data() -> str:
     try:
         data = request.get_data().decode('utf-8')
         telebot.types.Update.de_json(data)
+        return data
     except Exception:
         raise WebhookWrongRequest
-    else:
-        return data
 
 
 def save_message_to_queue(data):

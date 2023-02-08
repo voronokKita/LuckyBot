@@ -78,8 +78,9 @@ class OutputQueue:
             message = encrypt(message.encode())
 
         with OMQ_SESSION.begin() as session:
-            msg_obj = OutgoingMessage(destination=uid, text=message, time=time, markup=markup)
-            session.add(msg_obj)
+            session.add(
+                OutgoingMessage(destination=uid, text=message, time=time, markup=markup)
+            )
         return True
 
     @staticmethod
@@ -95,24 +96,22 @@ class OutputQueue:
         """
         test_func()
         with OMQ_SESSION() as session:
-            msg_obj = session.query(OutgoingMessage)\
-                .order_by(OutgoingMessage.time)\
-                .first()
-            if not msg_obj:
+            if not (msg_obj := session.query(OutgoingMessage)
+                    .order_by(OutgoingMessage.time)
+                    .first()):
                 return None
-
-            uid = decrypt(msg_obj.destination)
-            text = decrypt(msg_obj.text)
-            return msg_obj.id, uid, text, msg_obj.markup
+            else:
+                uid = decrypt(msg_obj.destination)
+                text = decrypt(msg_obj.text)
+                return msg_obj.id, uid, text, msg_obj.markup
 
     @staticmethod
     @catch_exception
     def delete_message(msg_id: int) -> bool:
         with OMQ_SESSION.begin() as session:
-            msg_obj = session.query(OutgoingMessage)\
-                .filter(OutgoingMessage.id == msg_id)\
-                .first()
-            if not msg_obj:
+            if not (msg_obj := session.query(OutgoingMessage)
+                    .filter(OutgoingMessage.id == msg_id)
+                    .first()):
                 return False
             session.delete(msg_obj)
         return True

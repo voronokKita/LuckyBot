@@ -23,7 +23,7 @@ class TestResponder(unittest.TestCase):
         text = 'hello'
         self.responder.send_message(uid, text)
 
-        output.add_message.assert_called_once_with(uid, text, markup=False)
+        output.add_message.assert_called_once_with(uid, text, markup=False, encrypted=False)
         self.assertTrue(NEW_MESSAGE_TO_SEND.is_set())
 
     def test_responder_delete_user(self, arg, db):

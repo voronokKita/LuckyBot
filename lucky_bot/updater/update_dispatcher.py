@@ -34,16 +34,14 @@ def notifications_dispatcher(current_time):
     4. Pass this message to the output message queue;
     5. Set the user flag for the current time period.
     """
-    users = MainDB.get_users_with_notes()
-    if not users:
+    if not (users := MainDB.get_users_with_notes()):
         return
 
     for user in users:
         if not is_waiting_for_update(user, current_time):
             continue
 
-        notes = MainDB.get_notifications_for_the_updater(user)
-        if not notes:
+        if not (notes := MainDB.get_notifications_for_the_updater(user)):
             msg = f"update dispatcher: got a user that don't have any notes to send, id #{user.id}"
             Log.warning(msg)
             continue

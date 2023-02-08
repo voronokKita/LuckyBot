@@ -125,10 +125,10 @@ class MainDB:
         test_func()
         try:
             with DB_SESSION.begin() as session:
-                tg_id = make_hash(uid)
-                c_id = encrypt(str(uid).encode())
-                user = User(tg_id=tg_id, c_id=c_id)
-                session.add(user)
+                session.add(User(
+                    tg_id=(tg_id := make_hash(uid)),
+                    c_id=(c_id := encrypt(str(uid).encode()))
+                ))
         except IntegrityError:
             return False
         else:
@@ -139,9 +139,9 @@ class MainDB:
     def add_note(uid: str | int, text: str, file=None) -> bool:
         """ Will return False if the user don't exist. """
         with DB_SESSION.begin() as session:
-            tg_id = make_hash(uid)
-            user = session.query(User).filter(User.tg_id == tg_id).first()
-            if not user:
+            if not (user := session.query(User)
+                    .filter(User.tg_id == make_hash(uid))
+                    .first()):
                 return False
 
             note = Note(
@@ -159,9 +159,9 @@ class MainDB:
     def delete_user(uid: str | int) -> bool:
         """ Will return False if the user don't exist. """
         with DB_SESSION.begin() as session:
-            tg_id = make_hash(uid)
-            user = session.query(User).filter(User.tg_id == tg_id).first()
-            if not user:
+            if not (user := session.query(User)
+                    .filter(User.tg_id == make_hash(uid))
+                    .first()):
                 return False
             else:
                 session.delete(user)
@@ -172,10 +172,10 @@ class MainDB:
     def delete_user_note(tg_id_hash: str, note_num: str | int) -> bool:
         """ Will return False if the note is not found. """
         with DB_SESSION.begin() as session:
-            note = session.query(Note).join(User) \
-                .filter(User.tg_id == tg_id_hash, Note.number == note_num) \
-                .first()
-            if not note:
+            if not (note := session.query(Note).join(User)
+                    .filter(User.tg_id == tg_id_hash,
+                            Note.number == note_num)
+                    .first()):
                 return False
             else:
                 note.user.notes_total -= 1
@@ -187,11 +187,10 @@ class MainDB:
     def update_user_note(uid: str | int, note_num: str | int, new_text: str) -> bool:
         """ Will return False if the note is not found. """
         with DB_SESSION.begin() as session:
-            tg_id = make_hash(uid)
-            note = session.query(Note).join(User) \
-                .filter(User.tg_id == tg_id, Note.number == note_num) \
-                .first()
-            if not note:
+            if not (note := session.query(Note).join(User)
+                    .filter(User.tg_id == make_hash(uid),
+                            Note.number == note_num)
+                    .first()):
                 return False
             else:
                 note.text = encrypt(new_text.encode())
@@ -208,8 +207,9 @@ class MainDB:
         will pop the 1st element from user's last_notes list, append the new one,
         """
         with DB_SESSION.begin() as session:
-            user = session.query(User).filter(User.tg_id == tg_id_hash).first()
-            if not user:
+            if not (user := session.query(User)
+                    .filter(User.tg_id == tg_id_hash)
+                    .first()):
                 return False
             elif user.notes_total <= LAST_NOTES_LIST:
                 return True
@@ -229,8 +229,7 @@ class MainDB:
     def clear_all_users_flags() -> bool:
         """ Will return False if the user don't exist. """
         with DB_SESSION.begin() as session:
-            users = session.query(User).filter().all()
-            if not users:
+            if not (users := session.query(User).filter().all()):
                 return False
             for user in users:
                 if user.got_first_update:
@@ -244,8 +243,9 @@ class MainDB:
     def set_user_flag(tg_id_hash: str, flag: str) -> bool:
         """ Will return False if the user don't exist. """
         with DB_SESSION.begin() as session:
-            user = session.query(User).filter(User.tg_id == tg_id_hash).first()
-            if not user:
+            if not (user := session.query(User)
+                    .filter(User.tg_id == tg_id_hash)
+                    .first()):
                 return False
             if flag == 'first update':
                 user.got_first_update = True
@@ -257,19 +257,16 @@ class MainDB:
     @catch_exception
     def get_user(uid: str | int) -> Query | None:
         with DB_SESSION() as session:
-            tg_id = make_hash(uid)
-            user = session.query(User).filter(User.tg_id == tg_id).first()
-            return user
+            return session.query(User).filter(User.tg_id == make_hash(uid)).first()
 
     @staticmethod
     @catch_exception
     def get_user_note(uid: str | int, note_num: str | int) -> Query | None:
         with DB_SESSION() as session:
-            tg_id = make_hash(uid)
-            note = session.query(Note).join(User) \
-                .filter(User.tg_id == tg_id, Note.number == note_num) \
-                .first()
-            return note
+            return session.query(Note).join(User)\
+                    .filter(User.tg_id == make_hash(uid),
+                            Note.number == note_num)\
+                    .first()
 
     @staticmethod
     @catch_exception
@@ -280,8 +277,7 @@ class MainDB:
         Notes are ordered by the Note.number, ascending.
         """
         with DB_SESSION() as session:
-            tg_id = make_hash(uid)
-            user = session.query(User).filter(User.tg_id == tg_id).first()
+            user = session.query(User).filter(User.tg_id == make_hash(uid)).first()
             return user.notes if user else []
 
     @staticmethod
@@ -289,15 +285,13 @@ class MainDB:
     def get_users_with_notes() -> list:
         """ Will return an empty list if no users with notes found. """
         with DB_SESSION() as session:
-            users = session.query(User).filter(User.notes_total != 0).all()
-            return users
+            return session.query(User).filter(User.notes_total != 0).all()
 
     @staticmethod
     @catch_exception
     def get_all_users() -> list:
         with DB_SESSION() as session:
-            users = session.query(User).filter().all()
-            return users
+            return session.query(User).filter().all()
 
     @staticmethod
     @catch_exception
@@ -316,11 +310,15 @@ class MainDB:
 
             if user.notes_total > LAST_NOTES_LIST and user.last_notes:
                 l = [n.note_number for n in user.last_notes]
+
                 notes = session.query(Note).join(User) \
-                    .filter(User.tg_id == user.tg_id, Note.number.not_in(l)).all()
+                    .filter(User.tg_id == user.tg_id,
+                            Note.number.not_in(l))\
+                    .all()
             else:
                 notes = session.query(Note).join(User) \
-                    .filter(User.tg_id == user.tg_id).all()
+                    .filter(User.tg_id == user.tg_id)\
+                    .all()
 
             return notes
 
@@ -334,8 +332,7 @@ class MainDB:
             else:
                 users_total = len(users)
 
-            notes = session.query(Note).filter().all()
-            if not notes:
+            if not (notes := session.query(Note).filter().all()):
                 notes_total = 0
             else:
                 notes_total = len(notes)
