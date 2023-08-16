@@ -1,4 +1,4 @@
-# LuckyBot
+# LuckyBot (deprecated)
 
 [<img src='cover.png' width='160'/>](cover.png)
 
